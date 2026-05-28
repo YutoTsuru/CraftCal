@@ -1,7 +1,7 @@
 import React from "react";
 
 type ProjectStatus = "active" | "paused" | "done";
-type TaskStatus = "todo" | "doing" | "done";
+type TaskStatus = "todo" | "doing" | "done" | "expired" | "paused" | "cancelled";
 
 export type Status = ProjectStatus | TaskStatus;
 
@@ -26,6 +26,10 @@ export function StatusBadge({
     todo: "bg-slate-50 text-slate-700 border border-slate-100",
     doing: "bg-accent-blue/10 text-accent-blue border border-accent-blue/20",
     done: "bg-emerald-50 text-emerald-700 border border-emerald-100"
+    ,
+    expired: "bg-red-50 text-red-700 border border-red-100",
+    paused: "bg-slate-50 text-slate-500 border border-slate-100",
+    cancelled: "bg-slate-50 text-slate-400 border border-slate-100"
   };
 
   const sizeClass = size === "md" ? "text-sm px-3 py-1" : "text-xs";

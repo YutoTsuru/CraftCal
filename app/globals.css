@@ -34,19 +34,7 @@ body {
 }
 
 .bg-grid {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(15,23,42,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.02) 1px, transparent 1px);
-  background-size: 48px 48px, 48px 48px;
-  opacity: 0.6;
-  mix-blend-mode: normal;
-}
-
-.blob {
-  position: absolute;
-  filter: blur(48px);
-  opacity: 0.35;
-  width: 36rem;
+  position: absolute; 
   height: 36rem;
   transform: translate3d(0,0,0);
   border-radius: 9999px;

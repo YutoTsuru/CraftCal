@@ -2,7 +2,7 @@ export type TaskWeight = "light" | "medium" | "heavy";
 
 export type TaskPriority = "low" | "medium" | "high";
 
-export type TaskStatus = "todo" | "doing" | "done";
+export type TaskStatus = "todo" | "doing" | "done" | "expired" | "paused" | "cancelled";
 
 export type Task = {
   id: string;
@@ -15,8 +15,23 @@ export type Task = {
   scheduledDate?: string | null;
   estimatedMinutes?: number | null;
   status: TaskStatus;
+  completedAt?: string | null;
+  completionNote?: string | null;
+  completionUrl?: string | null;
   createdAt: string;
   updatedAt?: string;
+};
+
+export type DailyLog = {
+  id: string;
+  taskId: string;
+  date: string; // YYYY-MM-DD
+  did: string;
+  blocked: string;
+  next: string;
+  doneToday: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type ProjectStatus = "active" | "paused" | "done";
@@ -67,6 +82,7 @@ export type DevCalendarContextValue = DevCalendarState & {
   deleteTask: (id: string) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
   updateTask: (id: string, input: TaskFormInput) => void;
+  completeTask: (id: string, note?: string | null, url?: string | null) => void;
   setSprint: (sprint: Sprint) => void;
   generateSprintSchedule: () => void;
   projects: Project[];

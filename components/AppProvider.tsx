@@ -96,6 +96,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           scheduledDate,
           estimatedMinutes,
           status: t.status ?? "todo",
+          completedAt: t.completedAt ?? null,
+          completionNote: t.completionNote ?? null,
+          completionUrl: t.completionUrl ?? null,
           createdAt: t.createdAt ?? new Date().toISOString(),
           updatedAt: t.updatedAt ?? t.createdAt ?? new Date().toISOString()
         };
@@ -130,6 +133,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             scheduledDate,
             estimatedMinutes,
             status: t.status ?? "todo",
+            completedAt: t.completedAt ?? null,
+            completionNote: t.completionNote ?? null,
+            completionUrl: t.completionUrl ?? null,
             createdAt: t.createdAt ?? new Date().toISOString(),
             updatedAt: t.updatedAt ?? t.createdAt ?? new Date().toISOString()
           };
@@ -274,6 +280,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.removeItem(storageKey);
     };
 
+    const completeTask = (id: string, note?: string | null, url?: string | null) => {
+      const now = new Date().toISOString();
+      setTasks((current) =>
+        current.map((task) => (task.id === id ? { ...task, status: "done", completedAt: now, completionNote: note ?? null, completionUrl: url ?? null, updatedAt: now } : task))
+      );
+
+      setSchedule((current) =>
+        current.map((day) => ({
+          ...day,
+          tasks: day.tasks.map((task) => (task.id === id ? { ...task, status: "done", completedAt: now, completionNote: note ?? null, completionUrl: url ?? null } : task))
+        }))
+      );
+    };
+
     return {
       tasks,
       sprint,
@@ -282,6 +302,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addTask,
       deleteTask,
       updateTaskStatus,
+      completeTask,
       updateTask,
       setSprint,
       generateSprintSchedule,

@@ -1,9 +1,11 @@
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { getTodayString, getTodayTasks } from "@/lib/schedule";
 import type { TaskStatus } from "@/types/dev-calendar";
+import { saveOrUpdateDailyLog, getLogsByDate, getRecentLogs, getAllLogs } from "@/lib/dailyLogs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
 
@@ -19,11 +21,17 @@ function ProjectBadge({ projectId, projects }: { projectId: string; projects: { 
   );
 }
 
-export function TodayList() {
+export default function TodayList() {
   const { schedule, updateTaskStatus, tasks } = useDevCalendar();
   const { projects } = useDevCalendar();
+  const { completeTask } = useDevCalendar();
   const today = getTodayString();
   const tasksForToday = getTodayTasks(schedule, tasks);
+
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [did, setDid] = useState("");
+  const [blocked, setBlocked] = useState("");
+  const [next, setNext] = useState("");
 
   return (
     <div className="grid gap-4">
@@ -47,7 +55,13 @@ export function TodayList() {
                 <input
                   type="checkbox"
                   checked={task.status === "done"}
-                  onChange={(e) => updateTaskStatus(task.id, e.target.checked ? "done" : "todo")}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      completeTask(task.id);
+                    } else {
+                      updateTaskStatus(task.id, "todo");
+                    }
+                  }}
                   className="mt-1 h-4 w-4"
                   aria-label={`完了 ${task.title}`}
                 />
@@ -79,16 +93,74 @@ export function TodayList() {
                   <option value="done">完了</option>
                 </select>
                 <button
-                  onClick={() => updateTaskStatus(task.id, "done")}
+                  onClick={() => {
+                    // Open simple prompt to collect optional note + url
+                    // Show caution message
+                    // eslint-disable-next-line no-alert
+                    if (!confirm("このタスクを完了にしますか？完了時にメモ(URL含む)を保存できます。個人情報や機密情報を含まないよう注意してください。")) return;
+                    // eslint-disable-next-line no-alert
+                    const note = prompt("完了メモ（任意）\n※個人情報やAPIキーを含まないでください。", "") || null;
+                    // eslint-disable-next-line no-alert
+                    const url = prompt("関連URL（任意）", "") || null;
+                    completeTask(task.id, note, url);
+                  }}
                   className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-3 py-1 text-sm font-semibold text-white transition hover:bg-emerald-400"
                 >
                   <CheckCircle2 size={16} />
                   完了
                 </button>
+
+                <button
+                  onClick={() => {
+                    // open daily log editor for this task
+                    const logs = getAllLogs();
+                    const existing = logs.find((l) => l.taskId === task.id && l.date === today);
+                    setEditingTaskId(task.id);
+                    setDid(existing?.did ?? "");
+                    setBlocked(existing?.blocked ?? "");
+                    setNext(existing?.next ?? "");
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-3 py-1 text-sm font-semibold text-white transition hover:bg-sky-400"
+                >
+                  今日分完了 / メモを書く
+                </button>
               </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {editingTaskId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg">
+            <h3 className="text-lg font-semibold">作業ログを記録</h3>
+            <p className="text-sm text-slate-500">今日やったこと・詰まったこと・次にやることを入力してください。空でも保存できます。</p>
+
+            <div className="mt-4 grid gap-3">
+              <label className="text-sm">今日やったこと (did)</label>
+              <textarea value={did} onChange={(e) => setDid(e.target.value)} className="h-24 w-full rounded-md border px-3 py-2" />
+
+              <label className="text-sm">詰まったこと (blocked)</label>
+              <textarea value={blocked} onChange={(e) => setBlocked(e.target.value)} className="h-24 w-full rounded-md border px-3 py-2" />
+
+              <label className="text-sm">次にやること (next)</label>
+              <input value={next} onChange={(e) => setNext(e.target.value)} className="w-full rounded-md border px-3 py-2" />
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setEditingTaskId(null)} className="rounded-md border px-3 py-1">閉じる</button>
+              <button
+                onClick={() => {
+                  saveOrUpdateDailyLog({ taskId: editingTaskId!, date: today, did, blocked, next, doneToday: true });
+                  setEditingTaskId(null);
+                }}
+                className="rounded-md bg-emerald-500 px-3 py-1 text-white"
+              >
+                保存して今日分完了にする
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

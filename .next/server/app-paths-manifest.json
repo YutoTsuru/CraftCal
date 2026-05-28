@@ -1,3 +1,7 @@
 {
-  "/tasks/page": "app/tasks/page.js"
+  "/tasks/page": "app/tasks/page.js",
+  "/page": "app/page.js",
+  "/today/page": "app/today/page.js",
+  "/sprint/page": "app/sprint/page.js",
+  "/calendar/page": "app/calendar/page.js"
 }
