@@ -7,16 +7,11 @@ import { QuickActionButtons } from "@/components/planner/QuickActionButtons";
 import { ScheduleSuggestionCard } from "@/components/planner/ScheduleSuggestionCard";
 import { usePlannerChat } from "@/components/planner/usePlannerChat";
 
-const previewSuggestions = [
-  { time: "19:00〜20:00", taskName: "MVP作成", projectName: "CraftCal", estimatedMinutes: 60, reason: "進行中タスクのため優先" },
-  { time: "20:10〜20:40", taskName: "README整理", projectName: "CraftCal", estimatedMinutes: 30, reason: "短時間で完了しやすい" }
-];
-
 export default function SprintPage() {
   const { tasks, projects } = useDevCalendar();
   const { messages, input, setInput, sendMessage, useQuickAction, latestSuggestions, notice, rerun, makeLighter, reflect, bottomRef, incompleteTasks } = usePlannerChat({ tasks, projects });
 
-  const proposalCount = messages.filter((message) => message.role === "assistant" && (message.suggestions?.length ?? 0) > 0).length;
+  const proposalCount = latestSuggestions.length;
 
   return (
     <div className="grid gap-6">
@@ -81,10 +76,10 @@ export default function SprintPage() {
         </div>
 
         <div className="grid gap-4 self-start">
-          <ScheduleSuggestionCard suggestions={latestSuggestions.length > 0 ? latestSuggestions : previewSuggestions} onReflect={reflect} onMakeLighter={makeLighter} onRerun={rerun} />
+          <ScheduleSuggestionCard suggestions={latestSuggestions} onReflect={reflect} onMakeLighter={makeLighter} onRerun={rerun} />
 
           <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-            Google Calendarの空き時間取得、CraftCalタスクの詳細フィルタ、AI API接続は後から差し込めるようにしています。
+            Google Calendarの空き時間取得やAI API接続は後から差し込めるようにしています。現在はルールベースで予定提案を返します。
           </div>
         </div>
       </section>
