@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import ProjectForm from "@/components/ProjectForm";
+import { Sparkles } from "lucide-react";
 
 export default function ProjectsPage() {
   const { projects = [], tasks } = useDevCalendar();
@@ -21,10 +22,19 @@ export default function ProjectsPage() {
 
   return (
     <div className="grid gap-6">
-      <div>
-        <p className="text-sm text-indigo-600">Projects</p>
-        <h2 className="mt-2 text-3xl font-bold">プロジェクト一覧</h2>
-        <p className="mt-2 text-slate-400">プロジェクト単位でタスクを管理します。</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm text-indigo-600">Projects</p>
+          <h2 className="mt-2 text-3xl font-bold">プロジェクト一覧</h2>
+          <p className="mt-2 text-slate-400">プロジェクト単位でタスクを管理します。</p>
+        </div>
+        <Link
+          href="/projects/plan"
+          className="flex shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+        >
+          <Sparkles size={15} />
+          AIで計画する
+        </Link>
       </div>
 
       <ProjectForm />

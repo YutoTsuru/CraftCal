@@ -218,9 +218,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSchedule(generateSchedule(targetTasks, sprint));
     };
 
-    const addProject = (p: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
+    const addProject = (p: Omit<Project, "id" | "createdAt" | "updatedAt"> & { id?: string }) => {
       const project: Project = {
-        id: crypto.randomUUID(),
+        id: p.id ?? crypto.randomUUID(),
         name: p.name,
         description: p.description ?? null,
         overviewUrl: (p as any).overviewUrl ?? null,
