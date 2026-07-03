@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDevCalendar } from "@/components/AppProvider";
 import { TaskList } from "@/components/TaskList";
@@ -9,8 +9,8 @@ import { getTodayString } from "@/lib/schedule";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { MarkdownView } from "@/components/MarkdownView";
 
-export default function ProjectDetailPage({ params }: { params: { projectId: string } }) {
-  const { projectId } = params;
+export default function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = use(params);
   const router = useRouter();
   const { projects = [], tasks, updateProject, deleteProject } = useDevCalendar();
 

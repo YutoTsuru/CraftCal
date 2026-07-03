@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import ProjectForm from "@/components/ProjectForm";
+import { MarkdownView } from "@/components/MarkdownView";
 import { Sparkles } from "lucide-react";
 
 export default function ProjectsPage() {
@@ -47,7 +48,11 @@ export default function ProjectsPage() {
 
                 <div>
                   <h3 className="text-lg font-semibold">{project.name}</h3>
-                  {project.description && <p className="mt-1 text-sm text-slate-600 line-clamp-2">{project.description}</p>}
+                  {project.description && (
+                    <div className="mt-1 line-clamp-2 text-sm text-slate-600 [&_*]:m-0 [&_*]:inline">
+                      <MarkdownView content={project.description} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
