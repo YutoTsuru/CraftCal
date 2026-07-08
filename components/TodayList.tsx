@@ -49,8 +49,12 @@ export default function TodayList() {
         </div>
       ) : (
         <ul className="grid gap-2">
+          {/* タスク1件分の行 (<li>)。
+              モバイル: 上に内容、下に操作ボタンの縦積み (flex-col)
+              sm(640px)以上: 左に内容、右にボタンの横並び (sm:flex-row)
+              — 横並び固定だとボタン群が375px幅からはみ出すため (Issue #14) */}
           {tasksForToday.map((task) => (
-            <li key={task.id} className={`flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 ${task.status === "done" ? "opacity-60" : ""}`}>
+            <li key={task.id} className={`flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between ${task.status === "done" ? "opacity-60" : ""}`}>
               <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
@@ -82,11 +86,13 @@ export default function TodayList() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* 操作ボタン群。flex-wrap で狭い画面では折り返す。
+                  min-h-11 (44px) はタップしやすさの基準 (Issue #14) */}
+              <div className="flex flex-wrap items-center gap-2">
                 <select
                   value={task.status}
                   onChange={(event) => updateTaskStatus(task.id, event.target.value as TaskStatus)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-900 outline-none"
+                  className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-900 outline-none"
                 >
                   <option value="todo">未着手</option>
                   <option value="doing">進行中</option>
