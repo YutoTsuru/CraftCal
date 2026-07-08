@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useDevCalendar } from "@/components/AppProvider";
-import type { TaskWeight, Task, TaskFormInput } from "@/types/dev-calendar";
+import type { TaskWeight, TaskPriority, Task, TaskFormInput } from "@/types/dev-calendar";
 
 type Props = {
   editingTask?: Task | null;
@@ -16,7 +16,7 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
   const [title, setTitle] = useState("");
   const [memo, setMemo] = useState("");
   const [weight, setWeight] = useState<TaskWeight>("medium");
-  const [priority, setPriority] = useState("medium");
+  const [priority, setPriority] = useState<TaskPriority>("medium");
   // Use clearer local names: startDate(開始日) and endDate(終了日)
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
@@ -34,7 +34,8 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
       // Map task fields to start/end semantics
       setEndDate(editingTask.dueDate ?? null);
       setStartDate(editingTask.scheduledDate ?? null);
-      setEstimateHours(typeof editingTask.estimatedMinutes === "number" ? Math.round(editingTask.estimatedMinutes / 60) : "");
+      // 0.5h 刻みの入力に合わせ、小数第1位まで保持する (90分 → 1.5h)
+      setEstimateHours(typeof editingTask.estimatedMinutes === "number" ? Math.round((editingTask.estimatedMinutes / 60) * 10) / 10 : "");
       setProjectId(editingTask.projectId ?? projects?.[0]?.id ?? null);
     }
   }, [editingTask, projects]);
@@ -62,7 +63,7 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
       title: title.trim(),
       memo: memo.trim(),
       weight,
-      priority: priority as any,
+      priority,
       // Map local start/end back to form fields
       dueDate: endDate,
       scheduledDate: startDate,
@@ -119,7 +120,7 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
             <span className="text-sm text-slate-700">優先度</span>
             <select
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
+              onChange={(e) => setPriority(e.target.value as TaskPriority)}
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none"
             >
               <option value="low">低</option>

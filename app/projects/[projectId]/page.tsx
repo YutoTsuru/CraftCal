@@ -5,9 +5,11 @@ import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDevCalendar } from "@/components/AppProvider";
 import { TaskList } from "@/components/TaskList";
+import { TaskInput } from "@/components/TaskInput";
 import { getTodayString } from "@/lib/schedule";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { MarkdownView } from "@/components/MarkdownView";
+import type { Task } from "@/types/dev-calendar";
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
@@ -27,6 +29,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
 
   // delete confirm state
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // task edit state
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
     if (project) {
@@ -71,7 +76,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       overviewUrl: overviewUrl.trim() || null,
       color: color || null,
       status,
-    } as any);
+    });
     setIsEditing(false);
   };
 
@@ -198,20 +203,24 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         </div>
       </section>
 
+      {editingTask && (
+        <TaskInput editingTask={editingTask} onCancel={() => setEditingTask(null)} />
+      )}
+
       <section className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
           <h3 className="text-lg font-semibold">タスク一覧</h3>
           <div className="mt-3">
-            <TaskList tasks={projectTasks} />
+            <TaskList tasks={projectTasks} onEdit={setEditingTask} />
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
           <h3 className="text-lg font-semibold">今日のタスク</h3>
-          {todays.length === 0 ? <p className="mt-3 text-slate-400">今日のタスクはありません。</p> : <TaskList tasks={todays} />}
+          {todays.length === 0 ? <p className="mt-3 text-slate-400">今日のタスクはありません。</p> : <TaskList tasks={todays} onEdit={setEditingTask} />}
 
           <h3 className="mt-6 text-lg font-semibold">期限が近いタスク</h3>
-          {dueSoon.length === 0 ? <p className="mt-3 text-slate-400">今後7日以内の期限はありません。</p> : <TaskList tasks={dueSoon} />}
+          {dueSoon.length === 0 ? <p className="mt-3 text-slate-400">今後7日以内の期限はありません。</p> : <TaskList tasks={dueSoon} onEdit={setEditingTask} />}
         </div>
       </section>
     </div>
