@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, use, useEffect, useState } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 
-export default function ProjectEditPage({ params }: { params: { projectId: string } }) {
-  const { projectId } = params;
+export default function ProjectEditPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = use(params);
   const router = useRouter();
   const { projects = [], updateProject } = useDevCalendar();
 
@@ -44,16 +44,14 @@ export default function ProjectEditPage({ params }: { params: { projectId: strin
 
     if (!name.trim()) return;
 
-    const patch = {
+    updateProject(projectId, {
       name: name.trim(),
       description: description.trim() || null,
       goal: goal.trim() || null,
       overviewUrl: overviewUrl.trim() || null,
       color: color || null,
       status
-    } as any;
-
-    updateProject(projectId, patch);
+    });
     router.push(`/projects/${projectId}`);
   };
 

@@ -8,35 +8,53 @@ CraftCalは、個人開発を短期集中で進めるためのスプリント管
 
 ## 主な機能
 
-- タスク追加
-- タスク削除
-- タスク状態変更
-- タスクの重さ設定
-- スプリント期間設定
-- 未完了タスクの自動配置
-- 今日やること表示
-- localStorage保存
+- タスクの追加・編集・削除・状態変更
+- プロジェクト管理（説明文からのタスク候補生成つき）
+- カレンダー表示（月/週）と未配置タスクの日付割り当て
+- AIプランナー（チャット形式で予定を提案し、タスクに反映）
+- 今日やること表示・作業ログ
+- localStorage保存（DB不要）
 
 ## 技術スタック
 
-- Next.js
+- Next.js (App Router)
 - TypeScript
 - Tailwind CSS
 - Framer Motion
 - localStorage
 
-## 起動方法
+## 開発
 
 ```bash
 npm install
-npm run dev
+npm run dev      # 開発サーバー (http://localhost:3000)
 ```
+
+### テスト・チェック
+
+```bash
+npm test             # Vitest (lib/ の純関数テスト)
+npx tsc --noEmit     # 型チェック
+npm run build        # 本番ビルド
+```
+
+## デプロイ (Vercel)
+
+サーバーサイドの依存がない（データはブラウザの localStorage に保存される）ため、Vercel にそのままデプロイできます。
+
+1. [Vercel](https://vercel.com) にログインし、このリポジトリをインポート
+2. Framework Preset は **Next.js**（自動検出）。ビルド設定はデフォルトのままでOK
+3. `main` ブランチへのマージで本番デプロイ、PRごとにプレビューデプロイが作成される
+
+環境変数は現時点では不要です。今後AI連携（#8）を入れる際は、`ANTHROPIC_API_KEY` を Vercel の Environment Variables に設定します（クライアントに公開される `NEXT_PUBLIC_` プレフィックスは使わないこと）。
 
 ## 画面構成
 
 - `/` ダッシュボード
 - `/tasks` タスク管理
-- `/sprint` スプリント生成
+- `/projects` プロジェクト管理（`/projects/plan` でタスク候補生成）
+- `/calendar` カレンダー（未配置タスクの割り当て）
+- `/sprint` AIプランナー（予定提案チャット）
 - `/today` 今日やること
 
 ## 開発方針
