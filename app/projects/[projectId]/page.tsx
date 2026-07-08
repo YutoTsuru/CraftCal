@@ -1,16 +1,49 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { use, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useDevCalendar } from "@/components/AppProvider";
 import { TaskList } from "@/components/TaskList";
+import { TaskInput } from "@/components/TaskInput";
 import { getTodayString } from "@/lib/schedule";
+import { Trash2, AlertTriangle } from "lucide-react";
+import { MarkdownView } from "@/components/MarkdownView";
+import type { Task } from "@/types/dev-calendar";
 
-export default function ProjectDetailPage({ params }: { params: { projectId: string } }) {
-  const { projectId } = params;
-  const { projects = [], tasks, updateProject } = useDevCalendar();
+export default function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = use(params);
+  const router = useRouter();
+  const { projects = [], tasks, updateProject, deleteProject } = useDevCalendar();
 
   const project = projects.find((p) => p.id === projectId);
+
+  // inline edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [goal, setGoal] = useState("");
+  const [overviewUrl, setOverviewUrl] = useState("");
+  const [color, setColor] = useState("#10b981");
+  const [status, setStatus] = useState<"active" | "paused" | "done">("active");
+
+  // delete confirm state
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // task edit state
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    if (project) {
+      setName(project.name ?? "");
+      setDescription(project.description ?? "");
+      setGoal(project.goal ?? "");
+      setOverviewUrl(project.overviewUrl ?? "");
+      setColor(project.color ?? "#10b981");
+      setStatus(project.status ?? "active");
+    }
+  }, [project]);
+
   if (!project) {
     return (
       <div>
@@ -34,53 +67,32 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
     return diff >= 0 && diff <= 7;
   });
 
-  // inline edit state
-  const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [goal, setGoal] = useState("");
-  const [overviewUrl, setOverviewUrl] = useState("");
-  const [color, setColor] = useState("#10b981");
-  const [status, setStatus] = useState<"active" | "paused" | "done">("active");
-
-  useEffect(() => {
-    if (project) {
-      setName(project.name ?? "");
-      setDescription(project.description ?? "");
-      setGoal(project.goal ?? "");
-      setOverviewUrl(project.overviewUrl ?? "");
-      setColor(project.color ?? "#10b981");
-      setStatus(project.status ?? "active");
-    }
-  }, [project]);
-
   const handleSave = () => {
-    if (!project) return;
     if (!name.trim()) return;
-
-    const patch = {
+    updateProject(project.id, {
       name: name.trim(),
       description: description.trim() || null,
       goal: goal.trim() || null,
       overviewUrl: overviewUrl.trim() || null,
       color: color || null,
-      status
-    } as any;
-
-    updateProject(project.id, patch);
+      status,
+    });
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    if (project) {
-      setName(project.name ?? "");
-      setDescription(project.description ?? "");
-      setGoal(project.goal ?? "");
-      setOverviewUrl(project.overviewUrl ?? "");
-      setColor(project.color ?? "#10b981");
-      setStatus(project.status ?? "active");
-    }
+    setName(project.name ?? "");
+    setDescription(project.description ?? "");
+    setGoal(project.goal ?? "");
+    setOverviewUrl(project.overviewUrl ?? "");
+    setColor(project.color ?? "#10b981");
+    setStatus(project.status ?? "active");
     setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    deleteProject(project.id);
+    router.push("/projects");
   };
 
   return (
@@ -96,7 +108,13 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
               <div className="grid gap-3 md:grid-cols-2">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-slate-200 px-3 py-2 outline-none" />
                 <input value={color} onChange={(e) => setColor(e.target.value)} type="color" className="w-12 rounded-xl border border-slate-200 px-3 py-2" />
-                <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={"説明 (Markdown が使えます)\n\n例:\n## 概要\n- 機能A\n- 機能B"}
+                  rows={8}
+                  className="resize-y rounded-xl border border-slate-200 px-3 py-2 font-mono text-sm outline-none md:col-span-2"
+                />
                 <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
                 <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
 
@@ -120,17 +138,57 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
             <div className="flex-1">
               <p className="text-sm text-indigo-600">Project</p>
               <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
-              {project.description && <p className="mt-2 text-slate-400">{project.description}</p>}
+              {project.description && (
+                <div className="mt-3 rounded-xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+                  <MarkdownView content={project.description} />
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-2">
-              {project.overviewUrl ? (
+              {project.overviewUrl && (
                 <a href={project.overviewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-indigo-600 hover:bg-slate-100">概要を開く</a>
-              ) : null}
+              )}
               <button onClick={() => setIsEditing(true)} className="inline-flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">編集</button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="inline-flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100"
+              >
+                <Trash2 size={14} />
+                削除
+              </button>
             </div>
           </div>
         )}
       </div>
+
+      {/* 削除確認 */}
+      {confirmDelete && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-red-500" />
+            <div className="flex-1">
+              <p className="font-medium text-red-800">「{project.name}」を削除しますか？</p>
+              <p className="mt-1 text-sm text-red-600">
+                このプロジェクトに紐づくタスク（{projectTasks.length}件）はInboxに移動されます。この操作は元に戻せません。
+              </p>
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={handleDelete}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                >
+                  削除する
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
         <div className="flex items-center justify-between">
@@ -145,20 +203,24 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
         </div>
       </section>
 
+      {editingTask && (
+        <TaskInput editingTask={editingTask} onCancel={() => setEditingTask(null)} />
+      )}
+
       <section className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
           <h3 className="text-lg font-semibold">タスク一覧</h3>
           <div className="mt-3">
-            <TaskList tasks={projectTasks} />
+            <TaskList tasks={projectTasks} onEdit={setEditingTask} />
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
           <h3 className="text-lg font-semibold">今日のタスク</h3>
-          {todays.length === 0 ? <p className="mt-3 text-slate-400">今日のタスクはありません。</p> : <TaskList tasks={todays} />}
+          {todays.length === 0 ? <p className="mt-3 text-slate-400">今日のタスクはありません。</p> : <TaskList tasks={todays} onEdit={setEditingTask} />}
 
           <h3 className="mt-6 text-lg font-semibold">期限が近いタスク</h3>
-          {dueSoon.length === 0 ? <p className="mt-3 text-slate-400">今後7日以内の期限はありません。</p> : <TaskList tasks={dueSoon} />}
+          {dueSoon.length === 0 ? <p className="mt-3 text-slate-400">今後7日以内の期限はありません。</p> : <TaskList tasks={dueSoon} onEdit={setEditingTask} />}
         </div>
       </section>
     </div>

@@ -1,13 +1,15 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { Task, TaskStatus, TaskWeight, TaskPriority } from "@/types/dev-calendar";
 
-const statusLabels: Record<TaskStatus, string> = {
+// ユーザーが手動で設定できるステータスのみ選択肢に出す
+// (expired / paused / cancelled は将来の自動遷移用で、手動設定は想定しない)
+const statusLabels: Partial<Record<TaskStatus, string>> = {
   todo: "未着手",
   doing: "進行中",
   done: "完了"
@@ -25,7 +27,7 @@ const weightClassNames: Record<TaskWeight, string> = {
   heavy: "border-orange-400/40 bg-orange-50 text-orange-700"
 };
 
-export function TaskList({ tasks }: { tasks: Task[] }) {
+export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Task) => void }) {
   const { deleteTask, updateTaskStatus } = useDevCalendar();
 
   if (tasks.length === 0) {
@@ -85,6 +87,15 @@ export function TaskList({ tasks }: { tasks: Task[] }) {
                     </option>
                   ))}
                 </select>
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(task)}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
+                    aria-label="タスクを編集"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                )}
                 <button
                   onClick={() => deleteTask(task.id)}
                   className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-700 transition hover:border-rose-400/50 hover:bg-rose-100 hover:text-rose-600"

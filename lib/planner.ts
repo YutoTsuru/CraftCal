@@ -509,6 +509,18 @@ export function generateMockPlan(message: string, tasks: Task[], projects: Proje
   };
 }
 
+// 提案の有効期限チェック: 対象日が過ぎた提案は反映できない
+export function splitStaleSuggestions(suggestions: ScheduleSuggestion[], today: string) {
+  const valid: ScheduleSuggestion[] = [];
+  const stale: ScheduleSuggestion[] = [];
+
+  suggestions.forEach((suggestion) => {
+    (suggestion.date >= today ? valid : stale).push(suggestion);
+  });
+
+  return { valid, stale };
+}
+
 export function createInitialPlannerMessage(): PlannerMessage {
   return {
     id: crypto.randomUUID(),

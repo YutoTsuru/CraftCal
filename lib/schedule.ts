@@ -50,8 +50,14 @@ export function generateSchedule(tasks: Task[], sprint: Sprint | null): Schedule
 
   const days = dates.map((date) => ({
     date,
-    tasks: [] as Task[]
+    taskIds: [] as string[]
   }));
+  const dayPoints = new Map(dates.map((date) => [date, 0]));
+
+  const addToDay = (day: ScheduleDay, task: Task) => {
+    day.taskIds.push(task.id);
+    dayPoints.set(day.date, (dayPoints.get(day.date) ?? 0) + getTaskWeightPoint(task.weight));
+  };
 
   const activeTasks = tasks.filter((task) => task.status !== "done");
 
@@ -60,7 +66,7 @@ export function generateSchedule(tasks: Task[], sprint: Sprint | null): Schedule
   scheduled.forEach((task) => {
     const day = days.find((d) => d.date === task.scheduledDate);
     if (day) {
-      day.tasks.push(task);
+      addToDay(day, task);
     }
   });
 
@@ -72,31 +78,41 @@ export function generateSchedule(tasks: Task[], sprint: Sprint | null): Schedule
 
   remaining.forEach((task) => {
     const targetDay = days.reduce((leastLoadedDay, currentDay) => {
-      return getDayPoint(currentDay) < getDayPoint(leastLoadedDay) ? currentDay : leastLoadedDay;
+      return (dayPoints.get(currentDay.date) ?? 0) < (dayPoints.get(leastLoadedDay.date) ?? 0)
+        ? currentDay
+        : leastLoadedDay;
     }, days[0]);
 
-    targetDay.tasks.push(task);
+    addToDay(targetDay, task);
   });
 
   return days;
 }
 
-export function getDayPoint(day: ScheduleDay) {
-  return day.tasks.reduce((total, task) => total + getTaskWeightPoint(task.weight), 0);
+export function resolveDayTasks(day: ScheduleDay, allTasks: Task[]): Task[] {
+  const byId = new Map(allTasks.map((task) => [task.id, task]));
+  return day.taskIds
+    .map((id) => byId.get(id))
+    .filter((task): task is Task => Boolean(task));
+}
+
+export function getDayPoint(day: ScheduleDay, allTasks: Task[]) {
+  return resolveDayTasks(day, allTasks).reduce((total, task) => total + getTaskWeightPoint(task.weight), 0);
 }
 
 export function getTodayString() {
   return formatDate(new Date());
 }
 
-export function getTodayTasks(schedule: ScheduleDay[], allTasks?: Task[]) {
+export function getTodayTasks(schedule: ScheduleDay[], allTasks: Task[]) {
   const today = getTodayString();
 
   // From generated schedule (sprint)
-  const fromSchedule = schedule.find((day) => day.date === today)?.tasks ?? [];
+  const todayDay = schedule.find((day) => day.date === today);
+  const fromSchedule = todayDay ? resolveDayTasks(todayDay, allTasks) : [];
 
   // Also include tasks that have scheduledDate === today or dueDate === today from allTasks
-  const fromTasks = (allTasks ?? []).filter((t) => t.scheduledDate === today || t.dueDate === today);
+  const fromTasks = allTasks.filter((t) => t.scheduledDate === today || t.dueDate === today);
 
   // Merge unique tasks (by id)
   const map = new Map<string, Task>();

@@ -1,10 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { getDayPoint } from "@/lib/schedule";
+import { useDevCalendar } from "@/components/AppProvider";
+import { getDayPoint, resolveDayTasks } from "@/lib/schedule";
 import type { ScheduleDay } from "@/types/dev-calendar";
 
 export function ScheduleBoard({ schedule }: { schedule: ScheduleDay[] }) {
+  const { tasks } = useDevCalendar();
+
   if (schedule.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center text-slate-700">
@@ -15,7 +18,10 @@ export function ScheduleBoard({ schedule }: { schedule: ScheduleDay[] }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      {schedule.map((day, index) => (
+      {schedule.map((day, index) => {
+        const dayTasks = resolveDayTasks(day, tasks);
+
+        return (
         <motion.section
           key={day.date}
           initial={{ opacity: 0, y: 14 }}
@@ -26,15 +32,15 @@ export function ScheduleBoard({ schedule }: { schedule: ScheduleDay[] }) {
           <div className="mb-4 flex items-center justify-between">
             <h3 className="font-semibold">{day.date}</h3>
             <span className="rounded-full bg-slate-50 px-3 py-1 text-xs text-slate-700">
-              {getDayPoint(day)} pt
+              {getDayPoint(day, tasks)} pt
             </span>
           </div>
 
-          {day.tasks.length === 0 ? (
+          {dayTasks.length === 0 ? (
             <p className="text-sm text-slate-500">タスクなし</p>
           ) : (
             <div className="grid gap-2">
-              {day.tasks.map((task) => (
+              {dayTasks.map((task) => (
                 <div key={task.id} className="rounded-2xl border border-slate-200 bg-white p-3">
                   <p className="font-medium">{task.title}</p>
                   <p className="mt-1 text-xs text-slate-600">{task.weight} / {task.status}</p>
@@ -43,7 +49,8 @@ export function ScheduleBoard({ schedule }: { schedule: ScheduleDay[] }) {
             </div>
           )}
         </motion.section>
-      ))}
+        );
+      })}
     </div>
   );
 }

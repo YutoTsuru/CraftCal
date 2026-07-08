@@ -33,12 +33,27 @@ function TaskCard({ task }: { task: Task }) {
 }
 
 export default function CalendarView() {
-  const { tasks } = useDevCalendar();
+  const { tasks, rescheduleTask } = useDevCalendar();
   const [mode, setMode] = useState<ViewMode>("month");
   const [cursor, setCursor] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  // 未配置タスクの「配置モード」: 選択中のタスクID
+  const [placingTaskId, setPlacingTaskId] = useState<string | null>(null);
 
   const today = useMemo(() => new Date(), []);
+
+  const unplacedTasks = useMemo(
+    () => tasks.filter((t) => !t.scheduledDate && t.status !== "done"),
+    [tasks]
+  );
+  const placingTask = unplacedTasks.find((t) => t.id === placingTaskId) ?? null;
+
+  function placeTask(dateKey: string) {
+    if (!placingTaskId) return false;
+    rescheduleTask(placingTaskId, dateKey);
+    setPlacingTaskId(null);
+    return true;
+  }
 
   function startOfMonth(date: Date) {
     return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -161,6 +176,46 @@ export default function CalendarView() {
         onNext={next}
       />
 
+      {/* 未配置タスク置き場: 予定日がまだ決まっていないタスク */}
+      {unplacedTasks.length > 0 && (
+        <section className={`rounded-xl border bg-white p-4 shadow-md ${placingTask ? "border-emerald-400" : "border-slate-200"}`}>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-700">未配置のタスク（{unplacedTasks.length}件）</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                {placingTask
+                  ? `「${placingTask.title}」を配置する日をカレンダーでクリックしてください`
+                  : "タスクを選んでからカレンダーの日付をクリックすると、予定日を設定できます。"}
+              </p>
+            </div>
+            {placingTask && (
+              <button
+                onClick={() => setPlacingTaskId(null)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:bg-slate-50"
+              >
+                選択解除
+              </button>
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {unplacedTasks.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setPlacingTaskId(placingTaskId === t.id ? null : t.id)}
+                className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                  placingTaskId === t.id
+                    ? "border-emerald-500 bg-emerald-50 font-semibold text-emerald-700"
+                    : "border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
+                }`}
+              >
+                {t.title}
+                {t.dueDate && <span className="ml-2 text-xs text-slate-500">期限 {t.dueDate}</span>}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
         <div className="flex items-center justify-between px-2">
           <div className="text-lg font-medium">{mode === "month" ? monthLabel : `${weekRange[0].getFullYear()}年 ${weekRange[0].getMonth() + 1}月 ${weekRange[0].getDate()}日 〜 ${weekRange[6].getMonth() + 1}/${weekRange[6].getDate()}`}</div>
@@ -276,7 +331,14 @@ export default function CalendarView() {
                         const isSelected = selectedDate === key;
 
                         return (
-                          <div key={key} onClick={() => setSelectedDate(isSelected ? null : key)} className={`cursor-pointer min-h-[110px] overflow-hidden rounded-md border p-2 ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${isSelected ? 'ring-2 ring-emerald-300' : ''}`}>
+                          <div
+                            key={key}
+                            onClick={() => {
+                              if (placeTask(key)) return;
+                              setSelectedDate(isSelected ? null : key);
+                            }}
+                            className={`cursor-pointer min-h-[110px] overflow-hidden rounded-md border p-2 ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${isSelected ? 'ring-2 ring-emerald-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-emerald-400' : ''}`}
+                          >
                             <div className="flex items-center justify-between">
                               <div className={`text-sm ${isToday ? 'rounded-full bg-emerald-600 px-2 py-1 text-white' : 'text-slate-700'}`}>
                                 <span>{d.getDate()}</span>
@@ -350,7 +412,11 @@ export default function CalendarView() {
                   const isEnd = key === endKey;
 
                   return (
-                    <div key={formatDate(d)} className={`rounded-md border bg-white p-3 ${!isStart && !isEnd ? '' : 'opacity-100'}`}>
+                    <div
+                      key={formatDate(d)}
+                      onClick={() => placeTask(key)}
+                      className={`rounded-md border bg-white p-3 ${!isStart && !isEnd ? '' : 'opacity-100'} ${placingTaskId ? 'cursor-pointer hover:ring-2 hover:ring-emerald-400' : ''}`}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">
                           {d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -403,7 +469,22 @@ export default function CalendarView() {
             {tasksForSelectedKey(selectedDate).length === 0 ? (
               <p className="text-sm text-slate-500">この日のタスクはありません。</p>
             ) : (
-              tasksForSelectedKey(selectedDate).map((t) => <TaskCard key={t.id} task={t} />)
+              tasksForSelectedKey(selectedDate).map((t) => (
+                <div key={t.id} className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <TaskCard task={t} />
+                  </div>
+                  {t.scheduledDate && (
+                    <button
+                      onClick={() => rescheduleTask(t.id, null)}
+                      className="mt-2 shrink-0 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                      title="予定日を外して未配置に戻す"
+                    >
+                      未配置に戻す
+                    </button>
+                  )}
+                </div>
+              ))
             )}
           </div>
         </section>

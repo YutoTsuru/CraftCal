@@ -5,11 +5,13 @@ import { useDevCalendar } from "@/components/AppProvider";
 import { StatCard } from "@/components/StatCard";
 import { TaskInput } from "@/components/TaskInput";
 import { TaskList } from "@/components/TaskList";
+import type { Task } from "@/types/dev-calendar";
 
 export default function TasksPage() {
   const { tasks } = useDevCalendar();
   const { projects } = useDevCalendar();
   const [projectFilter, setProjectFilter] = useState<string | "all">("all");
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const counts = useMemo(() => {
     return {
@@ -33,7 +35,7 @@ export default function TasksPage() {
         <StatCard label="完了" value={counts.done} />
       </section>
 
-      <TaskInput />
+      <TaskInput editingTask={editingTask} onCancel={() => setEditingTask(null)} />
 
       <div className="flex items-center gap-3">
         <label className="text-sm text-slate-700">プロジェクトで絞る:</label>
@@ -45,7 +47,10 @@ export default function TasksPage() {
         </select>
       </div>
 
-      <TaskList tasks={projectFilter === "all" ? tasks : tasks.filter((t) => t.projectId === projectFilter)} />
+      <TaskList
+        tasks={projectFilter === "all" ? tasks : tasks.filter((t) => t.projectId === projectFilter)}
+        onEdit={setEditingTask}
+      />
     </div>
   );
 }

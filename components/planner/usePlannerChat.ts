@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useDevCalendar } from "@/components/AppProvider";
 import type { PlannerMessage, ScheduleSuggestion } from "@/lib/planner";
-import { createInitialPlannerMessage, generateMockPlan } from "@/lib/planner";
+import { createInitialPlannerMessage, generateMockPlan, splitStaleSuggestions } from "@/lib/planner";
+import { getTodayString } from "@/lib/schedule";
 import type { Project, Task } from "@/types/dev-calendar";
 
 type Args = {
@@ -11,6 +13,7 @@ type Args = {
 };
 
 export function usePlannerChat({ tasks, projects }: Args) {
+  const { rescheduleTask } = useDevCalendar();
   const [messages, setMessages] = useState<PlannerMessage[]>(() => [createInitialPlannerMessage()]);
   const [input, setInput] = useState("");
   const [latestSuggestions, setLatestSuggestions] = useState<ScheduleSuggestion[]>([]);
@@ -57,19 +60,46 @@ export function usePlannerChat({ tasks, projects }: Args) {
     const result = generateMockPlan(sourceText, incompleteTasks, projects);
     pushAssistantReply(result.message, result.suggestions);
     setNotice("再提案を作成しました");
-    console.log("[Planner] rerun suggestion", result);
   };
 
   const makeLighter = () => {
     const result = generateMockPlan("軽めのタスクだけ", incompleteTasks, projects);
     pushAssistantReply(result.message, result.suggestions);
     setNotice("軽めの提案に切り替えました");
-    console.log("[Planner] lighter suggestion", result);
   };
 
   const reflect = () => {
-    setNotice("予定反映は今後実装予定です");
-    console.log("[Planner] reflect schedule", latestSuggestions);
+    if (latestSuggestions.length === 0) {
+      setNotice("反映できる提案がありません。まず予定の相談をしてください");
+      return;
+    }
+
+    const { valid, stale } = splitStaleSuggestions(latestSuggestions, getTodayString());
+
+    if (valid.length === 0) {
+      setNotice("提案の対象日が過ぎています。再提案してください");
+      return;
+    }
+
+    valid.forEach((suggestion) => {
+      rescheduleTask(suggestion.taskId, suggestion.date);
+    });
+
+    const lines = valid.map(
+      (suggestion) => `・${suggestion.dateLabel} ${suggestion.startTime}〜${suggestion.endTime} ${suggestion.taskTitle}`
+    );
+    const staleNote = stale.length > 0 ? `\n※ 対象日が過ぎていた${stale.length}件はスキップしました。` : "";
+
+    setLatestSuggestions([]);
+    setMessages((current) => [
+      ...current,
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: `以下の予定をタスクに反映しました。\n${lines.join("\n")}${staleNote}\n\nカレンダーやTodayページで確認できます。`
+      }
+    ]);
+    setNotice(`${valid.length}件の予定を反映しました`);
   };
 
   return {
