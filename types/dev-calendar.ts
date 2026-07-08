@@ -56,7 +56,8 @@ export type Sprint = {
 
 export type ScheduleDay = {
   date: string;
-  tasks: Task[];
+  // タスク本体は tasks 配列が唯一の保存先。schedule は ID 参照のみ持つ
+  taskIds: string[];
 };
 
 export type TaskFormInput = {
@@ -82,6 +83,8 @@ export type DevCalendarContextValue = DevCalendarState & {
   deleteTask: (id: string) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
   updateTask: (id: string, input: TaskFormInput) => void;
+  // 予定日だけを付け替える (null で未配置に戻す)
+  rescheduleTask: (id: string, scheduledDate: string | null) => void;
   completeTask: (id: string, note?: string | null, url?: string | null) => void;
   setSprint: (sprint: Sprint) => void;
   generateSprintSchedule: () => void;
