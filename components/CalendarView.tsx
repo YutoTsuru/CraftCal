@@ -155,10 +155,13 @@ export default function CalendarView() {
             <p className="mt-1 text-slate-400">月表示・週表示でタスクを確認できます。</p>
           </div>
 
+          {/* 月表示/週表示の切替タブ。
+              以前は hidden sm:flex でモバイル非表示だったが、モバイルでも切替できるよう常時表示に変更 (Issue #14)。
+              py-2 はタップ領域確保のため */}
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center rounded-md bg-slate-50 p-1">
-              <button onClick={() => setMode("month")} className={`px-3 py-1 text-sm ${mode === "month" ? "bg-emerald-600 text-white" : "text-slate-700"}`}>Month</button>
-              <button onClick={() => setMode("week")} className={`px-3 py-1 text-sm ${mode === "week" ? "bg-emerald-600 text-white" : "text-slate-700"}`}>Week</button>
+            <div className="flex items-center rounded-md bg-slate-50 p-1">
+              <button onClick={() => setMode("month")} className={`rounded px-3 py-2 text-sm ${mode === "month" ? "bg-emerald-600 text-white" : "text-slate-700"}`}>Month</button>
+              <button onClick={() => setMode("week")} className={`rounded px-3 py-2 text-sm ${mode === "week" ? "bg-emerald-600 text-white" : "text-slate-700"}`}>Week</button>
             </div>
           </div>
         </div>
@@ -222,8 +225,12 @@ export default function CalendarView() {
         </div>
 
         {mode === "month" ? (
-          <div className="mt-4 overflow-x-auto">
-            <div className="min-w-[680px]">
+          /* ===== 月表示 =====
+             以前は min-w-[680px] でモバイルに横スクロールを強制していたが、
+             画面幅に収まるグリッドに変更 (Issue #14)。
+             モバイルではセルを低くし、タスクは色ドットで表現する（下の day cells 参照） */
+          <div className="mt-4">
+            <div>
               {/* weekday headers */}
               <div className="grid grid-cols-7 gap-1">
                 {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
@@ -331,22 +338,42 @@ export default function CalendarView() {
                         const isSelected = selectedDate === key;
 
                         return (
+                          /* 日付セル1個分。クリックの挙動は2通り:
+                             - 未配置タスクを選択中 → その日に配置 (placeTask)
+                             - 通常時 → その日を選択して下部に詳細パネルを表示 */
                           <div
                             key={key}
                             onClick={() => {
                               if (placeTask(key)) return;
                               setSelectedDate(isSelected ? null : key);
                             }}
-                            className={`cursor-pointer min-h-[110px] overflow-hidden rounded-md border p-2 ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${isSelected ? 'ring-2 ring-emerald-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-emerald-400' : ''}`}
+                            className={`cursor-pointer min-h-[64px] sm:min-h-[110px] overflow-hidden rounded-md border p-1.5 sm:p-2 ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${isSelected ? 'ring-2 ring-emerald-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-emerald-400' : ''}`}
                           >
+                            {/* セル上段: 日付の数字（今日は緑丸で強調）と、タスク件数 */}
                             <div className="flex items-center justify-between">
-                              <div className={`text-sm ${isToday ? 'rounded-full bg-emerald-600 px-2 py-1 text-white' : 'text-slate-700'}`}>
+                              <div className={`text-xs sm:text-sm ${isToday ? 'rounded-full bg-emerald-600 px-1.5 py-0.5 sm:px-2 sm:py-1 text-white' : 'text-slate-700'}`}>
                                 <span>{d.getDate()}</span>
                               </div>
-                              <div className="text-xs text-slate-400">{items.length ? `${items.length}` : ''}</div>
+                              <div className="hidden sm:block text-xs text-slate-400">{items.length ? `${items.length}` : ''}</div>
                             </div>
 
-                            <div className="mt-2">
+                            {/* モバイル用: タスクを色ドットで表現（最大3個 + 超過分は +N）。
+                                バー表示はセルが小さすぎて読めないため、
+                                「ドットで存在を示し、タップで下の詳細パネルを見る」方式 (Issue #13 の調査より) */}
+                            <div className="mt-1 flex items-center gap-0.5 sm:hidden">
+                              {items.slice(0, 3).map((t) => (
+                                <span
+                                  key={t.id}
+                                  className={`inline-block h-1.5 w-1.5 rounded-full ${
+                                    t.status === 'done' ? 'bg-emerald-400' : t.status === 'doing' ? 'bg-blue-400' : 'bg-amber-400'
+                                  }`}
+                                />
+                              ))}
+                              {items.length > 3 && <span className="text-[10px] text-slate-500">+{items.length - 3}</span>}
+                            </div>
+
+                            {/* デスクトップ用: バー表示に収まらない分の「他N件」表示 */}
+                            <div className="mt-2 hidden sm:block">
                               {(() => {
                                 const keyFmt = formatDate(d);
                                 const allItems = tasksForDate(d);
@@ -366,8 +393,11 @@ export default function CalendarView() {
 
                       {/* end week.map */}
 
-                      {/* event bars overlay */}
-                      <div className="absolute inset-x-0 top-12 px-2 pointer-events-none">
+                      {/* event bars overlay（タスク名入りの横棒）。
+                          セルの上に重ねて描画するデスクトップ専用の表示。
+                          モバイルはセルが小さく読めないため hidden sm:block で消し、
+                          代わりにセル内の色ドット（上記）で件数を伝える (Issue #14) */}
+                      <div className="absolute inset-x-0 top-12 px-2 pointer-events-none hidden sm:block">
                         <div className="relative h-0">
                           {rows.slice(0, maxRows).map((row, ri) => (
                             <div key={ri} className="absolute left-0 right-0" style={{ top: ri * 28 }}>
@@ -401,9 +431,14 @@ export default function CalendarView() {
             </div>
           </div>
         ) : (
-          <div className="mt-4 overflow-x-auto">
-            <div className="min-w-[700px]">
-              <div className="grid grid-cols-7 gap-2">
+          /* ===== 週表示 =====
+             デスクトップ: 7列の横並び。
+             モバイル: 以前は min-w-[700px] で横スクロールだったが、
+             1列の縦リスト（アジェンダ形式）に変更 (Issue #14)。
+             grid-cols-1 sm:grid-cols-7 = モバイル1列 → sm(640px)以上で7列 */
+          <div className="mt-4">
+            <div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
                 {weekRange.map((d) => {
                   const key = formatDate(d);
                   const startKey = formatDate(weekRange[0]);

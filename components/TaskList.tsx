@@ -75,11 +75,14 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
                 </div>
               </div>
 
+              {/* カード右側の操作エリア: ステータス変更 / 編集 / 削除。
+                  各ボタンは高さ44px (h-11) 基準で、スマホの指でも押しやすくしている (Issue #14) */}
               <div className="flex flex-wrap items-center gap-2">
+                {/* ステータス変更のドロップダウン。変更すると即保存される */}
                 <select
                   value={task.status}
                   onChange={(event) => updateTaskStatus(task.id, event.target.value as TaskStatus)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+                  className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
                 >
                   {Object.entries(statusLabels).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -87,18 +90,21 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
                     </option>
                   ))}
                 </select>
+                {/* 編集ボタン（鉛筆アイコン）。onEdit を渡された画面でのみ表示され、
+                    押すと画面上部の入力フォームが編集モードに切り替わる */}
                 {onEdit && (
                   <button
                     onClick={() => onEdit(task)}
-                    className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
                     aria-label="タスクを編集"
                   >
                     <Pencil size={18} />
                   </button>
                 )}
+                {/* 削除ボタン（ゴミ箱アイコン） */}
                 <button
                   onClick={() => deleteTask(task.id)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-700 transition hover:border-rose-400/50 hover:bg-rose-100 hover:text-rose-600"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-rose-400/50 hover:bg-rose-100 hover:text-rose-600"
                   aria-label="タスクを削除"
                 >
                   <Trash2 size={18} />
