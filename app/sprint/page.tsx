@@ -6,12 +6,15 @@ import { ChatMessage } from "@/components/planner/ChatMessage";
 import { QuickActionButtons } from "@/components/planner/QuickActionButtons";
 import { ScheduleSuggestionCard } from "@/components/planner/ScheduleSuggestionCard";
 import { usePlannerChat } from "@/components/planner/usePlannerChat";
+import { getTodayString } from "@/lib/schedule";
 
 export default function SprintPage() {
   const { tasks, projects } = useDevCalendar();
   const { messages, input, setInput, sendMessage, useQuickAction, latestSuggestions, notice, rerun, makeLighter, reflect, bottomRef, incompleteTasks } = usePlannerChat({ tasks, projects });
 
   const proposalCount = latestSuggestions.length;
+  // 「今日の予定タスク」カード用の集計: scheduledDateが今日で、かつ未完了（statusがdoneでない）タスクの件数
+  const todayScheduledTaskCount = tasks.filter((t) => t.scheduledDate === getTodayString() && t.status !== "done").length;
 
   return (
     <div className="grid gap-6">
@@ -22,7 +25,7 @@ export default function SprintPage() {
       </div>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <StatCard label="今日の空き時間" value="3h 30m" description="Google Calendar連携予定" />
+        <StatCard label="今日の予定タスク" value={todayScheduledTaskCount} description="今日に配置済みの未完了タスク" />
         <StatCard label="未完了タスク" value={incompleteTasks.length} description="割り振り候補" />
         <StatCard label="提案済み予定" value={proposalCount} description="今日作成した予定案" />
       </section>
