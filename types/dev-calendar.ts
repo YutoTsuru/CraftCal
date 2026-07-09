@@ -92,5 +92,7 @@ export type DevCalendarContextValue = DevCalendarState & {
   addProject: (p: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateProject: (id: string, patch: Partial<Project>) => void;
   deleteProject: (id: string) => void;
+  // サンプルデータ投入 (lib/seed-data.ts)。タスクが1件もないときだけ動く
+  seedSampleData: () => void;
   resetAll: () => void;
 };

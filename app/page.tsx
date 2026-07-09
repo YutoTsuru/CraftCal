@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { StatCard } from "@/components/StatCard";
 import { getSprintLabel, getTodayTasks } from "@/lib/schedule";
 
 export default function HomePage() {
-  const { tasks, sprint, schedule } = useDevCalendar();
+  const { tasks, sprint, schedule, seedSampleData } = useDevCalendar();
   const { projects = [] } = useDevCalendar();
 
   const todayTasks = getTodayTasks(schedule, tasks);
@@ -33,6 +33,31 @@ export default function HomePage() {
 
   return (
     <div className="grid gap-6">
+      {/* サンプルデータの案内カード。
+          タスクが1件もない（初回アクセスやリセット直後）ときだけ表示される。
+          ボタンを押すと AppProvider の seedSampleData() が lib/seed-data.ts のデータを投入する */}
+      {tasks.length === 0 && (
+        <section className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-6">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
+                <Sparkles size={18} />
+                まずはサンプルデータで試してみる
+              </h3>
+              <p className="mt-1 text-sm text-emerald-800">
+                CraftCal自身の開発タスク（実際のGitHub Issue）とモックプロジェクトを読み込んで、各画面の使い方を確認できます。
+              </p>
+            </div>
+            <button
+              onClick={seedSampleData}
+              className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-500"
+            >
+              サンプルデータを読み込む
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
         <div className="flex items-start justify-between gap-4">
           <div>
