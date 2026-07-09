@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { generateSchedule } from "@/lib/schedule";
+import { createSeedData } from "@/lib/seed-data";
 import { INBOX_PROJECT_ID, createEmptyState, loadState, saveState } from "@/lib/storage";
 import type {
   DevCalendarContextValue,
@@ -171,6 +172,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setProjects(empty.projects ?? []);
     };
 
+    // サンプルデータの投入。ダッシュボード (app/page.tsx) の
+    // 「サンプルデータを読み込む」ボタンから呼ばれる。
+    // 既存タスクがある場合は誤って混ざらないよう何もしない（ボタン側でも非表示にしている）
+    const seedSampleData = () => {
+      if (tasks.length > 0) {
+        return;
+      }
+
+      const seed = createSeedData();
+      setProjects((cur) => [...seed.projects, ...cur]); // Inbox は既存を残し、その前にサンプル2件を追加
+      setTasks(seed.tasks);
+    };
+
     return {
       tasks,
       sprint,
@@ -187,6 +201,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addProject,
       updateProject,
       deleteProject,
+      seedSampleData,
       resetAll
     };
   }, [tasks, sprint, schedule, projects]);
