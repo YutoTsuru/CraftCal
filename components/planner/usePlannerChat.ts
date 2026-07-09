@@ -26,15 +26,24 @@ export function usePlannerChat({ tasks, projects }: Args) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, latestSuggestions.length]);
 
-  const pushAssistantReply = (text: string, suggestions: ScheduleSuggestion[]) => {
+  // アシスタント返信をチャットに追加する。alternative があるときは A案/B案の選択肢を付ける
+  const pushAssistantReply = (text: string, suggestions: ScheduleSuggestion[], alternative: ScheduleSuggestion[] | null = null) => {
+    // 反映候補はデフォルトで主案(A案)をセットしておく
     setLatestSuggestions(suggestions);
+    const choices = alternative
+      ? [
+          { label: "A案（おすすめ）", suggestions },
+          { label: "B案", suggestions: alternative }
+        ]
+      : undefined;
     setMessages((current) => [
       ...current,
       {
         id: crypto.randomUUID(),
         role: "assistant",
         content: text,
-        suggestions
+        suggestions,
+        choices
       }
     ]);
   };
@@ -48,7 +57,7 @@ export function usePlannerChat({ tasks, projects }: Args) {
     setInput("");
 
     const result = generateMockPlan(text, incompleteTasks, projects);
-    pushAssistantReply(result.message, result.suggestions);
+    pushAssistantReply(result.message, result.suggestions, result.alternative);
   };
 
   const useQuickAction = (value: string) => {
@@ -58,14 +67,20 @@ export function usePlannerChat({ tasks, projects }: Args) {
   const rerun = () => {
     const sourceText = messages.slice().reverse().find((message) => message.role === "user")?.content ?? "今日の予定を組む";
     const result = generateMockPlan(sourceText, incompleteTasks, projects);
-    pushAssistantReply(result.message, result.suggestions);
+    pushAssistantReply(result.message, result.suggestions, result.alternative);
     setNotice("再提案を作成しました");
   };
 
   const makeLighter = () => {
     const result = generateMockPlan("軽めのタスクだけ", incompleteTasks, projects);
-    pushAssistantReply(result.message, result.suggestions);
+    pushAssistantReply(result.message, result.suggestions, result.alternative);
     setNotice("軽めの提案に切り替えました");
+  };
+
+  // A案/B案ボタンで選ばれた案を反映候補に切り替える
+  const chooseSuggestions = (choice: { label: string; suggestions: ScheduleSuggestion[] }) => {
+    setLatestSuggestions(choice.suggestions);
+    setNotice(`${choice.label}を反映候補にしました`);
   };
 
   const reflect = () => {
@@ -113,6 +128,7 @@ export function usePlannerChat({ tasks, projects }: Args) {
     rerun,
     makeLighter,
     reflect,
+    chooseSuggestions,
     bottomRef,
     incompleteTasks
   };
