@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!--
+    CraftCal のアプリアイコン (ファビコン)。
+    Next.js App Router は app/icon.svg というファイル名を自動検出して
+    <link rel="icon"> としてブラウザタブに配信する (Issue #18)。
+    構成: 角丸スクエア背景 + カレンダー + 中央にパズルピース
+  -->
+  <defs>
+    <!-- パズルピースの白フチ用マスク (本体より一回り大きい形) -->
+    <mask id="puzzle-halo">
+      <rect width="1024" height="1024" fill="black"/>
+      <rect x="398" y="478" width="354" height="354" rx="42" fill="white"/>
+      <circle cx="560" cy="500" r="80" fill="white"/>
+      <circle cx="730" cy="650" r="80" fill="white"/>
+      <circle cx="420" cy="672" r="34" fill="black"/>
+      <circle cx="555" cy="810" r="34" fill="black"/>
+    </mask>
+    <!-- パズルピース本体のマスク:
+         四角形 + 上と右の凸 (白い円で足す) - 左と下の凹 (黒い円で削る) -->
+    <mask id="puzzle-body">
+      <rect width="1024" height="1024" fill="black"/>
+      <rect x="420" y="500" width="310" height="310" rx="28" fill="white"/>
+      <circle cx="560" cy="500" r="62" fill="white"/>
+      <circle cx="730" cy="650" r="62" fill="white"/>
+      <circle cx="420" cy="672" r="52" fill="black"/>
+      <circle cx="555" cy="810" r="52" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- 背景: 薄い青グレーの角丸スクエア -->
+  <rect x="64" y="64" width="896" height="896" rx="212" fill="#c4cfe4"/>
+
+  <!-- カレンダー本体 (白) -->
+  <rect x="180" y="255" width="664" height="608" rx="46" fill="#ffffff"/>
+
+  <!-- カレンダーヘッダー (ダークスレート、上だけ角丸) -->
+  <path d="M180 301 a46 46 0 0 1 46 -46 h572 a46 46 0 0 1 46 46 v88 h-664 Z" fill="#475064"/>
+
+  <!-- 日付マス (3x3)。薄いグレーの枠線つき白マス -->
+  <g fill="#ffffff" stroke="#e3e8f0" stroke-width="4">
+    <rect x="205" y="410" width="198" height="138" rx="12"/>
+    <rect x="413" y="410" width="198" height="138" rx="12"/>
+    <rect x="621" y="410" width="198" height="138" rx="12"/>
+    <rect x="205" y="558" width="198" height="138" rx="12"/>
+    <rect x="413" y="558" width="198" height="138" rx="12"/>
+    <rect x="621" y="558" width="198" height="138" rx="12"/>
+    <rect x="205" y="706" width="198" height="138" rx="12"/>
+    <rect x="413" y="706" width="198" height="138" rx="12"/>
+    <rect x="621" y="706" width="198" height="138" rx="12"/>
+  </g>
+
+  <!-- 予定を表すグレーのバー (左上・右上・左下のマス) -->
+  <g fill="#c7cedb">
+    <rect x="228" y="447" width="150" height="56" rx="18"/>
+    <rect x="644" y="447" width="150" height="56" rx="18"/>
+    <rect x="228" y="743" width="150" height="56" rx="18"/>
+  </g>
+
+  <!-- バインダーリングの穴 (ヘッダーに開いた濃い丸) -->
+  <circle cx="350" cy="300" r="46" fill="#39445a"/>
+  <circle cx="674" cy="300" r="46" fill="#39445a"/>
+
+  <!-- バインダーリング (白いカプセル形) -->
+  <g fill="#ffffff" stroke="#d9dfea" stroke-width="4">
+    <rect x="322" y="150" width="56" height="180" rx="28"/>
+    <rect x="646" y="150" width="56" height="180" rx="28"/>
+  </g>
+
+  <!-- パズルピース: 白フチ → 本体の順に重ねる -->
+  <rect width="1024" height="1024" fill="#ffffff" mask="url(#puzzle-halo)"/>
+  <rect width="1024" height="1024" fill="#7387ad" mask="url(#puzzle-body)"/>
+</svg>
