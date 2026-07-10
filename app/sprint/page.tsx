@@ -9,7 +9,7 @@ import { usePlannerChat } from "@/components/planner/usePlannerChat";
 
 export default function SprintPage() {
   const { tasks, projects } = useDevCalendar();
-  const { messages, input, setInput, sendMessage, useQuickAction, latestSuggestions, notice, rerun, makeLighter, reflect, bottomRef, incompleteTasks } = usePlannerChat({ tasks, projects });
+  const { messages, input, setInput, sendMessage, useQuickAction, latestSuggestions, notice, rerun, makeLighter, reflect, chooseSuggestions, bottomRef, incompleteTasks } = usePlannerChat({ tasks, projects });
 
   const proposalCount = latestSuggestions.length;
 
@@ -39,7 +39,7 @@ export default function SprintPage() {
 
           <div className="mt-4 flex max-h-[34rem] flex-col gap-4 overflow-y-auto pr-1">
             {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+              <ChatMessage key={message.id} message={message} onChoose={chooseSuggestions} />
             ))}
             <div ref={bottomRef} />
           </div>

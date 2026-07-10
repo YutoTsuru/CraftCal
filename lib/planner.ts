@@ -40,12 +40,16 @@ export type PlannerMessage = {
   role: PlannerRole;
   content: string;
   suggestions?: ScheduleSuggestion[];
+  // 確信度が低いときに「A案/B案」を選ばせる選択肢。チャット吹き出し下のボタンに対応する
+  choices?: { label: string; suggestions: ScheduleSuggestion[] }[];
 };
 
 export type PlannerResult = {
   message: string;
   suggestions: ScheduleSuggestion[];
   intent: PlannerIntent;
+  // スコアが拮抗しているときの代替案(B案)。確信度が高い場合は null
+  alternative: ScheduleSuggestion[] | null;
 };
 
 export type MockPlanResult = PlannerResult;
@@ -57,6 +61,8 @@ type PlannerTask = Task & {
 
 const BREAK_MINUTES = 10;
 const MAX_SUGGESTIONS = 3;
+// 1位と2位のスコア差がこれ未満なら「低確信」とみなし、A案/B案の2案を提示する
+export const LOW_CONFIDENCE_SCORE_GAP = 12;
 const MIN_BLOCK_MINUTES = 30;
 const MAX_BLOCK_MINUTES = 90;
 
@@ -500,12 +506,35 @@ export function generateMockPlan(message: string, tasks: Task[], projects: Proje
   const freeSlots = buildFreeSlots(intent);
   const suggestions = generateSchedulePlan(normalizedTasks, freeSlots, intent, projects);
   const hasTasks = normalizedTasks.length > 0;
-  const messageText = buildTemplateMessage(intent, freeSlots, suggestions, hasTasks);
+  let messageText = buildTemplateMessage(intent, freeSlots, suggestions, hasTasks);
+
+  // 確信度判定: 最初のスロットで全候補を scoreTask し降順ソートし、1位と2位のスコア差を見る
+  // （generateSchedulePlan の候補選定と同じ計算をここでもう一度行う）
+  let alternative: ScheduleSuggestion[] | null = null;
+  const firstSlot = freeSlots[0];
+
+  if (firstSlot) {
+    const scored = normalizedTasks
+      .map((task) => ({ task, score: scoreTask(task, intent, firstSlot) }))
+      .sort((left, right) => right.score - left.score);
+    // 候補が2件未満のときはスコア差を十分大きいとみなし、低確信扱いにしない
+    const gap = scored.length >= 2 ? scored[0].score - scored[1].score : Number.POSITIVE_INFINITY;
+
+    if (gap < LOW_CONFIDENCE_SCORE_GAP) {
+      // 1位のタスクを除いた候補で再計算した案を代替案(B案)にする
+      const topTaskId = scored[0].task.id;
+      const alternativeTasks = normalizedTasks.filter((task) => task.id !== topTaskId);
+      alternative = generateSchedulePlan(alternativeTasks, freeSlots, intent, projects);
+      // 拮抗している旨をメッセージ末尾に追記し、選択を促す
+      messageText += "\n\nスコアが拮抗しているため2案用意しました。下のボタンからどちらを反映候補にするか選んでください。";
+    }
+  }
 
   return {
     message: messageText,
     suggestions,
-    intent
+    intent,
+    alternative
   };
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generateMockPlan, parsePlannerIntent, splitStaleSuggestions } from "@/lib/planner";
 import type { ScheduleSuggestion } from "@/lib/planner";
+import { getTodayString } from "@/lib/schedule";
 import type { Project, Task } from "@/types/dev-calendar";
 
 let seq = 0;
@@ -161,6 +162,34 @@ describe("generateMockPlan", () => {
     const result = generateMockPlan("今日の予定を組んで", [task], [project]);
 
     expect(result.suggestions[0].projectName).toBe("CraftCal");
+  });
+
+  // スコアが拮抗している(同条件)ときは代替案(B案)を用意する
+  it("同条件のタスクが拮抗するときは代替案を返す", () => {
+    const taskA = makeTask({ title: "タスクA", weight: "medium", priority: "medium", status: "todo", estimatedMinutes: 60 });
+    const taskB = makeTask({ title: "タスクB", weight: "medium", priority: "medium", status: "todo", estimatedMinutes: 60 });
+    const result = generateMockPlan("今日の予定を組んで", [taskA, taskB], []);
+
+    expect(result.alternative).not.toBeNull();
+    // 主案と代替案では選ばれる1件目のタスクが入れ替わる
+    expect(result.alternative?.[0].taskId).not.toBe(result.suggestions[0].taskId);
+  });
+
+  // 明確にスコア差があるときは断定して1案のみ(代替案なし)
+  it("スコア差が明確なときは代替案を返さない", () => {
+    const strong = makeTask({ title: "進行中の重要作業", status: "doing", priority: "high", dueDate: getTodayString(), estimatedMinutes: 60 });
+    const weak = makeTask({ title: "後回しでよい作業", status: "todo", priority: "low", dueDate: null, estimatedMinutes: 60 });
+    const result = generateMockPlan("今日の予定を組んで", [strong, weak], []);
+
+    expect(result.alternative).toBeNull();
+  });
+
+  // 候補が1件だけなら比較対象がないので代替案なし
+  it("タスクが1件だけなら代替案を返さない", () => {
+    const only = makeTask({ title: "唯一のタスク", estimatedMinutes: 60 });
+    const result = generateMockPlan("今日の予定を組んで", [only], []);
+
+    expect(result.alternative).toBeNull();
   });
 });
 
