@@ -5,15 +5,21 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { StatCard } from "@/components/StatCard";
-import { getSprintLabel, getTodayTasks } from "@/lib/schedule";
+import { StatusBadge } from "@/components/StatusBadge";
+import { PriorityBadge } from "@/components/PriorityBadge";
+import { getSprintLabel, getTodayString, getTodayTasks } from "@/lib/schedule";
+import { selectTopTasks } from "@/lib/top-tasks";
 
 export default function HomePage() {
-  const { tasks, sprint, schedule, seedSampleData } = useDevCalendar();
+  const { tasks, sprint, schedule, seedSampleData, updateTaskStatus, completeTask } = useDevCalendar();
   const { projects = [] } = useDevCalendar();
 
   const todayTasks = getTodayTasks(schedule, tasks);
 
   const inProgress = tasks.filter((t) => t.status === "doing");
+
+  // 今日やるべき Top3: lib/top-tasks.ts のスコアリング（doing/優先度/期限/今日の予定）で上位を抽出
+  const topTasks = useMemo(() => selectTopTasks(tasks, getTodayString()), [tasks]);
 
   const dueSoon = useMemo(() => {
     const now = new Date();
@@ -54,6 +60,67 @@ export default function HomePage() {
             >
               サンプルデータを読み込む
             </button>
+          </div>
+        </section>
+      )}
+
+      {/* 今日やるべき Top3: 6セクションある中で最上部に置き、開いて数秒で「今何をすべきか」が分かるようにする (Issue #6)。
+          未完了タスクが1件もないときはセクションごと非表示にする */}
+      {topTasks.length > 0 && (
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">今日やるべき Top3</h3>
+            <Link href="/tasks" className="text-sm text-indigo-600">すべて見る</Link>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            {topTasks.map((task, index) => {
+              const project = projects.find((p) => p.id === task.projectId);
+
+              return (
+                <div key={task.id} className="relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  {/* 順位バッジ (1〜3位)。カード左上に固定表示 */}
+                  <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+                    {index + 1}
+                  </span>
+
+                  <div className="pl-9">
+                    <div className="font-semibold">{task.title}</div>
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project?.color ?? "#10b981" }} />
+                      {project?.name ?? "Inbox"}
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <StatusBadge status={task.status} size="sm" />
+                      <PriorityBadge priority={task.priority} />
+                      {typeof task.estimatedMinutes === "number" && (
+                        <span className="text-xs text-slate-500">{Math.round((task.estimatedMinutes / 60) * 10) / 10}h</span>
+                      )}
+                    </div>
+
+                    <div className="mt-3">
+                      {/* todo なら「開始」で doing へ、それ以外(doing等)は「完了」で done へ */}
+                      {task.status === "todo" ? (
+                        <button
+                          onClick={() => updateTaskStatus(task.id, "doing")}
+                          className="min-h-11 w-full rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                        >
+                          開始
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => completeTask(task.id)}
+                          className="min-h-11 w-full rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                        >
+                          完了
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
