@@ -61,6 +61,11 @@ export default function SprintPage() {
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(event) => {
+                  // 日本語IMEの変換確定Enterでは送信しない (Issue #24)。
+                  // 変換中は isComposing が true になる (一部ブラウザは keyCode 229 で判定)
+                  if (event.nativeEvent.isComposing || event.keyCode === 229) {
+                    return;
+                  }
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
                     sendMessage(input);
