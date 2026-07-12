@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { generateSchedule } from "@/lib/schedule";
 import { createSeedData } from "@/lib/seed-data";
-import { INBOX_PROJECT_ID, createEmptyState, loadState, saveState } from "@/lib/storage";
+import { INBOX_PROJECT_ID, STORAGE_KEY, createEmptyState, loadState, parsePersistedState, saveState } from "@/lib/storage";
 import type {
   DevCalendarContextValue,
   DevCalendarState,
@@ -23,6 +23,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  // 保存に失敗した（容量超過など）とき true になり、画面上部に警告バナーを出す (Issue #9)
+  const [storageError, setStorageError] = useState(false);
 
   useEffect(() => {
     const state = loadState();
@@ -45,8 +47,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       projects
     };
 
-    saveState(state);
+    // 保存の成否でバナーの表示/非表示を切り替える。
+    // 一度失敗しても、次の保存が成功すればバナーは消える
+    setStorageError(!saveState(state));
   }, [hydrated, tasks, sprint, schedule, projects]);
+
+  // 複数タブ同期 (Issue #9): 他のタブが localStorage を書き換えると
+  // storage イベントが飛んでくるので、その内容を自分の state に取り込む。
+  // (storage イベントは「自分以外のタブ」でのみ発火するため、無限ループにはならない)
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY || event.newValue === null) {
+        return;
+      }
+
+      const state = parsePersistedState(event.newValue);
+      if (!state) {
+        return;
+      }
+
+      setTasks(state.tasks);
+      setSprintState(state.sprint);
+      setSchedule(state.schedule);
+      setProjects(state.projects ?? []);
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [hydrated]);
 
   const value = useMemo<DevCalendarContextValue>(() => {
     const addTask = (input: TaskFormInput) => {
@@ -206,7 +238,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [tasks, sprint, schedule, projects]);
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {/* 保存失敗の警告バナー (Issue #9)。
+          localStorage への書き込みが失敗している間だけ画面最上部に固定表示する。
+          全ページ共通で出すため、アプリ全体を包むこの Provider で描画している */}
+      {storageError && (
+        <div
+          role="alert"
+          className="fixed inset-x-0 top-0 z-[60] bg-rose-600 px-4 py-2 text-center text-sm font-medium text-white"
+        >
+          データの保存に失敗しました。ブラウザの空き容量を確認してください（最新の変更が保存されていない可能性があります）
+        </div>
+      )}
+      {children}
+    </AppContext.Provider>
+  );
 }
 
 export function useDevCalendar() {
