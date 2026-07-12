@@ -95,7 +95,17 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+    <form
+      onSubmit={handleSubmit}
+      onKeyDown={(event) => {
+        // 日本語IMEの変換確定Enterでフォームが送信されるのを防ぐ (Issue #24)。
+        // 変換中のEnterは isComposing が true (一部ブラウザは keyCode 229)
+        if (event.key === "Enter" && (event.nativeEvent.isComposing || event.keyCode === 229)) {
+          event.preventDefault();
+        }
+      }}
+      className="rounded-xl border border-slate-200 bg-white p-4 shadow-md"
+    >
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         <input
           value={title}
