@@ -9,6 +9,12 @@ import type {
 export const STORAGE_KEY = "craftcal-state";
 export const INBOX_PROJECT_ID = "inbox";
 
+// 保存データのスキーマバージョン (Issue #9)。
+// データ構造を変えるときはこの数字を上げ、migrateState に旧バージョンからの変換を追加する。
+// v1: バージョン番号なし。schedule にタスクの複製を保存していた旧形式
+// v2: schedule は taskIds のみ保持。schemaVersion フィールド付き
+export const SCHEMA_VERSION = 2;
+
 // 過去バージョンで保存された可能性のあるフィールドを含むタスク
 type LegacyTaskRecord = Partial<Task> & {
   plannedDate?: string | null;
@@ -24,6 +30,7 @@ type LegacyScheduleDay = {
 };
 
 type PersistedState = {
+  schemaVersion?: number;
   tasks?: LegacyTaskRecord[];
   sprint?: Sprint | null;
   schedule?: LegacyScheduleDay[];
@@ -141,6 +148,30 @@ export function createEmptyState(): DevCalendarState {
   };
 }
 
+/**
+ * JSON文字列 → アプリの状態 に変換する（バージョン判定 + マイグレーション込み）。
+ * loadState と、複数タブ同期の storage イベント（AppProvider）の両方から使う。
+ * 壊れたデータなら null を返す（呼び出し側で空状態にフォールバックする）
+ */
+export function parsePersistedState(raw: string): DevCalendarState | null {
+  try {
+    const parsed = JSON.parse(raw) as PersistedState;
+    // schemaVersion がない場合は v1 (旧形式) として扱う。
+    // migrateState は v1→v2 の変換を含み、v2 データに対しては実質そのまま通す（冪等）
+    return migrateState(parsed);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * アプリの状態 → 保存用JSON文字列 に変換する。schemaVersion を必ず付与する。
+ * saveState と、テストからの直接検証に使う
+ */
+export function serializeState(state: DevCalendarState): string {
+  return JSON.stringify({ schemaVersion: SCHEMA_VERSION, ...state });
+}
+
 export function loadState(): DevCalendarState {
   if (typeof window === "undefined") {
     return createEmptyState();
@@ -151,22 +182,25 @@ export function loadState(): DevCalendarState {
     return createEmptyState();
   }
 
-  try {
-    return migrateState(JSON.parse(raw) as PersistedState);
-  } catch {
-    // 壊れたデータで画面全体が落ちるのを防ぐ。既存データは上書きせず残す
-    return createEmptyState();
-  }
+  // 壊れたデータで画面全体が落ちるのを防ぐ。既存データは上書きせず残す
+  return parsePersistedState(raw) ?? createEmptyState();
 }
 
-export function saveState(state: DevCalendarState) {
+/**
+ * 状態を localStorage に保存する。
+ * 成功したら true、容量超過などで失敗したら false を返す
+ * （AppProvider が false を受け取ると画面上部に警告バナーを出す。Issue #9）
+ */
+export function saveState(state: DevCalendarState): boolean {
   if (typeof window === "undefined") {
-    return;
+    return false;
   }
 
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(STORAGE_KEY, serializeState(state));
+    return true;
   } catch {
     // 容量超過などで保存に失敗しても操作自体は継続できるようにする
+    return false;
   }
 }

@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { INBOX_PROJECT_ID, ensureInboxProject, migrateScheduleDay, migrateState, migrateTask } from "@/lib/storage";
+import {
+  INBOX_PROJECT_ID,
+  SCHEMA_VERSION,
+  ensureInboxProject,
+  migrateScheduleDay,
+  migrateState,
+  migrateTask,
+  parsePersistedState,
+  serializeState
+} from "@/lib/storage";
 import type { Project } from "@/types/dev-calendar";
 
 function makeProject(overrides: Partial<Project> = {}): Project {
@@ -114,5 +123,47 @@ describe("migrateState", () => {
     expect(state.schedule).toEqual([]);
     expect(state.sprint).toBeNull();
     expect(state.projects?.[0].id).toBe(INBOX_PROJECT_ID);
+  });
+});
+
+describe("serializeState / parsePersistedState (Issue #9)", () => {
+  it("serializeState は schemaVersion を必ず付与する", () => {
+    const raw = serializeState({ tasks: [], sprint: null, schedule: [], projects: [] });
+
+    expect(JSON.parse(raw).schemaVersion).toBe(SCHEMA_VERSION);
+  });
+
+  it("serialize → parse の往復で状態が保たれる（v2ラウンドトリップ）", () => {
+    const original = migrateState({
+      tasks: [{ id: "t1", title: "往復テスト", scheduledDate: "2026-01-05" }],
+      sprint: null,
+      schedule: [{ date: "2026-01-05", taskIds: ["t1"] }],
+      projects: [{ id: "p1", name: "CraftCal" }]
+    });
+
+    const restored = parsePersistedState(serializeState(original));
+
+    expect(restored).not.toBeNull();
+    expect(restored?.tasks).toEqual(original.tasks);
+    expect(restored?.schedule).toEqual(original.schedule);
+    expect(restored?.projects).toEqual(original.projects);
+  });
+
+  it("schemaVersion なしの旧形式(v1)データも読める", () => {
+    const legacyRaw = JSON.stringify({
+      tasks: [{ id: "t1", title: "旧タスク", plannedDate: "2026-01-05", estimateHours: 1 }],
+      schedule: [{ date: "2026-01-05", tasks: [{ id: "t1" }] }]
+    });
+
+    const state = parsePersistedState(legacyRaw);
+
+    expect(state).not.toBeNull();
+    expect(state?.tasks[0].scheduledDate).toBe("2026-01-05");
+    expect(state?.tasks[0].estimatedMinutes).toBe(60);
+    expect(state?.schedule[0].taskIds).toEqual(["t1"]);
+  });
+
+  it("壊れたJSONは null を返す（例外を投げない）", () => {
+    expect(parsePersistedState("{壊れたデータ")).toBeNull();
   });
 });
