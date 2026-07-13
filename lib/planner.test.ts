@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { generateMockPlan, parsePlannerIntent, splitStaleSuggestions } from "@/lib/planner";
-import type { ScheduleSuggestion } from "@/lib/planner";
+import { buildFreeSlots, generateMockPlan, parsePlannerIntent, splitStaleSuggestions } from "@/lib/planner";
+import type { PlannerIntent, ScheduleSuggestion } from "@/lib/planner";
+import { getTodayString } from "@/lib/schedule";
 import type { Project, Task } from "@/types/dev-calendar";
 
 let seq = 0;
@@ -77,6 +78,13 @@ describe("parsePlannerIntent", () => {
     expect(parsePlannerIntent("30分だけ").durationLimitMinutes).toBe(30);
     expect(parsePlannerIntent("1時間で").durationLimitMinutes).toBe(60);
     expect(parsePlannerIntent("2時間とれる").durationLimitMinutes).toBe(120);
+  });
+
+  // Issue #30: ハードコードだった時間指定を正規表現で汎用化
+  it("任意の時間指定を読み取る (90分・1時間半・4時間)", () => {
+    expect(parsePlannerIntent("90分だけ作業").durationLimitMinutes).toBe(90);
+    expect(parsePlannerIntent("1時間半とれる").durationLimitMinutes).toBe(90);
+    expect(parsePlannerIntent("4時間がっつり").durationLimitMinutes).toBe(240);
   });
 
   it("プロジェクト名を検出する", () => {
@@ -161,6 +169,123 @@ describe("generateMockPlan", () => {
     const result = generateMockPlan("今日の予定を組んで", [task], [project]);
 
     expect(result.suggestions[0].projectName).toBe("CraftCal");
+  });
+
+  // スコアが拮抗している(同条件)ときは代替案(B案)を用意する
+  it("同条件のタスクが拮抗するときは代替案を返す", () => {
+    const taskA = makeTask({ title: "タスクA", weight: "medium", priority: "medium", status: "todo", estimatedMinutes: 60 });
+    const taskB = makeTask({ title: "タスクB", weight: "medium", priority: "medium", status: "todo", estimatedMinutes: 60 });
+    const result = generateMockPlan("今日の予定を組んで", [taskA, taskB], []);
+
+    expect(result.alternative).not.toBeNull();
+    // 主案と代替案では選ばれる1件目のタスクが入れ替わる
+    expect(result.alternative?.[0].taskId).not.toBe(result.suggestions[0].taskId);
+  });
+
+  // 明確にスコア差があるときは断定して1案のみ(代替案なし)
+  it("スコア差が明確なときは代替案を返さない", () => {
+    const strong = makeTask({ title: "進行中の重要作業", status: "doing", priority: "high", dueDate: getTodayString(), estimatedMinutes: 60 });
+    const weak = makeTask({ title: "後回しでよい作業", status: "todo", priority: "low", dueDate: null, estimatedMinutes: 60 });
+    const result = generateMockPlan("今日の予定を組んで", [strong, weak], []);
+
+    expect(result.alternative).toBeNull();
+  });
+
+  // 候補が1件だけなら比較対象がないので代替案なし
+  it("タスクが1件だけなら代替案を返さない", () => {
+    const only = makeTask({ title: "唯一のタスク", estimatedMinutes: 60 });
+    const result = generateMockPlan("今日の予定を組んで", [only], []);
+
+    expect(result.alternative).toBeNull();
+  });
+});
+
+// Issue #30: 現在時刻を考慮した空き時間計算のテスト。now を固定して検証する
+describe("buildFreeSlots", () => {
+  // intent を組み立てるヘルパー。timeWindow と targetDate 以外はデフォルト値
+  function makeIntent(overrides: Partial<PlannerIntent> = {}): PlannerIntent {
+    return {
+      targetDate: "today",
+      timeWindow: "anytime",
+      difficulty: "any",
+      priorityMode: "normal",
+      durationLimitMinutes: null,
+      projectName: null,
+      ...overrides
+    };
+  }
+
+  it("午後14:10の anytime → 昼の残り(14:30〜)から始まり、朝の窓は含まれない", () => {
+    const now = new Date(2026, 0, 5, 14, 10); // 2026-01-05 14:10
+    const slots = buildFreeSlots(makeIntent(), now);
+
+    expect(slots[0].startTime).toBe("14:30");
+    expect(slots[0].endTime).toBe("16:00");
+    expect(slots[0].date).toBe("2026-01-05");
+    // 朝(09:00)の窓が過去として除外されている
+    expect(slots.some((s) => s.startTime === "09:00")).toBe(false);
+    // 夜の窓は丸ごと残っている
+    expect(slots.some((s) => s.startTime === "19:00" && s.date === "2026-01-05")).toBe(true);
+  });
+
+  it("23:00の anytime → 今日の窓は全て終わっているので明日の全窓になる", () => {
+    const now = new Date(2026, 0, 5, 23, 0);
+    const slots = buildFreeSlots(makeIntent(), now);
+
+    expect(slots.length).toBeGreaterThan(0);
+    expect(slots.every((s) => s.date === "2026-01-06")).toBe(true);
+  });
+
+  it("12:00に朝を指定 → 今日の朝は終わっているので明日の朝になる", () => {
+    const now = new Date(2026, 0, 5, 12, 0);
+    const slots = buildFreeSlots(makeIntent({ timeWindow: "morning" }), now);
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0].date).toBe("2026-01-06");
+    expect(slots[0].startTime).toBe("09:00");
+    expect(slots[0].endTime).toBe("11:00");
+  });
+
+  it("10:00に朝を指定 → 今日の朝の残り(10:00〜11:00)にクランプされる", () => {
+    const now = new Date(2026, 0, 5, 10, 0);
+    const slots = buildFreeSlots(makeIntent({ timeWindow: "morning" }), now);
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0].date).toBe("2026-01-05");
+    expect(slots[0].startTime).toBe("10:00");
+    expect(slots[0].durationMinutes).toBe(60);
+  });
+
+  it("15:45に昼を指定 → 残り30分未満なので今日の昼は捨てて明日の昼になる", () => {
+    const now = new Date(2026, 0, 5, 15, 45); // 切り上げ後16:00 → 昼窓(〜16:00)の残り0分
+    const slots = buildFreeSlots(makeIntent({ timeWindow: "afternoon" }), now);
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0].date).toBe("2026-01-06");
+    expect(slots[0].startTime).toBe("13:00");
+  });
+
+  it("明日指定はクランプされない (現在時刻に関係なく窓そのまま)", () => {
+    const now = new Date(2026, 0, 5, 23, 0);
+    const slots = buildFreeSlots(makeIntent({ targetDate: "tomorrow", timeWindow: "evening" }), now);
+
+    expect(slots).toHaveLength(1);
+    expect(slots[0].date).toBe("2026-01-06");
+    expect(slots[0].startTime).toBe("19:00");
+  });
+
+  it("generateMockPlan 経由でも過去時刻の提案が出ない", () => {
+    const now = new Date(2026, 0, 5, 20, 30);
+    const task = makeTask({ estimatedMinutes: 60 });
+    const result = generateMockPlan("今日の予定を組んで", [task], [], now);
+
+    for (const s of result.suggestions) {
+      // 今日の提案なら 20:30 以降に開始すること
+      if (s.date === "2026-01-05") {
+        expect(s.startTime >= "20:30").toBe(true);
+      }
+    }
+    expect(result.suggestions.length).toBeGreaterThan(0);
   });
 });
 

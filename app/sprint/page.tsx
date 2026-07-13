@@ -10,7 +10,7 @@ import { getTodayString } from "@/lib/schedule";
 
 export default function SprintPage() {
   const { tasks, projects } = useDevCalendar();
-  const { messages, input, setInput, sendMessage, useQuickAction, latestSuggestions, notice, rerun, makeLighter, reflect, bottomRef, incompleteTasks } = usePlannerChat({ tasks, projects });
+  const { messages, input, setInput, sendMessage, useQuickAction, latestSuggestions, notice, rerun, makeLighter, reflect, chooseSuggestions, bottomRef, incompleteTasks } = usePlannerChat({ tasks, projects });
 
   const proposalCount = latestSuggestions.length;
   // 「今日の予定タスク」カード用の集計: scheduledDateが今日で、かつ未完了（statusがdoneでない）タスクの件数
@@ -42,7 +42,7 @@ export default function SprintPage() {
 
           <div className="mt-4 flex max-h-[34rem] flex-col gap-4 overflow-y-auto pr-1">
             {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+              <ChatMessage key={message.id} message={message} onChoose={chooseSuggestions} />
             ))}
             <div ref={bottomRef} />
           </div>
@@ -87,7 +87,7 @@ export default function SprintPage() {
           <ScheduleSuggestionCard suggestions={latestSuggestions} onReflect={reflect} onMakeLighter={makeLighter} onRerun={rerun} />
 
           <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-            Google Calendarの空き時間取得やAI API接続は後から差し込めるようにしています。現在はルールベースで予定提案を返します。
+            現在は時間帯テンプレートと現在時刻から空き時間を推定するルールベースで提案しています。Google Calendar連携は将来対応予定です。
           </div>
         </div>
       </section>
