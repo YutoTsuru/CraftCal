@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
+// Today (旧 /today) の機能をこのホームに統合するために配置するコンポーネント群 (Issue #27)。
+// 各コンポーネントの内部は変更せず、ここに並べ替えて移設するだけ
+import TodayList from "@/components/TodayList";
+import StatsCard from "@/components/StatsCard";
+import ActivityGrid from "@/components/ActivityGrid";
+import RecentLogs from "@/components/RecentLogs";
+import Achievements from "@/components/Achievements";
 import { getSprintLabel, getTodayString, getTodayTasks } from "@/lib/schedule";
 import { selectTopTasks } from "@/lib/top-tasks";
 
@@ -64,7 +71,27 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 今日やるべき Top3: 6セクションある中で最上部に置き、開いて数秒で「今何をすべきか」が分かるようにする (Issue #6)。
+      {/* ヘッダー: 統合ホームの見出し + 概要 StatCard 4枚。
+          旧「概要」セクションを流用し、Tasks/Sprint へのボタンはナビと重複するため削除した (Issue #27)。
+          右側の StatCard 4枚（全タスク/進行中/今日のタスク/期限間近）はそのまま残す */}
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-indigo-600">Home</p>
+            <h2 className="mt-2 text-2xl font-bold">今日のダッシュボード</h2>
+            <p className="mt-2 text-slate-500">今日やること・進捗・実績をここで確認します。</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard label="全タスク" value={tasks.length} />
+            <StatCard label="進行中" value={inProgress.length} />
+            <StatCard label="今日のタスク" value={todayTasks.length} description={getSprintLabel(sprint)} />
+            <StatCard label="期限間近" value={dueSoon.length} />
+          </div>
+        </div>
+      </section>
+
+      {/* 今日やるべき Top3: 開いて数秒で「今何をすべきか」が分かるように上部に置く (Issue #6)。
           未完了タスクが1件もないときはセクションごと非表示にする */}
       {topTasks.length > 0 && (
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
@@ -125,32 +152,19 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-indigo-600">概要</p>
-            <h2 className="mt-2 text-2xl font-bold">今日と今週の要約</h2>
-            <p className="mt-2 text-slate-500">今日や今週で優先すべき作業がすぐ分かるように整理しました。</p>
-            <div className="mt-4 flex gap-3">
-              <Link href="/tasks" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900">
-                タスク管理
-              </Link>
-              <Link href="/sprint" className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white">
-                スプリント
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="全タスク" value={tasks.length} />
-            <StatCard label="進行中" value={inProgress.length} />
-            <StatCard label="今日のタスク" value={todayTasks.length} description={getSprintLabel(sprint)} />
-            <StatCard label="期限間近" value={dueSoon.length} />
-          </div>
+      {/* 今日のタスク + 実績: 旧 /today ページの構成をそのまま移植 (Issue #27)。
+          左に今日のタスク操作 (TodayList)、右に実績サマリ (StatsCard) と活動グリッド (ActivityGrid) を縦積み */}
+      <section className="grid gap-4 md:grid-cols-2">
+        <div>
+          <TodayList />
+        </div>
+        <div className="grid gap-4">
+          <StatsCard />
+          <ActivityGrid />
         </div>
       </section>
 
+      {/* プロジェクト進捗: 各プロジェクトの完了率をバーで表示 */}
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
         <h3 className="text-lg font-semibold">プロジェクト進捗</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -177,29 +191,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">今日のタスク</h3>
-            <Link href="/today" className="text-sm text-indigo-600">すべて見る</Link>
-          </div>
-
-          {todayTasks.length === 0 ? (
-            <p className="mt-4 text-slate-400">今日のタスクはありません。</p>
-          ) : (
-            <ul className="mt-3 grid gap-2">
-              {todayTasks.slice(0, 5).map((t) => (
-                <li key={t.id} className={`flex items-center justify-between rounded-md px-3 py-2 ${t.status === "done" ? "opacity-60" : ""}`}>
-                  <div>
-                    <div className="font-medium">{t.title}</div>
-                    <div className="text-xs text-slate-600">{t.memo ?? ""}</div>
-                  </div>
-                  <div className="text-xs text-slate-500">{typeof t.estimatedMinutes === "number" ? `${Math.round(t.estimatedMinutes / 60 * 10) / 10}h` : ""}</div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      {/* ログと実績: 最近の作業ログ (RecentLogs)・達成バッジ (Achievements)・期限が近いタスクを3列で並べる (Issue #27)。
+          旧レイアウトで空だった3列目に「期限が近いタスク」カードを移設した */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <RecentLogs />
+        <Achievements />
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
           <div className="flex items-center justify-between">
@@ -223,25 +219,6 @@ export default function HomePage() {
             </ul>
           )}
         </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
-        <h3 className="text-lg font-semibold">進行中のタスク</h3>
-        {inProgress.length === 0 ? (
-          <p className="mt-3 text-slate-400">進行中の作業はありません。</p>
-        ) : (
-          <ul className="mt-3 grid gap-2">
-            {inProgress.map((t) => (
-              <li key={t.id} className="flex items-center justify-between rounded-md px-3 py-2">
-                <div>
-                  <div className="font-medium">{t.title}</div>
-                  <div className="text-xs text-slate-600">{t.memo ?? ""}</div>
-                </div>
-                <div className="text-xs text-slate-500">{typeof t.estimatedMinutes === "number" ? `${Math.round(t.estimatedMinutes / 60 * 10) / 10}h` : ""}</div>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
     </div>
   );

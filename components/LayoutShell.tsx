@@ -10,28 +10,31 @@
  *
  * ボトムタブバーにした理由 (Issue #13 の調査より):
  * - スマホは画面下 1/3 が親指で最も届きやすい（サムゾーン）
- * - タブは 3〜5 個が上限とされるため、6 画面のうち Dashboard はロゴタップに割り当てて 5 個に絞った
+ * - タブは 3〜5 個が上限とされるため、ちょうど 5 画面（Home 含む）に収まる
+ *
+ * ナビの並び順は利用フロー順にしている (Issue #27):
+ * Home（今日の確認）→ Projects（登録）→ Tasks（管理）→ Sprint（AI計画）→ Calendar（確認）。
+ * Today は統合ホーム (/) に統合したため項目から外した。
  */
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CheckSquare, Home, Rocket, Folder, Sun } from "lucide-react";
+import { CalendarDays, CheckSquare, Home, Rocket, Folder } from "lucide-react";
 import { motion } from "framer-motion";
 
-// デスクトップのサイドバーに出す項目（6画面すべて）
+// ナビ項目（5画面）。サイドバー・ボトムタブで共通に使う。
+// 並び順 = 利用フロー順（Home → Projects → Tasks → Sprint → Calendar）
 const sidebarItems = [
-  { href: "/", label: "Dashboard", icon: Home },
-  { href: "/today", label: "Today", icon: Sun },
+  { href: "/", label: "Home", icon: Home },
+  { href: "/projects", label: "Projects", icon: Folder },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/sprint", label: "Sprint", icon: Rocket },
-  { href: "/projects", label: "Projects", icon: Folder }
+  { href: "/calendar", label: "Calendar", icon: CalendarDays }
 ];
 
-// モバイルのボトムタブに出す項目（5個まで）。
-// Dashboard はタブに入れず、ヘッダーのロゴタップで開く。
-// 並び順 = タブの表示順。よく使う「今日」を先頭にしている。
-const tabItems = sidebarItems.filter((item) => item.href !== "/");
+// モバイルのボトムタブに出す項目。
+// タブは5個までが上限のため、5画面をそのまま表示する（Home もタブに含める）。
+const tabItems = sidebarItems;
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   // 現在のURLパス。ナビの「今いる画面」をハイライトする判定に使う
