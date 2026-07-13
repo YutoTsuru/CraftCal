@@ -73,6 +73,9 @@ const TIME_WINDOWS: Record<PlannerTimeWindow, { start: string; end: string }> = 
   anytime: { start: "19:00", end: "22:00" }
 };
 
+// 時系列順の時間帯ウィンドウ一覧。anytime(指定なし)のときに「その日の残り全部」を順番に使うために利用する
+const ORDERED_WINDOWS = [TIME_WINDOWS.morning, TIME_WINDOWS.afternoon, TIME_WINDOWS.evening];
+
 function normalizeText(value: string) {
   return value.trim().toLowerCase();
 }
@@ -90,8 +93,8 @@ function addDays(dateString: string, days: number) {
   return getLocalDateString(date);
 }
 
-function formatDateLabel(dateString: string) {
-  const today = getLocalDateString();
+function formatDateLabel(dateString: string, now = new Date()) {
+  const today = getLocalDateString(now);
   const tomorrow = addDays(today, 1);
 
   if (dateString === today) return "今日";
@@ -228,15 +231,18 @@ export function parsePlannerIntent(input: string, projects: Project[] = []): Pla
     priorityMode = "short";
   }
 
+  // 時間指定の解析: ハードコードをやめ、正規表現で任意の数値を拾う
+  // 判定順序は「時間半 → 時間 → 分」。先に「時間半」を見ないと「1時間半」が「1時間」として誤マッチするため
   let durationLimitMinutes: number | null = null;
-  if (text.includes("30分")) {
-    durationLimitMinutes = 30;
-  } else if (text.includes("1時間")) {
-    durationLimitMinutes = 60;
-  } else if (text.includes("2時間")) {
-    durationLimitMinutes = 120;
-  } else if (text.includes("3時間")) {
-    durationLimitMinutes = 180;
+  const halfHourMatch = text.match(/(\d+)時間半/); // 例: 1時間半 → 90分
+  const hourMatch = text.match(/(\d+)時間/); // 例: 2時間 → 120分
+  const minuteMatch = text.match(/(\d+)分/); // 例: 90分 → 90分
+  if (halfHourMatch) {
+    durationLimitMinutes = Number(halfHourMatch[1]) * 60 + 30;
+  } else if (hourMatch) {
+    durationLimitMinutes = Number(hourMatch[1]) * 60;
+  } else if (minuteMatch) {
+    durationLimitMinutes = Number(minuteMatch[1]);
   }
 
   return {
@@ -249,28 +255,77 @@ export function parsePlannerIntent(input: string, projects: Project[] = []): Pla
   };
 }
 
-function buildFreeSlots(intent: PlannerIntent): FreeSlot[] {
-  const today = getLocalDateString();
-  const tomorrow = addDays(today, 1);
-  const window = TIME_WINDOWS[intent.timeWindow];
+// 現在時刻を30分(=MIN_BLOCK_MINUTES)単位で切り上げる。中途半端な現在時刻を空きブロックの区切りに合わせる役割
+function roundUpToBlock(totalMinutes: number) {
+  return Math.ceil(totalMinutes / MIN_BLOCK_MINUTES) * MIN_BLOCK_MINUTES;
+}
 
-  const build = (date: string): FreeSlot => ({
+// 1つの時間帯ウィンドウから空きスロットを作る。
+// effectiveStartMinutes(実効開始時刻)で窓の開始をクランプし、残りが MIN_BLOCK_MINUTES 未満なら null を返して窓を捨てる
+function makeSlotFromWindow(
+  date: string,
+  window: { start: string; end: string },
+  effectiveStartMinutes: number,
+  now: Date
+): FreeSlot | null {
+  const windowStart = parseClockTime(window.start);
+  const windowEnd = parseClockTime(window.end);
+  // 窓の開始と実効開始の遅い方を実際の開始にする
+  const start = Math.max(effectiveStartMinutes, windowStart);
+  const durationMinutes = windowEnd - start;
+
+  // 30分未満しか残っていない窓は使わない
+  if (durationMinutes < MIN_BLOCK_MINUTES) {
+    return null;
+  }
+
+  return {
     date,
-    dateLabel: formatDateLabel(date),
-    startTime: window.start,
+    dateLabel: formatDateLabel(date, now),
+    startTime: formatClockTime(start),
     endTime: window.end,
-    durationMinutes: parseClockTime(window.end) - parseClockTime(window.start)
-  });
+    durationMinutes
+  };
+}
 
+// 現在時刻(now)を考慮して空き時間スロットを組み立てる。
+// 過去の時間帯を提案しないよう、今日の窓は現在時刻でクランプし、既に終わった窓は明日へ回す。
+export function buildFreeSlots(intent: PlannerIntent, now: Date = new Date()): FreeSlot[] {
+  const today = getLocalDateString(now);
+  const tomorrow = addDays(today, 1);
+  // 現在時刻(分)を30分単位で切り上げた実効現在時刻
+  const effectiveNow = roundUpToBlock(now.getHours() * 60 + now.getMinutes());
+
+  // 対象の時間帯ウィンドウ(時系列順)。anytimeは全窓、朝/昼/夜はその窓だけ
+  const windows = intent.timeWindow === "anytime" ? ORDERED_WINDOWS : [TIME_WINDOWS[intent.timeWindow]];
+
+  // クランプ不要(明日以降は窓の開始をそのまま使う)でスロット化するヘルパー
+  const buildUnclamped = (date: string, windowList: { start: string; end: string }[]) =>
+    windowList.map((window) => makeSlotFromWindow(date, window, 0, now)).filter((slot): slot is FreeSlot => slot !== null);
+
+  // 明日が対象: 明日の窓をそのまま使う
   if (intent.targetDate === "tomorrow") {
-    return [build(tomorrow)];
+    return buildUnclamped(tomorrow, windows);
   }
 
+  // 今日の窓を現在時刻でクランプしたスロット
+  const todaySlots = windows
+    .map((window) => makeSlotFromWindow(today, window, effectiveNow, now))
+    .filter((slot): slot is FreeSlot => slot !== null);
+
+  // 今週が対象: 今日(クランプ済み)の窓 + 明日の窓
   if (intent.targetDate === "thisWeek") {
-    return [build(today), build(tomorrow)];
+    return [...todaySlots, ...buildUnclamped(tomorrow, windows)];
   }
 
-  return [build(today)];
+  // ここから targetDate === "today"
+  if (intent.timeWindow !== "anytime") {
+    // 朝/昼/夜を指定: 今日その窓が残っていれば今日、もう終わっていれば明日の同じ窓
+    return todaySlots.length > 0 ? todaySlots : buildUnclamped(tomorrow, windows);
+  }
+
+  // anytime: 今日の残っている全窓。今日どの窓も残っていなければ明日の全窓
+  return todaySlots.length > 0 ? todaySlots : buildUnclamped(tomorrow, ORDERED_WINDOWS);
 }
 
 function normalizeTasks(tasks: Task[], projects: Project[]) {
@@ -500,10 +555,11 @@ function buildTemplateMessage(intent: PlannerIntent, freeSlots: FreeSlot[], sugg
   return lines.join("\n").trim();
 }
 
-export function generateMockPlan(message: string, tasks: Task[], projects: Project[]): PlannerResult {
+// now はテストから時刻を固定するための省略可能引数。通常は現在時刻が使われる
+export function generateMockPlan(message: string, tasks: Task[], projects: Project[], now: Date = new Date()): PlannerResult {
   const intent = parsePlannerIntent(message, projects);
   const normalizedTasks = normalizeTasks(tasks, projects);
-  const freeSlots = buildFreeSlots(intent);
+  const freeSlots = buildFreeSlots(intent, now);
   const suggestions = generateSchedulePlan(normalizedTasks, freeSlots, intent, projects);
   const hasTasks = normalizedTasks.length > 0;
   let messageText = buildTemplateMessage(intent, freeSlots, suggestions, hasTasks);

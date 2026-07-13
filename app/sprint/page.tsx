@@ -87,7 +87,7 @@ export default function SprintPage() {
           <ScheduleSuggestionCard suggestions={latestSuggestions} onReflect={reflect} onMakeLighter={makeLighter} onRerun={rerun} />
 
           <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-            Google Calendarの空き時間取得やAI API接続は後から差し込めるようにしています。現在はルールベースで予定提案を返します。
+            現在は時間帯テンプレートと現在時刻から空き時間を推定するルールベースで提案しています。Google Calendar連携は将来対応予定です。
           </div>
         </div>
       </section>
