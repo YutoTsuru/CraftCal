@@ -3,10 +3,25 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { generateSchedule } from "@/lib/schedule";
 import { createSeedData } from "@/lib/seed-data";
-import { INBOX_PROJECT_ID, STORAGE_KEY, createEmptyState, loadState, parsePersistedState, saveState } from "@/lib/storage";
+import { INBOX_PROJECT_ID, STORAGE_KEY, createEmptyState, ensureInboxProject, loadState } from "@/lib/storage";
+import { useAuth } from "@/components/AuthProvider";
+import {
+  deleteAllProjects,
+  deleteProject as deleteProjectRow,
+  insertProject,
+  listProjects,
+  updateProject as updateProjectRow
+} from "@/lib/services/projects";
+import {
+  deleteAllTasks,
+  deleteTask as deleteTaskRow,
+  insertTask,
+  insertTasks,
+  listTasks,
+  updateTask as updateTaskRow
+} from "@/lib/services/tasks";
 import type {
   DevCalendarContextValue,
-  DevCalendarState,
   Project,
   ScheduleDay,
   Sprint,
@@ -18,71 +33,89 @@ import type {
 const AppContext = createContext<DevCalendarContextValue | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
   const [tasks, setTasks] = useState<Task[]>([]);
+  // sprint / schedule はメモリのみ（Supabase にも localStorage にも保存しない）。
+  // 旧スプリント機能の永続化は廃止し、その場の計算結果としてだけ保持する。
   const [sprint, setSprintState] = useState<Sprint | null>(null);
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [hydrated, setHydrated] = useState(false);
-  // 保存に失敗した（容量超過など）とき true になり、画面上部に警告バナーを出す (Issue #9)
-  const [storageError, setStorageError] = useState(false);
+  // Supabase からの初回読み込み中フラグ
+  const [dataLoading, setDataLoading] = useState(false);
+  // サーバーが空 かつ 旧 localStorage にデータが残っているとき true（取り込みカードの表示条件）
+  const [canImportLocalData, setCanImportLocalData] = useState(false);
+  // サーバーへの保存に失敗したとき true。画面上部に警告バナーを出す
+  const [persistError, setPersistError] = useState(false);
+
+  // ログイン状態に応じて Supabase から hydrate する。
+  // user が変わった（ログイン/ログアウト）ときだけ再実行したいので user.id を依存にする
+  // （トークン更新で user オブジェクト参照が変わっても id は不変のため無駄な再取得を避ける）
+  const userId = user?.id ?? null;
 
   useEffect(() => {
-    const state = loadState();
-    setTasks(state.tasks);
-    setSprintState(state.sprint);
-    setSchedule(state.schedule);
-    setProjects(state.projects ?? []);
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) {
+    // 未ログイン: 空状態に戻す（保護ルート外への遷移時などの防御）
+    if (!userId) {
+      setTasks([]);
+      setProjects([]);
+      setSchedule([]);
+      setSprintState(null);
+      setCanImportLocalData(false);
+      setPersistError(false);
+      setDataLoading(false);
       return;
     }
 
-    const state: DevCalendarState = {
-      tasks,
-      sprint,
-      schedule,
-      projects
-    };
+    let cancelled = false;
+    setDataLoading(true);
 
-    // 保存の成否でバナーの表示/非表示を切り替える。
-    // 一度失敗しても、次の保存が成功すればバナーは消える
-    setStorageError(!saveState(state));
-  }, [hydrated, tasks, sprint, schedule, projects]);
+    (async () => {
+      try {
+        const [dbProjects, dbTasks] = await Promise.all([listProjects(), listTasks()]);
+        if (cancelled) {
+          return;
+        }
+        // 仮想 Inbox を合成して state に反映する
+        setProjects(ensureInboxProject(dbProjects));
+        setTasks(dbTasks);
 
-  // 複数タブ同期 (Issue #9): 他のタブが localStorage を書き換えると
-  // storage イベントが飛んでくるので、その内容を自分の state に取り込む。
-  // (storage イベントは「自分以外のタブ」でのみ発火するため、無限ループにはならない)
-  useEffect(() => {
-    if (!hydrated) {
-      return;
-    }
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key !== STORAGE_KEY || event.newValue === null) {
-        return;
+        // ローカルデータ取り込み判定:
+        // サーバーが tasks 0件 かつ projects 0件（Inbox は DB に存在しない）で、
+        // 旧 localStorage に tasks が1件以上あれば取り込みカードを出せる
+        const serverEmpty = dbTasks.length === 0 && dbProjects.length === 0;
+        const local = loadState();
+        setCanImportLocalData(serverEmpty && local.tasks.length >= 1);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+        // 個人データ・トークンは出さない
+        console.error("[CraftCal] 保存に失敗:", error);
+        setPersistError(true);
+      } finally {
+        if (!cancelled) {
+          setDataLoading(false);
+        }
       }
+    })();
 
-      const state = parsePersistedState(event.newValue);
-      if (!state) {
-        return;
-      }
-
-      setTasks(state.tasks);
-      setSprintState(state.sprint);
-      setSchedule(state.schedule);
-      setProjects(state.projects ?? []);
+    return () => {
+      cancelled = true;
     };
-
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, [hydrated]);
+  }, [userId]);
 
   const value = useMemo<DevCalendarContextValue>(() => {
+    // 楽観更新の非同期部分。失敗したら警告バナーを出す（個人データ・トークンは出さない）
+    const persist = (op: () => Promise<unknown>) => {
+      void op().catch((error) => {
+        console.error("[CraftCal] 保存に失敗:", error);
+        setPersistError(true);
+      });
+    };
+
     const addTask = (input: TaskFormInput) => {
       const projectId = input.projectId ?? projects[0]?.id ?? INBOX_PROJECT_ID;
+      const now = new Date().toISOString();
 
       const task: Task = {
         id: crypto.randomUUID(),
@@ -95,11 +128,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         scheduledDate: input.scheduledDate ?? null,
         estimatedMinutes: typeof input.estimatedMinutes === "number" ? input.estimatedMinutes : null,
         status: "todo",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: now,
+        updatedAt: now
       };
 
+      // ローカル即時反映 → DB へ非同期保存
       setTasks((current) => [task, ...current]);
+      persist(() => insertTask(task));
     };
 
     const deleteTask = (id: string) => {
@@ -110,52 +145,67 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           taskIds: day.taskIds.filter((taskId) => taskId !== id)
         }))
       );
+      persist(() => deleteTaskRow(id));
     };
 
     const updateTaskStatus = (id: string, status: TaskStatus) => {
+      const now = new Date().toISOString();
+      const target = tasks.find((task) => task.id === id);
       setTasks((current) =>
-        current.map((task) => (task.id === id ? { ...task, status, updatedAt: new Date().toISOString() } : task))
+        current.map((task) => (task.id === id ? { ...task, status, updatedAt: now } : task))
       );
+      if (target) {
+        persist(() => updateTaskRow({ ...target, status, updatedAt: now }));
+      }
     };
 
     const updateTask = (id: string, input: TaskFormInput) => {
-      setTasks((current) =>
-        current.map((task) =>
-          task.id === id
-            ? {
-                ...task,
-                projectId: input.projectId ?? task.projectId,
-                title: input.title,
-                memo: input.memo,
-                weight: input.weight,
-                priority: input.priority ?? task.priority,
-                dueDate: input.dueDate ?? null,
-                scheduledDate: input.scheduledDate ?? null,
-                estimatedMinutes: typeof input.estimatedMinutes === "number" ? input.estimatedMinutes : task.estimatedMinutes,
-                updatedAt: new Date().toISOString()
-              }
-            : task
-        )
-      );
+      const now = new Date().toISOString();
+      const target = tasks.find((task) => task.id === id);
+      if (!target) {
+        return;
+      }
+      const updated: Task = {
+        ...target,
+        projectId: input.projectId ?? target.projectId,
+        title: input.title,
+        memo: input.memo,
+        weight: input.weight,
+        priority: input.priority ?? target.priority,
+        dueDate: input.dueDate ?? null,
+        scheduledDate: input.scheduledDate ?? null,
+        estimatedMinutes: typeof input.estimatedMinutes === "number" ? input.estimatedMinutes : target.estimatedMinutes,
+        updatedAt: now
+      };
+      setTasks((current) => current.map((task) => (task.id === id ? updated : task)));
+      persist(() => updateTaskRow(updated));
     };
 
     const rescheduleTask = (id: string, scheduledDate: string | null) => {
+      const now = new Date().toISOString();
+      const target = tasks.find((task) => task.id === id);
       setTasks((current) =>
-        current.map((task) =>
-          task.id === id ? { ...task, scheduledDate, updatedAt: new Date().toISOString() } : task
-        )
+        current.map((task) => (task.id === id ? { ...task, scheduledDate, updatedAt: now } : task))
       );
+      if (target) {
+        persist(() => updateTaskRow({ ...target, scheduledDate, updatedAt: now }));
+      }
     };
 
     const completeTask = (id: string, note?: string | null, url?: string | null) => {
       const now = new Date().toISOString();
-      setTasks((current) =>
-        current.map((task) =>
-          task.id === id
-            ? { ...task, status: "done", completedAt: now, completionNote: note ?? null, completionUrl: url ?? null, updatedAt: now }
-            : task
-        )
-      );
+      const target = tasks.find((task) => task.id === id);
+      const patch = {
+        status: "done" as const,
+        completedAt: now,
+        completionNote: note ?? null,
+        completionUrl: url ?? null,
+        updatedAt: now
+      };
+      setTasks((current) => current.map((task) => (task.id === id ? { ...task, ...patch } : task)));
+      if (target) {
+        persist(() => updateTaskRow({ ...target, ...patch }));
+      }
     };
 
     const setSprint = (nextSprint: Sprint) => {
@@ -163,7 +213,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     const generateSprintSchedule = () => {
-      // If sprint has projectId, only include that project's tasks
+      // sprint に projectId があればそのプロジェクトのタスクだけを対象にする
       const targetTasks = sprint?.projectId
         ? tasks.filter((t) => t.projectId === sprint.projectId && t.status !== "done")
         : tasks.filter((t) => t.status !== "done");
@@ -171,6 +221,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     const addProject = (p: Omit<Project, "id" | "createdAt" | "updatedAt"> & { id?: string }) => {
+      const now = new Date().toISOString();
       const project: Project = {
         id: p.id ?? crypto.randomUUID(),
         name: p.name,
@@ -179,21 +230,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         color: p.color ?? null,
         status: p.status,
         goal: p.goal ?? null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: now,
+        updatedAt: now
       };
 
       setProjects((cur) => [project, ...cur]);
+      persist(() => insertProject(project));
     };
 
     const updateProject = (id: string, patch: Partial<Project>) => {
-      setProjects((cur) => cur.map((pr) => (pr.id === id ? { ...pr, ...patch, updatedAt: new Date().toISOString() } : pr)));
+      const now = new Date().toISOString();
+      const target = projects.find((pr) => pr.id === id);
+      if (!target) {
+        return;
+      }
+      const updated: Project = { ...target, ...patch, updatedAt: now };
+      setProjects((cur) => cur.map((pr) => (pr.id === id ? updated : pr)));
+      persist(() => updateProjectRow(updated));
     };
 
     const deleteProject = (id: string) => {
-      // Reassign tasks to inbox
+      // ローカルは従来どおりタスクを Inbox へ付け替える。
+      // DB 側は行削除のみ（FK ON DELETE SET NULL でタスクの project_id が null=Inbox になる）
       setTasks((cur) => cur.map((t) => (t.projectId === id ? { ...t, projectId: INBOX_PROJECT_ID } : t)));
       setProjects((cur) => cur.filter((p) => p.id !== id));
+      persist(() => deleteProjectRow(id));
     };
 
     const resetAll = () => {
@@ -202,19 +263,55 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSprintState(empty.sprint);
       setSchedule(empty.schedule);
       setProjects(empty.projects ?? []);
+      setCanImportLocalData(false);
+      // DB からも自分の tasks → projects の順で全削除する（FK 依存のため tasks が先）
+      persist(async () => {
+        await deleteAllTasks();
+        await deleteAllProjects();
+      });
     };
 
-    // サンプルデータの投入。ダッシュボード (app/page.tsx) の
-    // 「サンプルデータを読み込む」ボタンから呼ばれる。
-    // 既存タスクがある場合は誤って混ざらないよう何もしない（ボタン側でも非表示にしている）
+    // サンプルデータ投入。既存タスクがあるときは何もしない（ボタン側でも非表示）。
+    // createSeedData() の結果を DB に保存してから state に反映する
     const seedSampleData = () => {
       if (tasks.length > 0) {
         return;
       }
 
       const seed = createSeedData();
-      setProjects((cur) => [...seed.projects, ...cur]); // Inbox は既存を残し、その前にサンプル2件を追加
-      setTasks(seed.tasks);
+      persist(async () => {
+        // タスクは project_id で参照するため、プロジェクトを先に登録する
+        for (const project of seed.projects) {
+          await insertProject(project);
+        }
+        await insertTasks(seed.tasks);
+        // DB 保存が成功してから state 反映（Inbox は既存を残し前にサンプル2件を足す）
+        setProjects((cur) => [...seed.projects, ...cur.filter((p) => p.id !== INBOX_PROJECT_ID)]);
+        setTasks(seed.tasks);
+        setCanImportLocalData(false);
+      });
+    };
+
+    // 旧 localStorage のデータを Supabase へ取り込む。
+    // 成功したら localStorage を削除して二重取り込みを防ぎ、state にも反映する
+    const importLocalData = () => {
+      const local = loadState();
+      // Inbox は DB に作らないため取り込み対象から除く
+      const importProjects = (local.projects ?? []).filter((p) => p.id !== INBOX_PROJECT_ID);
+      const importTasks = local.tasks;
+
+      persist(async () => {
+        for (const project of importProjects) {
+          await insertProject(project);
+        }
+        await insertTasks(importTasks);
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(STORAGE_KEY);
+        }
+        setProjects(ensureInboxProject(importProjects));
+        setTasks(importTasks);
+        setCanImportLocalData(false);
+      });
     };
 
     return {
@@ -234,21 +331,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateProject,
       deleteProject,
       seedSampleData,
-      resetAll
+      resetAll,
+      dataLoading,
+      canImportLocalData,
+      importLocalData
     };
-  }, [tasks, sprint, schedule, projects]);
+  }, [tasks, sprint, schedule, projects, dataLoading, canImportLocalData]);
 
   return (
     <AppContext.Provider value={value}>
-      {/* 保存失敗の警告バナー (Issue #9)。
-          localStorage への書き込みが失敗している間だけ画面最上部に固定表示する。
+      {/* サーバー保存失敗の警告バナー。
+          Supabase への書き込みが失敗している間だけ画面最上部に固定表示する。
           全ページ共通で出すため、アプリ全体を包むこの Provider で描画している */}
-      {storageError && (
+      {persistError && (
         <div
           role="alert"
           className="fixed inset-x-0 top-0 z-[60] bg-rose-600 px-4 py-2 text-center text-sm font-medium text-white"
         >
-          データの保存に失敗しました。ブラウザの空き容量を確認してください（最新の変更が保存されていない可能性があります）
+          サーバーへの保存に失敗しました。通信状態を確認してページを再読み込みしてください
         </div>
       )}
       {children}

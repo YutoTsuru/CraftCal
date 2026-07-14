@@ -95,4 +95,10 @@ export type DevCalendarContextValue = DevCalendarState & {
   // サンプルデータ投入 (lib/seed-data.ts)。タスクが1件もないときだけ動く
   seedSampleData: () => void;
   resetAll: () => void;
+  // Supabase からの初回読み込み中は true（画面側でローディング表示に使える）
+  dataLoading: boolean;
+  // サーバーが空で、旧 localStorage にデータが残っているとき true（ホームに取り込みカードを出す）
+  canImportLocalData: boolean;
+  // 旧 localStorage のデータを Supabase へ取り込む（成功後 localStorage は削除して二重取り込みを防ぐ）
+  importLocalData: () => void;
 };
