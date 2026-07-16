@@ -65,15 +65,18 @@ export function LoadingScreen({ message = "Loading" }: { message?: string }) {
           />
         </g>
 
-        {/* ペン: emerald-600 の軸 + 濃いペン先。keyframes で行をなぞるように translate/rotate する。
-            transform-origin をペン先付近にして、書いている手の動きに近づける */}
-        <g className="loading-pen" style={{ transformOrigin: "70px 60px" }}>
-          {/* 軸（斜めのカプセル形） */}
-          <rect x="66" y="24" width="8" height="34" rx="4" fill="#059669" transform="rotate(35 70 41)" />
-          {/* 持ち手側の端（濃い緑のキャップ） */}
-          <rect x="66" y="20" width="8" height="8" rx="3" fill="#047857" transform="rotate(35 70 24)" />
-          {/* ペン先（濃い三角形） */}
-          <path d="M60 58 L64 53 L67 57 Z" fill="#1e293b" transform="rotate(35 63 56)" />
+        {/* ペン: 45度で紙に当たるコンパクトな鉛筆。ペン先の頂点は (63,56) で、
+            globals.css の loading-pen keyframes がこの点を手書き線の上へ移動させる。
+            紙 (64x72) に対して大きくなりすぎないよう全長 26px 程度に抑えている */}
+        <g className="loading-pen" style={{ transformOrigin: "63px 56px" }}>
+          {/* ペン先（木の削り部分: 薄いベージュ） */}
+          <path d="M63 56 L66.2 49.6 L69.4 52.8 Z" fill="#d6c6a8" />
+          {/* 芯（先端の小さな三角） */}
+          <path d="M63 56 L64.2 53.6 L65.4 54.8 Z" fill="#1e293b" />
+          {/* 軸（emerald の平行四辺形。45度で上右方向へ） */}
+          <path d="M66.2 49.6 L69.4 52.8 L80.7 41.5 L77.5 38.3 Z" fill="#059669" />
+          {/* 尻のキャップ（濃い緑） */}
+          <path d="M77.5 38.3 L80.7 41.5 L83.3 38.9 L80.1 35.7 Z" fill="#047857" />
         </g>
       </svg>
 
