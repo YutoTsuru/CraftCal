@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Pencil, Trash2, Plus, Check, X } from "lucide-react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { formatDate, getTodayString } from "@/lib/schedule";
 import type { Task } from "@/types/dev-calendar";
@@ -33,12 +33,20 @@ function TaskCard({ task }: { task: Task }) {
 }
 
 export default function CalendarView() {
-  const { tasks, rescheduleTask } = useDevCalendar();
+  // Issue #38: カレンダーから直接タスクを追加・編集・削除するため CRUD 操作を取得
+  const { tasks, rescheduleTask, addTask, updateTask, deleteTask } = useDevCalendar();
   const [mode, setMode] = useState<ViewMode>("month");
   const [cursor, setCursor] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   // 未配置タスクの「配置モード」: 選択中のタスクID
   const [placingTaskId, setPlacingTaskId] = useState<string | null>(null);
+
+  // Issue #38 追加フォーム: 「この日にタスクを追加」を開いているかと入力中のタイトル
+  const [isAdding, setIsAdding] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  // Issue #38 編集: インライン編集中のタスクIDと編集中タイトル
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
 
   const today = useMemo(() => new Date(), []);
 
@@ -53,6 +61,27 @@ export default function CalendarView() {
     rescheduleTask(placingTaskId, dateKey);
     setPlacingTaskId(null);
     return true;
+  }
+
+  // Issue #39 スワイプ/ドラッグで期間移動。
+  // touch と（マウスの）pointer 開始位置を覚えておき、終了時の移動量で判定する。
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+
+  function beginSwipe(x: number, y: number) {
+    swipeStart.current = { x, y };
+  }
+
+  function endSwipe(x: number, y: number) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start) return;
+    const dx = x - start.x;
+    const dy = y - start.y;
+    // 横移動50px以上 かつ 横優勢（縦スクロールやタップを妨げないため）
+    if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) next(); // 左スワイプ = 次の期間へ
+      else prev(); // 右スワイプ = 前の期間へ
+    }
   }
 
   function startOfMonth(date: Date) {
@@ -143,6 +172,40 @@ export default function CalendarView() {
     else setCursor((c) => addDays(c, 7));
   }
 
+  // Issue #38 追加: 選択日に予定日を設定した最小タスクを作る
+  function submitAdd() {
+    const title = newTitle.trim();
+    if (!title || !selectedDate) return;
+    addTask({ title, memo: "", weight: "medium", scheduledDate: selectedDate });
+    setNewTitle("");
+    setIsAdding(false);
+  }
+
+  // Issue #38 編集: タイトルだけを書き換え、その他の項目は既存値を引き継ぐ
+  function submitEdit(task: Task) {
+    const title = editTitle.trim();
+    if (!title) return;
+    updateTask(task.id, {
+      title,
+      memo: task.memo,
+      weight: task.weight,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      scheduledDate: task.scheduledDate,
+      projectId: task.projectId,
+      estimatedMinutes: task.estimatedMinutes
+    });
+    setEditingTaskId(null);
+    setEditTitle("");
+  }
+
+  // Issue #38 削除: 誤タップ防止に confirm を挟む
+  function handleDelete(task: Task) {
+    if (confirm(`「${task.title}」を削除しますか？`)) {
+      deleteTask(task.id);
+    }
+  }
+
   const monthLabel = `${cursor.getFullYear()}年 ${cursor.getMonth() + 1}月`;
 
   return (
@@ -219,7 +282,21 @@ export default function CalendarView() {
         </section>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+      {/* Issue #39: カレンダーグリッドを包む section に touch/pointer ハンドラを付け、
+          横スワイプ/ドラッグで前後の期間に移動できるようにする。
+          preventDefault はせず、縦スクロールやタップ（日付選択・配置）を妨げない。
+          pointer は touch と二重発火しないよう mouse のみ処理する */}
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-4 shadow-md"
+        onTouchStart={(e) => beginSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
+        onTouchEnd={(e) => endSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
+        onPointerDown={(e) => {
+          if (e.pointerType === "mouse") beginSwipe(e.clientX, e.clientY);
+        }}
+        onPointerUp={(e) => {
+          if (e.pointerType === "mouse") endSwipe(e.clientX, e.clientY);
+        }}
+      >
         <div className="flex items-center justify-between px-2">
           <div className="text-lg font-medium">{mode === "month" ? monthLabel : `${weekRange[0].getFullYear()}年 ${weekRange[0].getMonth() + 1}月 ${weekRange[0].getDate()}日 〜 ${weekRange[6].getMonth() + 1}/${weekRange[6].getDate()}`}</div>
         </div>
@@ -496,7 +573,19 @@ export default function CalendarView() {
               <h3 className="mt-1 text-lg font-semibold">この日のタスク</h3>
             </div>
             <div>
-              <button onClick={() => setSelectedDate(null)} className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm">閉じる</button>
+              <button
+                onClick={() => {
+                  // 閉じるときは追加/編集の途中状態もリセットする
+                  setSelectedDate(null);
+                  setIsAdding(false);
+                  setNewTitle("");
+                  setEditingTaskId(null);
+                  setEditTitle("");
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm"
+              >
+                閉じる
+              </button>
             </div>
           </div>
 
@@ -505,21 +594,142 @@ export default function CalendarView() {
               <p className="text-sm text-slate-500">この日のタスクはありません。</p>
             ) : (
               tasksForSelectedKey(selectedDate).map((t) => (
-                <div key={t.id} className="flex items-start gap-2">
-                  <div className="min-w-0 flex-1">
-                    <TaskCard task={t} />
-                  </div>
-                  {t.scheduledDate && (
-                    <button
-                      onClick={() => rescheduleTask(t.id, null)}
-                      className="mt-2 shrink-0 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
-                      title="予定日を外して未配置に戻す"
-                    >
-                      未配置に戻す
-                    </button>
+                <div key={t.id} className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                  {editingTaskId === t.id ? (
+                    /* Issue #38 編集モード: その行がタイトルのインライン編集に切り替わる */
+                    <div className="mb-2 min-w-0 flex-1">
+                      <input
+                        autoFocus
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          // 日本語IMEの変換確定Enterでは保存しない (Issue #24 と同様のガード)
+                          if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            submitEdit(t);
+                          }
+                          if (e.key === "Escape") {
+                            setEditingTaskId(null);
+                            setEditTitle("");
+                          }
+                        }}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      />
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          onClick={() => submitEdit(t)}
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-emerald-700 transition hover:border-emerald-400/50 hover:bg-emerald-100"
+                          aria-label="タイトルを保存"
+                        >
+                          <Check size={18} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingTaskId(null);
+                            setEditTitle("");
+                          }}
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100"
+                          aria-label="編集をキャンセル"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="min-w-0 flex-1">
+                        <TaskCard task={t} />
+                      </div>
+                      {/* Issue #38: 各タスク行の操作ボタン。h-11 w-11 (44px) 基準で
+                          「未配置に戻す」と並べて配置する（見た目は TaskList.tsx が手本） */}
+                      <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2">
+                        {/* 編集ボタン（鉛筆） */}
+                        <button
+                          onClick={() => {
+                            setEditingTaskId(t.id);
+                            setEditTitle(t.title);
+                          }}
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
+                          aria-label="タスクを編集"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                        {/* 削除ボタン（ゴミ箱） */}
+                        <button
+                          onClick={() => handleDelete(t)}
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-rose-400/50 hover:bg-rose-100 hover:text-rose-600"
+                          aria-label="タスクを削除"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                        {t.scheduledDate && (
+                          <button
+                            onClick={() => rescheduleTask(t.id, null)}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                            title="予定日を外して未配置に戻す"
+                          >
+                            未配置に戻す
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
               ))
+            )}
+          </div>
+
+          {/* Issue #38 追加: パネル下部の「+ この日にタスクを追加」。
+              押すとタイトル入力＋「追加」「キャンセル」のインラインフォームに切り替わる */}
+          <div className="mt-3 border-t border-slate-100 pt-3">
+            {isAdding ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  autoFocus
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    // 日本語IMEの変換確定Enterでは追加しない (Issue #24 と同様のガード)
+                    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      submitAdd();
+                    }
+                    if (e.key === "Escape") {
+                      setIsAdding(false);
+                      setNewTitle("");
+                    }
+                  }}
+                  placeholder="タスクのタイトル"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={submitAdd}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                  >
+                    追加
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAdding(false);
+                      setNewTitle("");
+                    }}
+                    className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAdding(true)}
+                className="flex items-center gap-1 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700"
+              >
+                <Plus size={16} />
+                この日にタスクを追加
+              </button>
             )}
           </div>
         </section>
