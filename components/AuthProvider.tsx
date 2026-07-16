@@ -60,9 +60,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error };
     };
 
-    // メール+パスワードで新規登録
+    // メール+パスワードで新規登録。
+    // emailRedirectTo を明示することで、確認メールのリンクが「登録操作をした環境」
+    // （ローカルなら localhost、本番なら craftcal.me）に戻ってくる。
+    // 指定しないと Supabase の Site URL 設定に飛ばされ、環境違いの事故になる
     const signUp = async (email: string, password: string): Promise<AuthResult> => {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${location.origin}/auth/callback` }
+      });
       return { error };
     };
 
