@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { generateSchedule } from "@/lib/schedule";
 import { createSeedData } from "@/lib/seed-data";
 import { INBOX_PROJECT_ID, STORAGE_KEY, createEmptyState, ensureInboxProject, loadState } from "@/lib/storage";
@@ -351,7 +352,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           サーバーへの保存に失敗しました。通信状態を確認してページを再読み込みしてください
         </div>
       )}
-      {children}
+      {/* 初回データ読み込み中は children の代わりにローディングを出す。
+          コンテキスト自体は提供し続けるので、読み込み完了後は再マウントなしで children が表示される */}
+      {dataLoading ? <LoadingScreen /> : children}
     </AppContext.Provider>
   );
 }

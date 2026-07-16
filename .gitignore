@@ -1,7 +1,9 @@
 node_modules/
 .next/
-.env
-.env.local
+# 環境変数ファイルは名前のゆれ（スペース混入など）も含めて全て除外する。
+# 変数名だけを載せるテンプレート .env.example だけは例外としてコミット対象
+.env*
+!.env.example
 dist/
 build/
 npm-debug.log*
@@ -9,5 +11,4 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 /.vscode/
-package-lock.jsonnode_modules
 tsconfig.tsbuildinfo
