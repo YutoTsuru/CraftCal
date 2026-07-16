@@ -30,7 +30,18 @@ export function ProjectForm() {
     <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
       <div className="grid gap-3 md:grid-cols-2">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-slate-200 px-3 py-2 outline-none" />
-        <input value={color} onChange={(e) => setColor(e.target.value)} type="color" className="w-12 rounded-xl border border-slate-200 px-3 py-2" />
+        {/* テーマカラー選択。ラベルなしの type=color だけだと「謎のグレーの棒」に見えるため、
+            説明テキストと丸い色見本の形にする (Issue #37) */}
+        <label className="flex items-center gap-2">
+          <span className="text-sm text-slate-700">テーマカラー</span>
+          <input
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            type="color"
+            aria-label="プロジェクトのテーマカラー"
+            className="h-11 w-11 cursor-pointer rounded-full border border-slate-200 p-1"
+          />
+        </label>
         <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
         <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
         <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />

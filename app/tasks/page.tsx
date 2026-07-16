@@ -32,7 +32,8 @@ export default function TasksPage() {
         <p className="mt-2 text-slate-400">今やるべき作業を小さく分けて登録します。</p>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      {/* モバイルでも3列のまま並べる (Issue #37)。縦積みだとカード1枚ずつが巨大になりスクロールが長くなる */}
+      <section className="grid grid-cols-3 gap-3 md:gap-4">
         <StatCard label="未着手" value={counts.todo} />
         <StatCard label="進行中" value={counts.doing} />
         <StatCard label="完了" value={counts.done} />
