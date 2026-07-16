@@ -8,6 +8,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { useAuth } from "@/components/AuthProvider";
 
 export default function AuthCallbackPage() {
@@ -31,14 +32,6 @@ export default function AuthCallbackPage() {
     return () => clearTimeout(timer);
   }, [session, loading, router]);
 
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900">CraftCal</h1>
-      <div
-        className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-emerald-500"
-        aria-label="読み込み中"
-      />
-      <p className="text-sm text-slate-500">ログイン処理中...</p>
-    </div>
-  );
+  // 紙とペンのアニメーションでログイン処理中を表示する
+  return <LoadingScreen message="ログイン処理中" />;
 }

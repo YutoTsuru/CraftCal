@@ -19,6 +19,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppProvider } from "@/components/AppProvider";
 import { LayoutShell } from "@/components/LayoutShell";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { useAuth } from "@/components/AuthProvider";
 
 // ログイン不要でアクセスできるルート
@@ -46,9 +47,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [loading, user, isPublicRoute, pathname, router]);
 
-  // セッション判定中は全画面ローディング（CraftCal ロゴ + スピナー）
+  // セッション判定中は全画面ローディング（紙とペンのアニメーション）
   if (loading) {
-    return <FullScreenLoading />;
+    return <LoadingScreen />;
   }
 
   // 公開ルートはサイドバー等なしでそのまま描画
@@ -58,7 +59,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   // 未ログインで保護ルートのときは、上の useEffect が /login へ遷移するまでの間ローディングを出す
   if (!user) {
-    return <FullScreenLoading />;
+    return <LoadingScreen />;
   }
 
   // ログイン済みの保護ルート: 従来どおりアプリ本体を描画
@@ -66,19 +67,5 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     <AppProvider>
       <LayoutShell>{children}</LayoutShell>
     </AppProvider>
-  );
-}
-
-// 全画面ローディング表示。ロゴとスピナーを中央に置く
-function FullScreenLoading() {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-bold tracking-tight text-slate-900">CraftCal</h1>
-      {/* Tailwind の animate-spin で回るリング型スピナー */}
-      <div
-        className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-emerald-500"
-        aria-label="読み込み中"
-      />
-    </div>
   );
 }
