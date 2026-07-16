@@ -18,9 +18,10 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { CalendarDays, CheckSquare, Home, Rocket, Folder } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { CalendarDays, CheckSquare, Home, Rocket, Folder, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/components/AuthProvider";
 
 // ナビ項目（5画面）。サイドバー・ボトムタブで共通に使う。
 // 並び順 = 利用フロー順（Home → Projects → Tasks → Sprint → Calendar）
@@ -39,6 +40,15 @@ const tabItems = sidebarItems;
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   // 現在のURLパス。ナビの「今いる画面」をハイライトする判定に使う
   const pathname = usePathname();
+  const router = useRouter();
+  // ログイン中のユーザー情報とログアウト操作（サイドバー下部・モバイルヘッダーで使う）
+  const { user, signOut } = useAuth();
+
+  // ログアウト → ログイン画面へ戻す
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace("/login");
+  };
 
   return (
     <div className="min-h-screen lg:flex">
@@ -50,8 +60,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <div className="blob blob--c" />
       </div>
 
-      {/* ===== デスクトップ用: 左固定サイドバー (lg 以上でのみ表示) ===== */}
-      <aside className="hidden lg:block border-slate-200 bg-white px-3 py-3 lg:fixed lg:inset-y-0 lg:left-0 lg:w-56 lg:border-r">
+      {/* ===== デスクトップ用: 左固定サイドバー (lg 以上でのみ表示) =====
+          flex-col にしてナビを上、ユーザー情報+ログアウトを下端 (mt-auto) に配置する */}
+      <aside className="hidden lg:flex lg:flex-col border-slate-200 bg-white px-3 py-3 lg:fixed lg:inset-y-0 lg:left-0 lg:w-56 lg:border-r">
         {/* ロゴ。クリックでダッシュボード (/) へ */}
         <div className="mb-6">
           <Link href="/" className="block">
@@ -81,16 +92,43 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
+        {/* ===== サイドバー下部: ログイン中のメールアドレス + ログアウトボタン =====
+            mt-auto で常に一番下に貼り付ける */}
+        <div className="mt-auto border-t border-slate-200 pt-3">
+          {/* メールアドレス（長い場合は truncate で省略） */}
+          <p className="mb-2 truncate px-1 text-xs text-slate-500" title={user?.email ?? ""}>
+            {user?.email}
+          </p>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <LogOut size={18} />
+            <span>ログアウト</span>
+          </button>
+        </div>
       </aside>
 
       {/* ===== モバイル用: 上部の薄いヘッダー (lg 未満でのみ表示) =====
           ナビはここには置かず、ロゴだけにして縦スペースを節約する。
           ロゴタップでダッシュボード (/) へ移動できる */}
       <header className="lg:hidden sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="flex items-center justify-center px-4 py-3">
+        {/* relative + 中央絶対配置のロゴ。右端にログアウトアイコンボタンを置く */}
+        <div className="relative flex items-center justify-center px-2 py-3">
           <Link href="/" className="text-lg font-bold tracking-tight text-slate-900">
             CraftCal
           </Link>
+          {/* ログアウトボタン。タップ領域 44px を確保 (h-11 w-11) */}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            aria-label="ログアウト"
+            className="absolute right-1 flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <LogOut size={20} />
+          </button>
         </div>
       </header>
 

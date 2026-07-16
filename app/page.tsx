@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -19,7 +19,10 @@ import { selectTopTasks } from "@/lib/top-tasks";
 
 export default function HomePage() {
   const { tasks, sprint, schedule, seedSampleData, updateTaskStatus, completeTask } = useDevCalendar();
-  const { projects = [] } = useDevCalendar();
+  const { projects = [], canImportLocalData, importLocalData } = useDevCalendar();
+
+  // 取り込みボタンの二度押し防止。取り込み成功でカード自体が消えるため false へ戻す必要はない
+  const [importing, setImporting] = useState(false);
 
   const todayTasks = getTodayTasks(schedule, tasks);
 
@@ -46,10 +49,40 @@ export default function HomePage() {
 
   return (
     <div className="grid gap-6">
+      {/* 以前このブラウザ (localStorage) に保存したデータが見つかったときの取り込み案内カード。
+          サンプルカードと同型 (emerald)。取り込み後は canImportLocalData が false になり自動で消える。
+          サンプルカードより優先し、両方は同時に出さない */}
+      {canImportLocalData && (
+        <section className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-6">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
+                <Sparkles size={18} />
+                以前このブラウザに保存したデータが見つかりました
+              </h3>
+              <p className="mt-1 text-sm text-emerald-800">
+                ログイン前にこのブラウザへ保存したタスク・プロジェクトを、あなたのアカウントに取り込めます。
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setImporting(true);
+                importLocalData();
+              }}
+              disabled={importing}
+              className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {importing ? "取り込み中..." : "データを取り込む"}
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* サンプルデータの案内カード。
           タスクが1件もない（初回アクセスやリセット直後）ときだけ表示される。
+          ただし取り込みカードを出しているときは重複を避けて非表示にする。
           ボタンを押すと AppProvider の seedSampleData() が lib/seed-data.ts のデータを投入する */}
-      {tasks.length === 0 && (
+      {tasks.length === 0 && !canImportLocalData && (
         <section className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-6">
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>

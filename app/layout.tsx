@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AppProvider } from "@/components/AppProvider";
-import { LayoutShell } from "@/components/LayoutShell";
+import { AuthProvider } from "@/components/AuthProvider";
+import { AuthGate } from "@/components/AuthGate";
 
 export const metadata: Metadata = {
   title: "CraftCal",
@@ -16,9 +16,11 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <AppProvider>
-          <LayoutShell>{children}</LayoutShell>
-        </AppProvider>
+        {/* AuthProvider で認証状態を配布し、AuthGate が公開/保護ルートを振り分ける。
+            AppProvider（データ層）と LayoutShell（枠）は保護ルートのみ必要なため AuthGate 内へ移した */}
+        <AuthProvider>
+          <AuthGate>{children}</AuthGate>
+        </AuthProvider>
       </body>
     </html>
   );
