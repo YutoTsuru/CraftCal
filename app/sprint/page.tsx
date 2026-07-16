@@ -24,7 +24,8 @@ export default function SprintPage() {
         <p className="mt-2 text-slate-600">Googleカレンダーの空き時間とタスクをもとに、作業予定をチャット形式で提案します。</p>
       </div>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      {/* モバイルでも3列のまま並べる (Issue #37)。縦積みだとカード1枚ずつが巨大になりスクロールが長くなる */}
+      <section className="grid grid-cols-3 gap-3 md:gap-4">
         <StatCard label="今日の予定タスク" value={todayScheduledTaskCount} description="今日に配置済みの未完了タスク" />
         <StatCard label="未完了タスク" value={incompleteTasks.length} description="割り振り候補" />
         <StatCard label="提案済み予定" value={proposalCount} description="今日作成した予定案" />

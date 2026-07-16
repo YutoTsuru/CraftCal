@@ -108,7 +108,9 @@ export default function HomePage() {
           旧「概要」セクションを流用し、Tasks/Sprint へのボタンはナビと重複するため削除した (Issue #27)。
           右側の StatCard 4枚（全タスク/進行中/今日のタスク/期限間近）はそのまま残す */}
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
-        <div className="flex items-start justify-between gap-4">
+        {/* モバイルでは「見出し → 統計カード」の縦積みにする (Issue #37)。
+            横並びのままだと統計カードが本文の横に押し込まれ、ラベルが縦に折り返してしまう */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-medium text-indigo-600">Home</p>
             <h2 className="mt-2 text-2xl font-bold">今日のダッシュボード</h2>

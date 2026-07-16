@@ -12,11 +12,13 @@ export function StatCard({ label, value, description }: StatCardProps) {
   return (
     <motion.div
       whileHover={{ y: -4 }}
-      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-md"
+      // モバイルでは余白と数字を少し小さくして、狭い幅でもカードが間延びしないようにする (Issue #37)
+      className="rounded-3xl border border-slate-200 bg-white p-4 shadow-md md:p-5"
     >
       <p className="text-sm text-slate-700">{label}</p>
-      <p className="mt-3 text-3xl font-bold">{value}</p>
-      {description && <p className="mt-2 text-sm text-slate-600">{description}</p>}
+      <p className="mt-2 text-2xl font-bold md:mt-3 md:text-3xl">{value}</p>
+      {/* 補足説明はモバイルでは非表示（3列に並べたとき窮屈になるため） */}
+      {description && <p className="mt-2 hidden text-sm text-slate-600 md:block">{description}</p>}
     </motion.div>
   );
 }
