@@ -9,6 +9,17 @@ import CalendarRangeHeader from "@/components/CalendarRangeHeader";
 
 type ViewMode = "month" | "week";
 
+// Issue #46: 期間持ち（複数日）タスクの判定。開始日と終了日が両方あり、かつ異なる日付のとき true。
+// 月表示では複数日タスクを週またぎのバーで、単日タスクをセル内チップで描き分けるために使う。
+function isMultiDayTask(t: Task) {
+  return !!(t.scheduledDate && t.dueDate && t.scheduledDate !== t.dueDate);
+}
+
+// Issue #46: セル内チップ／週バーの状態色（done=緑 / doing=青 / その他=amber）。バーと同じ配色に統一。
+function statusChipColor(status: Task["status"]) {
+  return status === "done" ? "bg-emerald-200" : status === "doing" ? "bg-blue-200" : "bg-amber-200";
+}
+
 function TaskCard({ task }: { task: Task }) {
   const { projects } = useDevCalendar();
   const project = projects.find((p) => p.id === task.projectId);
@@ -118,9 +129,11 @@ export default function CalendarView() {
         setRangeEnd(k);
       }
     };
-    const up = () => {
+    // Issue #46: 指を離す（pointerup）とキャンセル（pointercancel）の後始末は共通。
+    const finish = () => {
       window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointerup", finish);
+      window.removeEventListener("pointercancel", finish);
       // 開始 > 終了 なら入れ替える（YYYY-MM-DD は辞書順=日付順）
       let a = startKey;
       let b = endKey;
@@ -128,23 +141,34 @@ export default function CalendarView() {
         a = endKey;
         b = startKey;
       }
+      // 期間を追加フォームへ反映。ハイライトは以後 newStart/newEnd を源に描き続ける。
       setNewStart(a);
       setNewEnd(b);
-      setRangeSelecting(false);
+      // ライブ表示用の一時 state だけ消す。範囲選択モードは維持し、もう一度なぞれば選び直せる。
       setRangeStart(null);
       setRangeEnd(null);
-      // pointerup 直後の click（日付選択）を1回だけ握りつぶす
-      suppressClick.current = true;
     };
     window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
+    window.addEventListener("pointerup", finish);
+    window.addEventListener("pointercancel", finish);
   }
 
-  // 選択中の範囲（開始〜終了）に含まれる日付セルかどうか。ハイライト用
+  // Issue #46: 選択ハイライトの表示源。確定までハイライトを残し、date入力での調整にも追従させる。
+  //  - ドラッグ中（rangeStart/rangeEnd あり）: なぞっている範囲をライブ表示
+  //  - 指を離した後（範囲選択モード中）: 追加フォームの開始/終了(newStart/newEnd)を源に緑のまま表示し続ける
+  // 範囲選択モードを抜ける／フォームを閉じると newStart/newEnd も消えるためハイライトも消える。
   function inSelectingRange(key: string) {
-    if (!rangeStart || !rangeEnd) return false;
-    const lo = rangeStart < rangeEnd ? rangeStart : rangeEnd;
-    const hi = rangeStart < rangeEnd ? rangeEnd : rangeStart;
+    let lo: string | null = null;
+    let hi: string | null = null;
+    if (rangeStart && rangeEnd) {
+      lo = rangeStart < rangeEnd ? rangeStart : rangeEnd;
+      hi = rangeStart < rangeEnd ? rangeEnd : rangeStart;
+    } else if (rangeSelecting && newStart) {
+      const b = newEnd ?? newStart;
+      lo = newStart < b ? newStart : b;
+      hi = newStart < b ? b : newStart;
+    }
+    if (!lo || !hi) return false;
     return lo <= key && key <= hi;
   }
 
@@ -554,29 +578,13 @@ export default function CalendarView() {
               {/* weeks */}
               <div className="space-y-1">
                 {monthMatrix.map((week, wi) => {
-                  const weekStart = week[0];
-                  const weekEnd = week[6];
-
-                  // events that overlap this week（ドラッグ中はプレビュー反映のため displayTasks を使う）
-                  const events = displayTasks
-                    .map((t) => {
-                      const startKey = t.scheduledDate ?? t.dueDate ?? null;
-                      const endKey = t.dueDate ?? t.scheduledDate ?? null;
-                      if (!startKey) return null;
-                      const start = new Date(`${startKey}T00:00:00`);
-                      const end = new Date(`${endKey}T00:00:00`);
-                      if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
-                      return { task: t, start, end };
-                    })
-                    .filter(Boolean) as { task: Task; start: Date; end: Date }[];
-
-                  const overlapping = events.filter(({ start, end }) => !(end < weekStart || start > weekEnd));
-
-                  // compute per-day top-2 map for this week to limit visible segments
+                  // Issue #46: バー表示は複数日タスクのみ対象（単日タスクはセル内チップで表示するため）。
+                  // 各日ごとに上位2件までを選び、連続日をつないで週またぎのセグメント（バー）にする。
                   const dayTopMap: Record<string, Set<string>> = {};
                   week.forEach((d) => {
                     const key = formatDate(d);
                     const items = tasksForDate(d)
+                      .filter(isMultiDayTask)
                       .slice()
                       .sort((a, b) => taskDisplayScore(b) - taskDisplayScore(a))
                       .slice(0, 2);
@@ -639,11 +647,24 @@ export default function CalendarView() {
 
                   const maxRows = 2;
 
+                  // Issue #46: 実際に表示される（上位 maxRows 段の）バーが各曜日を通るタスクID集合。
+                  // セルの「+N件」計算と、チップを置く上部スペースの段数決定に使う。
+                  const shownBarIdsByIndex: Set<string>[] = week.map(() => new Set<string>());
+                  rows.slice(0, maxRows).forEach((row) => {
+                    row.forEach((seg) => {
+                      for (let i = seg.startIndex; i < seg.startIndex + seg.length; i++) {
+                        shownBarIdsByIndex[i]?.add(seg.task.id);
+                      }
+                    });
+                  });
+                  // この週で確保するバーの段数（0〜maxRows）。セル上部に同じ高さの余白を作り段を揃える。
+                  const barLaneCount = Math.min(rows.length, maxRows);
+
                   return (
                     <div key={wi} className="relative grid grid-cols-7 gap-1">
-                  
+
                       {/* day cells */}
-                      {week.map((d) => {
+                      {week.map((d, di) => {
                         const key = formatDate(d);
                         const isCurrentMonth = d.getMonth() === cursor.getMonth();
                         const isToday = formatDate(d) === formatDate(today);
@@ -651,6 +672,20 @@ export default function CalendarView() {
                         const isSelected = selectedDate === key;
 
                         const inRange = inSelectingRange(key);
+
+                        // Issue #46: 単日タスクはセル内にタスク名チップで表示（最大2件）。
+                        const singleDayItems = items
+                          .filter((t) => !isMultiDayTask(t))
+                          .slice()
+                          .sort((a, b) => taskDisplayScore(b) - taskDisplayScore(a));
+                        const chipItems = singleDayItems.slice(0, 2);
+                        // その日を通る（表示中の）バー数
+                        const barsThrough = shownBarIdsByIndex[di]?.size ?? 0;
+                        // 「+N件」= 全タスク数 −（表示チップ数 + 表示バー数）。負にならないようにclamp。
+                        //  - デスクトップ: 複数日タスクはバーで見えるので差し引く（issueの式どおり）
+                        //  - モバイル: バーは非表示なので複数日タスクも「隠れている件数」として +N に含める
+                        const moreCountDesktop = Math.max(0, items.length - chipItems.length - barsThrough);
+                        const moreCountMobile = Math.max(0, items.length - chipItems.length);
 
                         return (
                           /* 日付セル1個分。クリックの挙動は2通り:
@@ -665,6 +700,8 @@ export default function CalendarView() {
                             onPointerDown={(e) => {
                               if (!rangeSelecting) return;
                               e.preventDefault();
+                              // Issue #46: タッチでも pointermove/up が届くようポインタをこのセルにキャプチャする
+                              e.currentTarget.setPointerCapture?.(e.pointerId);
                               startRangeDrag(key);
                             }}
                             onClick={() => {
@@ -677,7 +714,7 @@ export default function CalendarView() {
                               if (placeTask(key)) return;
                               setSelectedDate(isSelected ? null : key);
                             }}
-                            className={`cursor-pointer min-h-[64px] sm:min-h-[110px] overflow-hidden rounded-md border p-1.5 sm:p-2 ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${inRange ? 'bg-emerald-100 ring-2 ring-emerald-300' : ''} ${isSelected ? 'ring-2 ring-emerald-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-emerald-400' : ''}`}
+                            className={`cursor-pointer h-24 sm:h-32 overflow-hidden rounded-md border p-1.5 sm:p-2 ${rangeSelecting ? 'touch-none' : ''} ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${inRange ? 'bg-emerald-100 ring-2 ring-emerald-300' : ''} ${isSelected ? 'ring-2 ring-emerald-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-emerald-400' : ''}`}
                           >
                             {/* セル上段: 日付の数字（今日は緑丸で強調）と、タスク件数 */}
                             <div className="flex items-center justify-between">
@@ -687,35 +724,32 @@ export default function CalendarView() {
                               <div className="hidden sm:block text-xs text-slate-400">{items.length ? `${items.length}` : ''}</div>
                             </div>
 
-                            {/* モバイル用: タスクを色ドットで表現（最大3個 + 超過分は +N）。
-                                バー表示はセルが小さすぎて読めないため、
-                                「ドットで存在を示し、タップで下の詳細パネルを見る」方式 (Issue #13 の調査より) */}
-                            <div className="mt-1 flex items-center gap-0.5 sm:hidden">
-                              {items.slice(0, 3).map((t) => (
-                                <span
-                                  key={t.id}
-                                  className={`inline-block h-1.5 w-1.5 rounded-full ${
-                                    t.status === 'done' ? 'bg-emerald-400' : t.status === 'doing' ? 'bg-blue-400' : 'bg-amber-400'
-                                  }`}
-                                />
-                              ))}
-                              {items.length > 3 && <span className="text-[10px] text-slate-500">+{items.length - 3}</span>}
-                            </div>
+                            {/* Issue #46: 複数日バー用にセル上部へ確保する余白（デスクトップのみ）。
+                                週内で同じ段数ぶん空けてバーの段を揃え、下のチップと重ならないようにする */}
+                            {barLaneCount > 0 && (
+                              <div className="hidden sm:block" style={{ height: barLaneCount * 28 }} aria-hidden />
+                            )}
 
-                            {/* デスクトップ用: バー表示に収まらない分の「他N件」表示 */}
-                            <div className="mt-2 hidden sm:block">
-                              {(() => {
-                                const keyFmt = formatDate(d);
-                                const allItems = tasksForDate(d);
-                                const selectedSet = dayTopMap[keyFmt] ?? new Set<string>();
-                                const visibleCount = Math.min(2, selectedSet.size);
-                                const more = Math.max(0, allItems.length - visibleCount);
-                                return (
-                                  <>
-                                    {more > 0 && <div className="mt-1 text-xs text-slate-500">他{more}件</div>}
-                                  </>
-                                );
-                              })()}
+                            {/* Issue #46: 単日タスク名チップ（Googleカレンダー風）。最大2件。
+                                pointer-events-none にしてタップはセル全体の選択挙動を維持する。
+                                色はバーと同じ状態色（done=緑 / doing=青 / その他=amber）。
+                                あふれた分（表示チップ＋表示バーを除く）は最下部に「+N件」で示す */}
+                            <div className="mt-1 space-y-0.5">
+                              {chipItems.map((t) => (
+                                <div
+                                  key={t.id}
+                                  title={t.title}
+                                  className={`pointer-events-none truncate rounded px-1 py-0.5 text-[10px] leading-tight text-slate-800 sm:text-xs ${statusChipColor(t.status)}`}
+                                >
+                                  {t.title}
+                                </div>
+                              ))}
+                              {moreCountDesktop > 0 && (
+                                <div className="hidden text-[10px] leading-tight text-slate-500 sm:block sm:text-xs">+{moreCountDesktop}件</div>
+                              )}
+                              {moreCountMobile > 0 && (
+                                <div className="text-[10px] leading-tight text-slate-500 sm:hidden">+{moreCountMobile}件</div>
+                              )}
                             </div>
                           </div>
                         );
@@ -727,7 +761,7 @@ export default function CalendarView() {
                           セルの上に重ねて描画するデスクトップ専用の表示。
                           モバイルはセルが小さく読めないため hidden sm:block で消し、
                           代わりにセル内の色ドット（上記）で件数を伝える (Issue #14) */}
-                      <div className="absolute inset-x-0 top-12 px-2 pointer-events-none hidden sm:block">
+                      <div className="absolute inset-x-0 top-8 px-2 pointer-events-none hidden sm:block">
                         <div className="relative h-0">
                           {rows.slice(0, maxRows).map((row, ri) => (
                             <div key={ri} className="absolute left-0 right-0" style={{ top: ri * 28 }}>
@@ -811,6 +845,8 @@ export default function CalendarView() {
                       onPointerDown={(e) => {
                         if (!rangeSelecting) return;
                         e.preventDefault();
+                        // Issue #46: タッチでも pointermove/up が届くようポインタをこのセルにキャプチャする
+                        e.currentTarget.setPointerCapture?.(e.pointerId);
                         startRangeDrag(key);
                       }}
                       onClick={() => {
@@ -821,7 +857,7 @@ export default function CalendarView() {
                         if (rangeSelecting) return;
                         placeTask(key);
                       }}
-                      className={`rounded-md border bg-white p-3 ${inRange ? 'bg-emerald-100 ring-2 ring-emerald-300' : ''} ${!isStart && !isEnd ? '' : 'opacity-100'} ${placingTaskId ? 'cursor-pointer hover:ring-2 hover:ring-emerald-400' : ''}`}
+                      className={`rounded-md border bg-white p-3 ${rangeSelecting ? 'touch-none' : ''} ${inRange ? 'bg-emerald-100 ring-2 ring-emerald-300' : ''} ${!isStart && !isEnd ? '' : 'opacity-100'} ${placingTaskId ? 'cursor-pointer hover:ring-2 hover:ring-emerald-400' : ''}`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">
