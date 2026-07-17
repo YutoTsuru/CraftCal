@@ -175,7 +175,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         priority: input.priority ?? target.priority,
         dueDate: input.dueDate ?? null,
         scheduledDate: input.scheduledDate ?? null,
-        estimatedMinutes: typeof input.estimatedMinutes === "number" ? input.estimatedMinutes : target.estimatedMinutes,
+        // undefined = 変更なし（既存値を維持） / null = クリア（未設定に戻す） / 数値 = その値に設定 (Issue #44)
+        estimatedMinutes: input.estimatedMinutes === undefined ? target.estimatedMinutes : input.estimatedMinutes,
         updatedAt: now
       };
       setTasks((current) => current.map((task) => (task.id === id ? updated : task)));
