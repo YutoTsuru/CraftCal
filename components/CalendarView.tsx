@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pencil, Trash2, Plus, Check, X } from "lucide-react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { formatDate, getTodayString } from "@/lib/schedule";
-import type { Task } from "@/types/dev-calendar";
+import type { Task, TaskWeight } from "@/types/dev-calendar";
 import CalendarRangeHeader from "@/components/CalendarRangeHeader";
 
 type ViewMode = "month" | "week";
@@ -44,6 +44,24 @@ export default function CalendarView() {
   // Issue #38 追加フォーム: 「この日にタスクを追加」を開いているかと入力中のタイトル
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  // Issue #42 追加フォーム拡張: 期間（開始日/終了日）・重さ・見積時間・エラー文言
+  const [newStart, setNewStart] = useState<string | null>(null);
+  const [newEnd, setNewEnd] = useState<string | null>(null);
+  const [newWeight, setNewWeight] = useState<TaskWeight>("medium");
+  const [newEstimateHours, setNewEstimateHours] = useState<number | "">("");
+  const [addError, setAddError] = useState<string | null>(null);
+
+  // Issue #42 なぞって期間指定: 範囲選択モードの ON/OFF と、選択中の開始/終了候補日
+  const [rangeSelecting, setRangeSelecting] = useState(false);
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
+  // 範囲選択の pointerup 直後に発火する click（日付選択）を1回だけ無視するためのフラグ
+  const suppressClick = useRef(false);
+
+  // Issue #42 バー端ドラッグ: ドラッグ中のタスクIDと掴んでいる端（開始/終了）、および現在のプレビュー期間
+  const [dragTask, setDragTask] = useState<{ id: string; edge: "start" | "end" } | null>(null);
+  const [dragPreview, setDragPreview] = useState<{ start: string; end: string } | null>(null);
+
   // Issue #38 編集: インライン編集中のタスクIDと編集中タイトル
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -56,11 +74,116 @@ export default function CalendarView() {
   );
   const placingTask = unplacedTasks.find((t) => t.id === placingTaskId) ?? null;
 
+  // Issue #42 バー端ドラッグのプレビュー用タスク配列。
+  // ドラッグ中は対象タスクの scheduledDate/dueDate をプレビュー値に差し替える。
+  // これを描画系（tasksForDate や週バー計算）が参照することで、既存ロジックのまま
+  // バーがライブで伸縮して見える。
+  const displayTasks = useMemo(() => {
+    if (!dragTask || !dragPreview) return tasks;
+    return tasks.map((t) =>
+      t.id === dragTask.id ? { ...t, scheduledDate: dragPreview.start, dueDate: dragPreview.end } : t
+    );
+  }, [tasks, dragTask, dragPreview]);
+
   function placeTask(dateKey: string) {
     if (!placingTaskId) return false;
     rescheduleTask(placingTaskId, dateKey);
     setPlacingTaskId(null);
     return true;
+  }
+
+  // Issue #42 共通: 画面座標から data-date セルの日付キーを求める（なぞり選択・バー端ドラッグ共用）
+  function cellDateFromPoint(x: number, y: number): string | null {
+    const el = document.elementFromPoint(x, y);
+    const cell = el?.closest("[data-date]") as HTMLElement | null;
+    return cell?.getAttribute("data-date") ?? null;
+  }
+
+  // Issue #42 なぞって期間指定: セルを押した日を開始候補にし、pointermove で通過セルまで範囲を広げる。
+  // 離した日を終了候補とし、開始より前で離したら開始/終了を入れ替えてフォームに反映する。
+  function startRangeDrag(startKey: string) {
+    setRangeStart(startKey);
+    setRangeEnd(startKey);
+    let endKey = startKey;
+    const move = (ev: PointerEvent) => {
+      const k = cellDateFromPoint(ev.clientX, ev.clientY);
+      if (k) {
+        endKey = k;
+        setRangeEnd(k);
+      }
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      // 開始 > 終了 なら入れ替える（YYYY-MM-DD は辞書順=日付順）
+      let a = startKey;
+      let b = endKey;
+      if (b < a) {
+        a = endKey;
+        b = startKey;
+      }
+      setNewStart(a);
+      setNewEnd(b);
+      setRangeSelecting(false);
+      setRangeStart(null);
+      setRangeEnd(null);
+      // pointerup 直後の click（日付選択）を1回だけ握りつぶす
+      suppressClick.current = true;
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
+
+  // 選択中の範囲（開始〜終了）に含まれる日付セルかどうか。ハイライト用
+  function inSelectingRange(key: string) {
+    if (!rangeStart || !rangeEnd) return false;
+    const lo = rangeStart < rangeEnd ? rangeStart : rangeEnd;
+    const hi = rangeStart < rangeEnd ? rangeEnd : rangeStart;
+    return lo <= key && key <= hi;
+  }
+
+  // Issue #42 バー端ドラッグ（デスクトップ月表示のみ・マウス限定）。
+  // pointermove 中は elementFromPoint で通過セルを特定し、掴んだ端をそのセルへ寄せる。
+  // 開始>終了 にならないようクランプ（最小1日）。pointerup で updateTask に確定する。
+  function startBarDrag(task: Task, edge: "start" | "end", e: React.PointerEvent) {
+    if (e.pointerType !== "mouse") return; // タッチは対象外（モバイルはバー非表示）
+    e.stopPropagation(); // 下のセルの click（日付選択）が発火しないよう保護
+    e.preventDefault();
+    const startKey = task.scheduledDate ?? task.dueDate ?? formatDate(new Date());
+    const endKey = task.dueDate ?? task.scheduledDate ?? startKey;
+    let previewStart = startKey;
+    let previewEnd = endKey;
+    setDragTask({ id: task.id, edge });
+    setDragPreview({ start: startKey, end: endKey });
+    const move = (ev: PointerEvent) => {
+      const k = cellDateFromPoint(ev.clientX, ev.clientY);
+      if (!k) return;
+      if (edge === "end") {
+        previewEnd = k < startKey ? startKey : k; // 終了は開始以降にクランプ
+        setDragPreview({ start: startKey, end: previewEnd });
+      } else {
+        previewStart = k > endKey ? endKey : k; // 開始は終了以前にクランプ
+        setDragPreview({ start: previewStart, end: endKey });
+      }
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      updateTask(task.id, {
+        title: task.title,
+        memo: task.memo,
+        weight: task.weight,
+        priority: task.priority,
+        projectId: task.projectId,
+        estimatedMinutes: task.estimatedMinutes,
+        scheduledDate: previewStart,
+        dueDate: previewEnd
+      });
+      setDragTask(null);
+      setDragPreview(null);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
   }
 
   // Issue #39 スワイプ/ドラッグで期間移動。
@@ -83,6 +206,23 @@ export default function CalendarView() {
       else prev(); // 右スワイプ = 前の期間へ
     }
   }
+
+  // Issue #42 矢印キーで期間移動。ArrowLeft→前 / ArrowRight→次。
+  // input/textarea/select にフォーカスがあるとき（日付入力中など）は無視する。
+  // 範囲選択モード中も誤操作を避けるため無効化する。
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (rangeSelecting) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key === "ArrowLeft") prev();
+      else if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // prev/next は mode に依存するため mode 変化時に貼り直す
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, rangeSelecting]);
 
   function startOfMonth(date: Date) {
     return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -128,7 +268,7 @@ export default function CalendarView() {
   function tasksForDate(d: Date) {
     const key = formatDate(d);
     const sd = new Date(`${key}T00:00:00`);
-    return tasks.filter((t) => {
+    return displayTasks.filter((t) => {
       const startKey = t.scheduledDate ?? t.dueDate ?? null;
       const endKey = t.dueDate ?? t.scheduledDate ?? null;
       if (!startKey) return false;
@@ -141,7 +281,7 @@ export default function CalendarView() {
 
   function tasksForSelectedKey(key: string) {
     const sd = new Date(`${key}T00:00:00`);
-    return tasks.filter((t) => {
+    return displayTasks.filter((t) => {
       const startKey = t.scheduledDate ?? t.dueDate ?? null;
       const endKey = t.dueDate ?? t.scheduledDate ?? null;
       if (!startKey) return false;
@@ -172,13 +312,52 @@ export default function CalendarView() {
     else setCursor((c) => addDays(c, 7));
   }
 
-  // Issue #38 追加: 選択日に予定日を設定した最小タスクを作る
+  // Issue #42 追加フォームを開くときは開始日を選択日で初期化し、他項目は既定値に戻す
+  function openAdd() {
+    setIsAdding(true);
+    setNewStart(selectedDate);
+    setNewEnd(null);
+    setNewWeight("medium");
+    setNewEstimateHours("");
+    setAddError(null);
+  }
+
+  // 追加フォームの状態をすべてリセット（キャンセル/追加後/パネルを閉じたとき）
+  function resetAddForm() {
+    setIsAdding(false);
+    setNewTitle("");
+    setNewStart(null);
+    setNewEnd(null);
+    setNewWeight("medium");
+    setNewEstimateHours("");
+    setAddError(null);
+    setRangeSelecting(false);
+    setRangeStart(null);
+    setRangeEnd(null);
+  }
+
+  // Issue #38/#42 追加: 選択日に予定日・期間・重さ・見積を設定してタスクを作る
   function submitAdd() {
     const title = newTitle.trim();
-    if (!title || !selectedDate) return;
-    addTask({ title, memo: "", weight: "medium", scheduledDate: selectedDate });
-    setNewTitle("");
-    setIsAdding(false);
+    if (!title) {
+      setAddError("タスク名を入力してください");
+      return;
+    }
+    const start = newStart ?? selectedDate;
+    // 終了日 < 開始日 はエラー（送信しない）
+    if (start && newEnd && newEnd < start) {
+      setAddError("終了日は開始日以降の日付にしてください");
+      return;
+    }
+    addTask({
+      title,
+      memo: "",
+      weight: newWeight,
+      scheduledDate: start,
+      dueDate: newEnd || null,
+      estimatedMinutes: typeof newEstimateHours === "number" ? Math.round(newEstimateHours * 60) : undefined
+    });
+    resetAddForm();
   }
 
   // Issue #38 編集: タイトルだけを書き換え、その他の項目は既存値を引き継ぐ
@@ -282,19 +461,37 @@ export default function CalendarView() {
         </section>
       )}
 
-      {/* Issue #39: カレンダーグリッドを包む section に touch/pointer ハンドラを付け、
-          横スワイプ/ドラッグで前後の期間に移動できるようにする。
+      {/* Issue #42 なぞって期間指定モードの案内バー。
+          開始日から終了日までなぞる操作を促し、キャンセルできるようにする */}
+      {rangeSelecting && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <span>開始日から終了日までカレンダーをなぞってください</span>
+          <button
+            onClick={() => {
+              setRangeSelecting(false);
+              setRangeStart(null);
+              setRangeEnd(null);
+            }}
+            className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs text-emerald-700 hover:bg-emerald-100"
+          >
+            キャンセル
+          </button>
+        </div>
+      )}
+
+      {/* Issue #39/#42: カレンダーグリッドを包む section にタッチスワイプで期間移動を付ける。
+          Issue #42 でマウスドラッグでの月/週移動は廃止し（PCは矢印キーに一本化）、タッチのみ残す。
           preventDefault はせず、縦スクロールやタップ（日付選択・配置）を妨げない。
-          pointer は touch と二重発火しないよう mouse のみ処理する */}
+          範囲選択モード中（rangeSelecting）は誤発火防止のためスワイプを無効化する */}
       <section
         className="rounded-xl border border-slate-200 bg-white p-4 shadow-md"
-        onTouchStart={(e) => beginSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
-        onTouchEnd={(e) => endSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
-        onPointerDown={(e) => {
-          if (e.pointerType === "mouse") beginSwipe(e.clientX, e.clientY);
+        onTouchStart={(e) => {
+          if (rangeSelecting) return;
+          beginSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
         }}
-        onPointerUp={(e) => {
-          if (e.pointerType === "mouse") endSwipe(e.clientX, e.clientY);
+        onTouchEnd={(e) => {
+          if (rangeSelecting) return;
+          endSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
         }}
       >
         <div className="flex items-center justify-between px-2">
@@ -321,8 +518,8 @@ export default function CalendarView() {
                   const weekStart = week[0];
                   const weekEnd = week[6];
 
-                  // events that overlap this week
-                  const events = tasks
+                  // events that overlap this week（ドラッグ中はプレビュー反映のため displayTasks を使う）
+                  const events = displayTasks
                     .map((t) => {
                       const startKey = t.scheduledDate ?? t.dueDate ?? null;
                       const endKey = t.dueDate ?? t.scheduledDate ?? null;
@@ -350,7 +547,7 @@ export default function CalendarView() {
                   // build segments for week based on per-day top-2 selection
                   // For each day, dayTopMap contains top-2 task ids; coalesce consecutive days per task into segments
                   const idToTask = new Map<string, Task>();
-                  tasks.forEach((t) => idToTask.set(t.id, t));
+                  displayTasks.forEach((t) => idToTask.set(t.id, t));
 
                   const idToIndices = new Map<string, number[]>();
                   week.forEach((d, idx) => {
@@ -414,17 +611,34 @@ export default function CalendarView() {
                         const items = tasksForDate(d);
                         const isSelected = selectedDate === key;
 
+                        const inRange = inSelectingRange(key);
+
                         return (
                           /* 日付セル1個分。クリックの挙動は2通り:
                              - 未配置タスクを選択中 → その日に配置 (placeTask)
-                             - 通常時 → その日を選択して下部に詳細パネルを表示 */
+                             - 通常時 → その日を選択して下部に詳細パネルを表示
+                             範囲選択モード中は pointerdown でなぞり選択を開始し、click（選択/配置）は無効化する。
+                             data-date は Issue #42 のなぞり選択・バー端ドラッグで elementFromPoint から日付を引くために付与 */
                           <div
                             key={key}
+                            data-date={key}
+                            style={rangeSelecting ? { touchAction: "none" } : undefined}
+                            onPointerDown={(e) => {
+                              if (!rangeSelecting) return;
+                              e.preventDefault();
+                              startRangeDrag(key);
+                            }}
                             onClick={() => {
+                              // なぞり選択の pointerup 直後の click は握りつぶす
+                              if (suppressClick.current) {
+                                suppressClick.current = false;
+                                return;
+                              }
+                              if (rangeSelecting) return;
                               if (placeTask(key)) return;
                               setSelectedDate(isSelected ? null : key);
                             }}
-                            className={`cursor-pointer min-h-[64px] sm:min-h-[110px] overflow-hidden rounded-md border p-1.5 sm:p-2 ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${isSelected ? 'ring-2 ring-emerald-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-emerald-400' : ''}`}
+                            className={`cursor-pointer min-h-[64px] sm:min-h-[110px] overflow-hidden rounded-md border p-1.5 sm:p-2 ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${inRange ? 'bg-emerald-100 ring-2 ring-emerald-300' : ''} ${isSelected ? 'ring-2 ring-emerald-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-emerald-400' : ''}`}
                           >
                             {/* セル上段: 日付の数字（今日は緑丸で強調）と、タスク件数 */}
                             <div className="flex items-center justify-between">
@@ -482,11 +696,36 @@ export default function CalendarView() {
                                 const left = (seg.startIndex / 7) * 100;
                                 const width = (seg.length / 7) * 100;
                                 const bg = seg.task.status === 'done' ? 'bg-emerald-200' : seg.task.status === 'doing' ? 'bg-blue-200' : 'bg-amber-200';
+                                // Issue #42: このセグメントがタスクの実際の開始日/終了日を含むか。
+                                // 含む端にだけドラッグハンドルを出す（週をまたぐタスクの中間セグメントには出さない）
+                                const taskStartKey = seg.task.scheduledDate ?? seg.task.dueDate ?? null;
+                                const taskEndKey = seg.task.dueDate ?? seg.task.scheduledDate ?? null;
+                                const isStartSeg = taskStartKey !== null && formatDate(seg.segStart) === taskStartKey;
+                                const isEndSeg = taskEndKey !== null && formatDate(seg.segEnd) === taskEndKey;
                                 return (
                                   <div key={seg.task.id} title={seg.task.title} className={`absolute h-7 overflow-hidden text-xs font-medium text-slate-800 shadow-sm`} style={{ left: `${left}%`, width: `${width}%` }}>
                                     <div className={`${bg} rounded-md px-2 py-1 truncate` + (seg.startIndex === 0 ? ' rounded-l-lg' : '') + (seg.startIndex + seg.length === 7 ? ' rounded-r-lg' : '')}>
                                       {seg.task.title}
                                     </div>
+                                    {/* Issue #42 期間変更ハンドル（デスクトップ・マウス限定）。
+                                        pointer-events-auto でこの8px幅だけドラッグ可能にする。
+                                        親オーバーレイは pointer-events-none なのでバー本体はセルのクリックを妨げない */}
+                                    {isStartSeg && (
+                                      <div
+                                        onPointerDown={(e) => startBarDrag(seg.task, "start", e)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="absolute left-0 top-0 h-7 w-2 cursor-ew-resize rounded-l-md bg-slate-500/30 pointer-events-auto hover:bg-slate-600/50"
+                                        aria-label="開始日を変更"
+                                      />
+                                    )}
+                                    {isEndSeg && (
+                                      <div
+                                        onPointerDown={(e) => startBarDrag(seg.task, "end", e)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="absolute right-0 top-0 h-7 w-2 cursor-ew-resize rounded-r-md bg-slate-500/30 pointer-events-auto hover:bg-slate-600/50"
+                                        aria-label="終了日を変更"
+                                      />
+                                    )}
                                   </div>
                                 );
                               })}
@@ -523,11 +762,27 @@ export default function CalendarView() {
                   const isStart = key === startKey;
                   const isEnd = key === endKey;
 
+                  const inRange = inSelectingRange(key);
+
                   return (
                     <div
                       key={formatDate(d)}
-                      onClick={() => placeTask(key)}
-                      className={`rounded-md border bg-white p-3 ${!isStart && !isEnd ? '' : 'opacity-100'} ${placingTaskId ? 'cursor-pointer hover:ring-2 hover:ring-emerald-400' : ''}`}
+                      data-date={key}
+                      style={rangeSelecting ? { touchAction: "none" } : undefined}
+                      onPointerDown={(e) => {
+                        if (!rangeSelecting) return;
+                        e.preventDefault();
+                        startRangeDrag(key);
+                      }}
+                      onClick={() => {
+                        if (suppressClick.current) {
+                          suppressClick.current = false;
+                          return;
+                        }
+                        if (rangeSelecting) return;
+                        placeTask(key);
+                      }}
+                      className={`rounded-md border bg-white p-3 ${inRange ? 'bg-emerald-100 ring-2 ring-emerald-300' : ''} ${!isStart && !isEnd ? '' : 'opacity-100'} ${placingTaskId ? 'cursor-pointer hover:ring-2 hover:ring-emerald-400' : ''}`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">
@@ -577,8 +832,7 @@ export default function CalendarView() {
                 onClick={() => {
                   // 閉じるときは追加/編集の途中状態もリセットする
                   setSelectedDate(null);
-                  setIsAdding(false);
-                  setNewTitle("");
+                  resetAddForm();
                   setEditingTaskId(null);
                   setEditTitle("");
                 }}
@@ -680,11 +934,12 @@ export default function CalendarView() {
             )}
           </div>
 
-          {/* Issue #38 追加: パネル下部の「+ この日にタスクを追加」。
-              押すとタイトル入力＋「追加」「キャンセル」のインラインフォームに切り替わる */}
+          {/* Issue #38/#42 追加: パネル下部の「+ この日にタスクを追加」。
+              押すとタイトル・期間（開始日/終了日）・重さ・見積時間を入力できるインラインフォームに切り替わる */}
           <div className="mt-3 border-t border-slate-100 pt-3">
             {isAdding ? (
-              <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="flex flex-col gap-3">
+                {/* タイトル（IMEの変換確定Enterでは送信しない） */}
                 <input
                   autoFocus
                   value={newTitle}
@@ -697,13 +952,90 @@ export default function CalendarView() {
                       submitAdd();
                     }
                     if (e.key === "Escape") {
-                      setIsAdding(false);
-                      setNewTitle("");
+                      resetAddForm();
                     }
                   }}
                   placeholder="タスクのタイトル"
-                  className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
                 />
+
+                {/* 開始日 / 終了日（TaskInput.tsx の同項目が手本） */}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <label className="flex flex-col">
+                    <span className="mb-1 text-xs text-slate-600">開始日</span>
+                    <input
+                      type="date"
+                      value={newStart ?? ""}
+                      onChange={(e) => setNewStart(e.target.value || null)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      aria-label="開始日"
+                    />
+                  </label>
+                  <label className="flex flex-col">
+                    <span className="mb-1 text-xs text-slate-600">終了日（任意）</span>
+                    <input
+                      type="date"
+                      value={newEnd ?? ""}
+                      onChange={(e) => setNewEnd(e.target.value || null)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      aria-label="終了日"
+                    />
+                  </label>
+                </div>
+
+                {/* 重さ / 見積時間 / なぞって期間指定トグル */}
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="flex flex-col">
+                    <span className="mb-1 text-xs text-slate-600">重さ</span>
+                    <select
+                      value={newWeight}
+                      onChange={(e) => setNewWeight(e.target.value as TaskWeight)}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      aria-label="重さ"
+                    >
+                      <option value="light">軽め</option>
+                      <option value="medium">普通</option>
+                      <option value="heavy">重め</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col">
+                    <span className="mb-1 text-xs text-slate-600">見積時間 (h)</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      value={newEstimateHours === "" ? "" : String(newEstimateHours)}
+                      onChange={(e) => setNewEstimateHours(e.target.value === "" ? "" : Number(e.target.value))}
+                      placeholder="h"
+                      className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      aria-label="見積時間"
+                    />
+                  </label>
+                  {/* Issue #42 なぞって期間指定モードへ入る/抜けるトグル */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (rangeSelecting) {
+                        setRangeSelecting(false);
+                        setRangeStart(null);
+                        setRangeEnd(null);
+                      } else {
+                        setRangeSelecting(true);
+                      }
+                    }}
+                    className={`h-11 rounded-lg border px-3 py-2 text-sm transition ${
+                      rangeSelecting
+                        ? "border-emerald-500 bg-emerald-50 font-semibold text-emerald-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-emerald-400 hover:text-emerald-700"
+                    }`}
+                  >
+                    {rangeSelecting ? "なぞり選択を終了" : "カレンダーで期間を選ぶ"}
+                  </button>
+                </div>
+
+                {/* 終了日 < 開始日 などのエラー（rose 色） */}
+                {addError && <div className="text-sm text-rose-600">{addError}</div>}
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={submitAdd}
@@ -712,10 +1044,7 @@ export default function CalendarView() {
                     追加
                   </button>
                   <button
-                    onClick={() => {
-                      setIsAdding(false);
-                      setNewTitle("");
-                    }}
+                    onClick={resetAddForm}
                     className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
                   >
                     キャンセル
@@ -724,7 +1053,7 @@ export default function CalendarView() {
               </div>
             ) : (
               <button
-                onClick={() => setIsAdding(true)}
+                onClick={openAdd}
                 className="flex items-center gap-1 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700"
               >
                 <Plus size={16} />
