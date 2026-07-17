@@ -65,6 +65,12 @@ export default function CalendarView() {
   // Issue #38 編集: インライン編集中のタスクIDと編集中タイトル
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  // Issue #44 編集フォーム拡張: 追加フォームと同じく期間（開始日/終了日）・重さ・見積時間・エラー文言を編集できるようにする
+  const [editStart, setEditStart] = useState<string | null>(null);
+  const [editEnd, setEditEnd] = useState<string | null>(null);
+  const [editWeight, setEditWeight] = useState<TaskWeight>("medium");
+  const [editEstimateHours, setEditEstimateHours] = useState<number | "">("");
+  const [editError, setEditError] = useState<string | null>(null);
 
   const today = useMemo(() => new Date(), []);
 
@@ -360,22 +366,55 @@ export default function CalendarView() {
     resetAddForm();
   }
 
-  // Issue #38 編集: タイトルだけを書き換え、その他の項目は既存値を引き継ぐ
+  // Issue #44 編集フォームを開く: タスクの現在値を各入力欄の初期値として展開する
+  function openEdit(task: Task) {
+    setEditingTaskId(task.id);
+    setEditTitle(task.title);
+    setEditStart(task.scheduledDate ?? null);
+    setEditEnd(task.dueDate ?? null);
+    setEditWeight(task.weight);
+    // 見積は分→時間に直し、小数1桁で丸めて表示（未設定なら空）
+    setEditEstimateHours(
+      typeof task.estimatedMinutes === "number" ? Math.round((task.estimatedMinutes / 60) * 10) / 10 : ""
+    );
+    setEditError(null);
+  }
+
+  // Issue #44 編集フォームの状態をすべてリセット（保存後/キャンセル/パネルを閉じたとき）
+  function resetEditForm() {
+    setEditingTaskId(null);
+    setEditTitle("");
+    setEditStart(null);
+    setEditEnd(null);
+    setEditWeight("medium");
+    setEditEstimateHours("");
+    setEditError(null);
+  }
+
+  // Issue #38/#44 編集: タイトル・期間・重さ・見積を書き換える。memo/priority/projectId は既存値を引き継ぐ
   function submitEdit(task: Task) {
     const title = editTitle.trim();
-    if (!title) return;
+    if (!title) {
+      setEditError("タスク名を入力してください");
+      return;
+    }
+    // 終了日 < 開始日 はエラー（追加フォームと同じ文言・rose色）
+    if (editStart && editEnd && editEnd < editStart) {
+      setEditError("終了日は開始日以降の日付にしてください");
+      return;
+    }
     updateTask(task.id, {
       title,
       memo: task.memo,
-      weight: task.weight,
+      weight: editWeight,
       priority: task.priority,
-      dueDate: task.dueDate,
-      scheduledDate: task.scheduledDate,
+      scheduledDate: editStart || null,
+      dueDate: editEnd || null,
       projectId: task.projectId,
-      estimatedMinutes: task.estimatedMinutes
+      // 見積: 入力があれば時間→分に、なければ未設定 (null)
+      estimatedMinutes: typeof editEstimateHours === "number" ? Math.round(editEstimateHours * 60) : null
     });
-    setEditingTaskId(null);
-    setEditTitle("");
+    resetEditForm();
   }
 
   // Issue #38 削除: 誤タップ防止に confirm を挟む
@@ -833,8 +872,7 @@ export default function CalendarView() {
                   // 閉じるときは追加/編集の途中状態もリセットする
                   setSelectedDate(null);
                   resetAddForm();
-                  setEditingTaskId(null);
-                  setEditTitle("");
+                  resetEditForm();
                 }}
                 className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm"
               >
@@ -850,8 +888,10 @@ export default function CalendarView() {
               tasksForSelectedKey(selectedDate).map((t) => (
                 <div key={t.id} className="flex flex-col gap-2 sm:flex-row sm:items-start">
                   {editingTaskId === t.id ? (
-                    /* Issue #38 編集モード: その行がタイトルのインライン編集に切り替わる */
-                    <div className="mb-2 min-w-0 flex-1">
+                    /* Issue #44 編集モード: 追加フォームと同じ構成（タイトル・期間・重さ・見積）でインライン編集する。
+                       編集展開中はこの行に削除等の他ボタンを出さず、保存/キャンセルのみにして誤操作を防ぐ */
+                    <div className="mb-2 flex min-w-0 flex-1 flex-col gap-3">
+                      {/* タイトル（IMEの変換確定Enterでは保存しない） */}
                       <input
                         autoFocus
                         value={editTitle}
@@ -864,25 +904,81 @@ export default function CalendarView() {
                             submitEdit(t);
                           }
                           if (e.key === "Escape") {
-                            setEditingTaskId(null);
-                            setEditTitle("");
+                            resetEditForm();
                           }
                         }}
+                        placeholder="タスクのタイトル"
                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
                       />
-                      <div className="mt-2 flex items-center gap-2">
+
+                      {/* 開始日 / 終了日（初期値はタスクの scheduledDate / dueDate。空も許容） */}
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <label className="flex flex-col">
+                          <span className="mb-1 text-xs text-slate-600">開始日</span>
+                          <input
+                            type="date"
+                            value={editStart ?? ""}
+                            onChange={(e) => setEditStart(e.target.value || null)}
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                            aria-label="開始日"
+                          />
+                        </label>
+                        <label className="flex flex-col">
+                          <span className="mb-1 text-xs text-slate-600">終了日（任意）</span>
+                          <input
+                            type="date"
+                            value={editEnd ?? ""}
+                            onChange={(e) => setEditEnd(e.target.value || null)}
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                            aria-label="終了日"
+                          />
+                        </label>
+                      </div>
+
+                      {/* 重さ / 見積時間 */}
+                      <div className="flex flex-wrap items-end gap-3">
+                        <label className="flex flex-col">
+                          <span className="mb-1 text-xs text-slate-600">重さ</span>
+                          <select
+                            value={editWeight}
+                            onChange={(e) => setEditWeight(e.target.value as TaskWeight)}
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                            aria-label="重さ"
+                          >
+                            <option value="light">軽め</option>
+                            <option value="medium">普通</option>
+                            <option value="heavy">重め</option>
+                          </select>
+                        </label>
+                        <label className="flex flex-col">
+                          <span className="mb-1 text-xs text-slate-600">見積時間 (h)</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step={0.5}
+                            value={editEstimateHours === "" ? "" : String(editEstimateHours)}
+                            onChange={(e) => setEditEstimateHours(e.target.value === "" ? "" : Number(e.target.value))}
+                            placeholder="h"
+                            className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                            aria-label="見積時間"
+                          />
+                        </label>
+                      </div>
+
+                      {/* 終了日 < 開始日 などのエラー（追加フォームと同じ rose 色） */}
+                      {editError && <div className="text-sm text-rose-600">{editError}</div>}
+
+                      {/* 保存/キャンセルは既存の 44px 基準ボタンのまま */}
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => submitEdit(t)}
                           className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-emerald-700 transition hover:border-emerald-400/50 hover:bg-emerald-100"
-                          aria-label="タイトルを保存"
+                          aria-label="編集を保存"
                         >
                           <Check size={18} />
                         </button>
                         <button
-                          onClick={() => {
-                            setEditingTaskId(null);
-                            setEditTitle("");
-                          }}
+                          onClick={resetEditForm}
                           className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100"
                           aria-label="編集をキャンセル"
                         >
@@ -900,10 +996,7 @@ export default function CalendarView() {
                       <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2">
                         {/* 編集ボタン（鉛筆） */}
                         <button
-                          onClick={() => {
-                            setEditingTaskId(t.id);
-                            setEditTitle(t.title);
-                          }}
+                          onClick={() => openEdit(t)}
                           className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
                           aria-label="タスクを編集"
                         >
