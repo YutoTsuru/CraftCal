@@ -36,6 +36,9 @@ export type DbTask = {
   weight: TaskWeight;
   due_date: string | null; // date 型（"YYYY-MM-DD"）
   scheduled_date: string | null; // date 型（"YYYY-MM-DD"）
+  // Issue #51: scheduled_date に付ける任意の時刻（"HH:MM" の text 列）。null=時刻なし
+  scheduled_start_time: string | null;
+  scheduled_end_time: string | null;
   estimated_minutes: number | null;
   completed_at: string | null; // timestamptz（ISO 文字列）
   completion_note: string | null;
@@ -56,6 +59,9 @@ export type DbTaskInsert = {
   weight: TaskWeight;
   due_date: string | null;
   scheduled_date: string | null;
+  // Issue #51: scheduled_date に付ける任意の時刻（"HH:MM" の text 列）。null=時刻なし
+  scheduled_start_time: string | null;
+  scheduled_end_time: string | null;
   estimated_minutes: number | null;
   completed_at: string | null;
   completion_note: string | null;
@@ -117,6 +123,9 @@ export function fromDbTask(row: DbTask): Task {
     priority: row.priority,
     dueDate: row.due_date,
     scheduledDate: row.scheduled_date,
+    // Issue #51: DB 側の text 列をそのまま camelCase に渡す（null はそのまま null）
+    scheduledStartTime: row.scheduled_start_time,
+    scheduledEndTime: row.scheduled_end_time,
     estimatedMinutes: row.estimated_minutes,
     status: row.status,
     completedAt: row.completed_at,
@@ -140,6 +149,9 @@ function toDbTaskColumns(task: Task): DbTaskUpdate {
     weight: task.weight,
     due_date: task.dueDate ?? null,
     scheduled_date: task.scheduledDate ?? null,
+    // Issue #51: undefined（アプリ側で未設定）も null として送る（他の任意列と同じ ?? null パターン）
+    scheduled_start_time: task.scheduledStartTime ?? null,
+    scheduled_end_time: task.scheduledEndTime ?? null,
     estimated_minutes: task.estimatedMinutes ?? null,
     completed_at: task.completedAt ?? null,
     completion_note: task.completionNote ?? null,

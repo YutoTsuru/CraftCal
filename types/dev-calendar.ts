@@ -13,6 +13,9 @@ export type Task = {
   priority: TaskPriority;
   dueDate?: string | null;
   scheduledDate?: string | null;
+  // Issue #51: scheduledDate に時刻を付けたいときの開始/終了時刻（"HH:MM"）。null=時刻なし（終日扱い）
+  scheduledStartTime?: string | null;
+  scheduledEndTime?: string | null;
   estimatedMinutes?: number | null;
   status: TaskStatus;
   completedAt?: string | null;
@@ -69,6 +72,9 @@ export type TaskFormInput = {
   priority?: TaskPriority;
   dueDate?: string | null;
   scheduledDate?: string | null;
+  // Issue #51: scheduledDate に時刻を付けたいときの開始/終了時刻（"HH:MM"）。null=時刻なし（終日扱い）
+  scheduledStartTime?: string | null;
+  scheduledEndTime?: string | null;
   projectId?: string | null;
   estimatedMinutes?: number | null;
 };
@@ -98,8 +104,15 @@ export type DevCalendarActions = {
   deleteTask: (id: string) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
   updateTask: (id: string, input: TaskFormInput) => void;
-  // 予定日だけを付け替える (null で未配置に戻す)
-  rescheduleTask: (id: string, scheduledDate: string | null) => void;
+  // 予定日だけを付け替える (null で未配置に戻す)。
+  // Issue #51: options で開始/終了時刻も一緒に付け替えられるようにした。
+  // scheduledDate が null（未配置に戻す）のときは options を渡していても時刻は必ず null にクリアする。
+  // options 自体を省略した場合は既存の時刻を維持する（呼び出し元を全て時刻対応させる必要をなくすため）。
+  rescheduleTask: (
+    id: string,
+    scheduledDate: string | null,
+    options?: { startTime?: string | null; endTime?: string | null }
+  ) => void;
   completeTask: (id: string, note?: string | null, url?: string | null) => void;
   setSprint: (sprint: Sprint) => void;
   generateSprintSchedule: () => void;
@@ -120,8 +133,12 @@ export type DevCalendarContextValue = DevCalendarState & {
   deleteTask: (id: string) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
   updateTask: (id: string, input: TaskFormInput) => void;
-  // 予定日だけを付け替える (null で未配置に戻す)
-  rescheduleTask: (id: string, scheduledDate: string | null) => void;
+  // 予定日だけを付け替える (null で未配置に戻す)。Issue #51: options で時刻も付け替えられる（詳細は DevCalendarActions 側コメント参照）
+  rescheduleTask: (
+    id: string,
+    scheduledDate: string | null,
+    options?: { startTime?: string | null; endTime?: string | null }
+  ) => void;
   completeTask: (id: string, note?: string | null, url?: string | null) => void;
   setSprint: (sprint: Sprint) => void;
   generateSprintSchedule: () => void;

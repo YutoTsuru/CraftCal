@@ -20,6 +20,9 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
   // Use clearer local names: startDate(開始日) and endDate(終了日)
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
+  // Issue #51: 任意の開始/終了時刻（"HH:MM"）。空="時刻なし
+  const [startTime, setStartTime] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState<string | null>(null);
   const [estimateHours, setEstimateHours] = useState<number | "">("");
   const [projectId, setProjectId] = useState<string | null>(projects?.[0]?.id ?? null);
   const [saving, setSaving] = useState(false);
@@ -34,6 +37,9 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
       // Map task fields to start/end semantics
       setEndDate(editingTask.dueDate ?? null);
       setStartDate(editingTask.scheduledDate ?? null);
+      // Issue #51: 既存の開始/終了時刻をフォームへ展開（なければ空のまま）
+      setStartTime(editingTask.scheduledStartTime ?? null);
+      setEndTime(editingTask.scheduledEndTime ?? null);
       // 0.5h 刻みの入力に合わせ、小数第1位まで保持する (90分 → 1.5h)
       setEstimateHours(typeof editingTask.estimatedMinutes === "number" ? Math.round((editingTask.estimatedMinutes / 60) * 10) / 10 : "");
       setProjectId(editingTask.projectId ?? projects?.[0]?.id ?? null);
@@ -67,6 +73,9 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
       // Map local start/end back to form fields
       dueDate: endDate,
       scheduledDate: startDate,
+      // Issue #51: 任意の開始/終了時刻。未入力なら null（時刻なし＝終日扱い）
+      scheduledStartTime: startTime,
+      scheduledEndTime: endTime,
       projectId,
       estimatedMinutes: typeof estimateHours === "number" ? Math.round(estimateHours * 60) : undefined
     };
@@ -86,6 +95,8 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
         setWeight("medium");
         setStartDate(null);
         setEndDate(null);
+        setStartTime(null);
+        setEndTime(null);
       }
     } catch (e: any) {
       setError(e?.message ?? "保存に失敗しました");
@@ -173,6 +184,31 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
                 onChange={(e) => setEstimateHours(e.target.value === "" ? "" : Number(e.target.value))}
                 placeholder="h"
                 className="w-full sm:w-20 rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none time-input box-border"
+              />
+            </label>
+        </div>
+
+        {/* Issue #51: 開始/終了時刻（任意）。空のままなら時刻なし＝終日扱いで保存される */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center md:col-span-2 lg:col-span-2">
+            <label className="flex flex-col">
+              <span className="text-xs text-slate-600 mb-1">開始時刻（任意）</span>
+              <input
+                type="time"
+                value={startTime ?? ""}
+                onChange={(e) => setStartTime(e.target.value || null)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none w-full box-border"
+                aria-label="開始時刻"
+              />
+            </label>
+
+            <label className="flex flex-col">
+              <span className="text-xs text-slate-600 mb-1">終了時刻（任意）</span>
+              <input
+                type="time"
+                value={endTime ?? ""}
+                onChange={(e) => setEndTime(e.target.value || null)}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none w-full box-border"
+                aria-label="終了時刻"
               />
             </label>
         </div>

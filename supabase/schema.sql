@@ -100,6 +100,23 @@ create table if not exists public.schedules (
 );
 
 -- ----------------------------------------------------------------------------
+-- tasks: 予定の開始/終了時刻 (Issue #51)
+-- Googleカレンダー片方向連携の前提として、日付のみだった予定に任意の時刻を持たせる。
+-- 既存データには影響しないよう、列は nullable・default なしで追加するだけ（バックフィルしない）。
+-- add column if not exists / drop constraint if exists で何度実行しても安全（冪等）。
+-- ----------------------------------------------------------------------------
+alter table public.tasks add column if not exists scheduled_start_time text;
+alter table public.tasks add column if not exists scheduled_end_time text;
+
+alter table public.tasks drop constraint if exists tasks_scheduled_start_time_check;
+alter table public.tasks add constraint tasks_scheduled_start_time_check
+  check (scheduled_start_time is null or scheduled_start_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
+
+alter table public.tasks drop constraint if exists tasks_scheduled_end_time_check;
+alter table public.tasks add constraint tasks_scheduled_end_time_check
+  check (scheduled_end_time is null or scheduled_end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
+
+-- ----------------------------------------------------------------------------
 -- インデックス: 絞り込みに使う列に付与
 -- ----------------------------------------------------------------------------
 create index if not exists projects_user_id_idx on public.projects (user_id);

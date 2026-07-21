@@ -24,11 +24,23 @@ function statusChipColor(status: Task["status"]) {
   return status === "done" ? "bg-lime-200" : status === "doing" ? "bg-amber-200" : "bg-amber-200";
 }
 
+// Issue #51: 開始/終了時刻を "HH:MM–HH:MM" 形式にする。片方だけ入力されていればその時刻だけ表示し、
+// どちらも無ければ null（呼び出し側は時刻行自体を出さない＝従来どおり終日扱い）。
+function formatScheduledTimeRange(task: Task): string | null {
+  const start = task.scheduledStartTime;
+  const end = task.scheduledEndTime;
+  if (start && end) return `${start}–${end}`;
+  if (start) return start;
+  if (end) return end;
+  return null;
+}
+
 function TaskCard({ task }: { task: Task }) {
   const { projects } = useDevCalendar();
   const project = projects.find((p) => p.id === task.projectId);
   const today = getTodayString();
   const overdue = task.dueDate && task.dueDate < today && task.status !== "done";
+  const timeRange = formatScheduledTimeRange(task);
 
   const priorityColor =
     task.priority === "high" ? "border-rose-500" : task.priority === "medium" ? "border-amber-400" : "border-lime-500";
@@ -42,6 +54,8 @@ function TaskCard({ task }: { task: Task }) {
         </div>
         <div className="text-xs text-stone-400">{task.estimatedMinutes ? `${task.estimatedMinutes}m` : ""}</div>
       </div>
+      {/* Issue #51: 時刻があるときだけ表示（時刻なしのタスクは従来どおり何も出さない） */}
+      {timeRange && <div className="mt-1 text-xs text-stone-500">{timeRange}</div>}
       <div className="mt-1 text-xs text-stone-500 truncate">{task.memo}</div>
     </div>
   );
@@ -62,6 +76,9 @@ export default function CalendarView() {
   // Issue #42 追加フォーム拡張: 期間（開始日/終了日）・重さ・見積時間・エラー文言
   const [newStart, setNewStart] = useState<string | null>(null);
   const [newEnd, setNewEnd] = useState<string | null>(null);
+  // Issue #51: 追加フォームの任意の開始/終了時刻（"HH:MM"）。空="時刻なし
+  const [newStartTime, setNewStartTime] = useState<string | null>(null);
+  const [newEndTime, setNewEndTime] = useState<string | null>(null);
   const [newWeight, setNewWeight] = useState<TaskWeight>("medium");
   const [newEstimateHours, setNewEstimateHours] = useState<number | "">("");
   const [addError, setAddError] = useState<string | null>(null);
@@ -83,6 +100,9 @@ export default function CalendarView() {
   // Issue #44 編集フォーム拡張: 追加フォームと同じく期間（開始日/終了日）・重さ・見積時間・エラー文言を編集できるようにする
   const [editStart, setEditStart] = useState<string | null>(null);
   const [editEnd, setEditEnd] = useState<string | null>(null);
+  // Issue #51: 編集フォームの任意の開始/終了時刻（"HH:MM"）。空=時刻なし
+  const [editStartTime, setEditStartTime] = useState<string | null>(null);
+  const [editEndTime, setEditEndTime] = useState<string | null>(null);
   const [editWeight, setEditWeight] = useState<TaskWeight>("medium");
   const [editEstimateHours, setEditEstimateHours] = useState<number | "">("");
   const [editError, setEditError] = useState<string | null>(null);
@@ -211,7 +231,11 @@ export default function CalendarView() {
         projectId: task.projectId,
         estimatedMinutes: task.estimatedMinutes,
         scheduledDate: previewStart,
-        dueDate: previewEnd
+        dueDate: previewEnd,
+        // Issue #51: バー端ドラッグは期間（日付）だけを変えるドラッグなので、時刻は既存値を維持する
+        // （updateTask は単純代入のため、ここで明示的に渡さないと時刻が消えてしまう）
+        scheduledStartTime: task.scheduledStartTime,
+        scheduledEndTime: task.scheduledEndTime
       });
       setDragTask(null);
       setDragPreview(null);
@@ -289,6 +313,8 @@ export default function CalendarView() {
     setIsAdding(true);
     setNewStart(selectedDate);
     setNewEnd(null);
+    setNewStartTime(null);
+    setNewEndTime(null);
     setNewWeight("medium");
     setNewEstimateHours("");
     setAddError(null);
@@ -300,6 +326,8 @@ export default function CalendarView() {
     setNewTitle("");
     setNewStart(null);
     setNewEnd(null);
+    setNewStartTime(null);
+    setNewEndTime(null);
     setNewWeight("medium");
     setNewEstimateHours("");
     setAddError(null);
@@ -327,6 +355,9 @@ export default function CalendarView() {
       weight: newWeight,
       scheduledDate: start,
       dueDate: newEnd || null,
+      // Issue #51: 任意の開始/終了時刻。未入力なら null（時刻なし＝終日扱い）
+      scheduledStartTime: newStartTime || null,
+      scheduledEndTime: newEndTime || null,
       estimatedMinutes: typeof newEstimateHours === "number" ? Math.round(newEstimateHours * 60) : undefined
     });
     resetAddForm();
@@ -338,6 +369,9 @@ export default function CalendarView() {
     setEditTitle(task.title);
     setEditStart(task.scheduledDate ?? null);
     setEditEnd(task.dueDate ?? null);
+    // Issue #51: 既存の開始/終了時刻をフォームへ展開（なければ空のまま）
+    setEditStartTime(task.scheduledStartTime ?? null);
+    setEditEndTime(task.scheduledEndTime ?? null);
     setEditWeight(task.weight);
     // 見積は分→時間に直し、小数1桁で丸めて表示（未設定なら空）
     setEditEstimateHours(
@@ -352,6 +386,8 @@ export default function CalendarView() {
     setEditTitle("");
     setEditStart(null);
     setEditEnd(null);
+    setEditStartTime(null);
+    setEditEndTime(null);
     setEditWeight("medium");
     setEditEstimateHours("");
     setEditError(null);
@@ -376,6 +412,9 @@ export default function CalendarView() {
       priority: task.priority,
       scheduledDate: editStart || null,
       dueDate: editEnd || null,
+      // Issue #51: 任意の開始/終了時刻。未入力なら null（時刻なし＝終日扱い）
+      scheduledStartTime: editStartTime || null,
+      scheduledEndTime: editEndTime || null,
       projectId: task.projectId,
       // 見積: 入力があれば時間→分に、なければ未設定 (null)
       estimatedMinutes: typeof editEstimateHours === "number" ? Math.round(editEstimateHours * 60) : null
@@ -841,6 +880,30 @@ export default function CalendarView() {
                         </label>
                       </div>
 
+                      {/* Issue #51: 開始/終了時刻（任意）。空のままなら時刻なし＝終日扱いで保存される */}
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <label className="flex flex-col">
+                          <span className="mb-1 text-xs text-stone-600">開始時刻（任意）</span>
+                          <input
+                            type="time"
+                            value={editStartTime ?? ""}
+                            onChange={(e) => setEditStartTime(e.target.value || null)}
+                            className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
+                            aria-label="開始時刻"
+                          />
+                        </label>
+                        <label className="flex flex-col">
+                          <span className="mb-1 text-xs text-stone-600">終了時刻（任意）</span>
+                          <input
+                            type="time"
+                            value={editEndTime ?? ""}
+                            onChange={(e) => setEditEndTime(e.target.value || null)}
+                            className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
+                            aria-label="終了時刻"
+                          />
+                        </label>
+                      </div>
+
                       {/* 重さ / 見積時間 */}
                       <div className="flex flex-wrap items-end gap-3">
                         <label className="flex flex-col">
@@ -978,6 +1041,30 @@ export default function CalendarView() {
                       onChange={(e) => setNewEnd(e.target.value || null)}
                       className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                       aria-label="終了日"
+                    />
+                  </label>
+                </div>
+
+                {/* Issue #51: 開始/終了時刻（任意）。空のままなら時刻なし＝終日扱いで保存される */}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <label className="flex flex-col">
+                    <span className="mb-1 text-xs text-stone-600">開始時刻（任意）</span>
+                    <input
+                      type="time"
+                      value={newStartTime ?? ""}
+                      onChange={(e) => setNewStartTime(e.target.value || null)}
+                      className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
+                      aria-label="開始時刻"
+                    />
+                  </label>
+                  <label className="flex flex-col">
+                    <span className="mb-1 text-xs text-stone-600">終了時刻（任意）</span>
+                    <input
+                      type="time"
+                      value={newEndTime ?? ""}
+                      onChange={(e) => setNewEndTime(e.target.value || null)}
+                      className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
+                      aria-label="終了時刻"
                     />
                   </label>
                 </div>

@@ -17,6 +17,15 @@ const WEIGHT_LABEL: Record<string, string> = {
   heavy: "重い"
 };
 
+// Issue #51: 開始/終了時刻を "HH:MM–HH:MM" 形式にする。片方だけ入力されていればその時刻だけ表示し、
+// どちらも無ければ null（呼び出し側は時刻を出さない＝従来どおり終日扱い）。CalendarView.tsx の同名関数と同じ表示ルール。
+function formatScheduledTimeRange(start?: string | null, end?: string | null): string | null {
+  if (start && end) return `${start}–${end}`;
+  if (start) return start;
+  if (end) return end;
+  return null;
+}
+
 function ProjectBadge({ projectId, projects }: { projectId: string; projects: { id: string; name: string; color?: string | null }[] }) {
   const project = projects.find((p) => p.id === projectId);
   if (!project) return null;
@@ -114,6 +123,10 @@ export default function TodayList() {
                   </div>
                   {task.memo && <div className={`text-sm ${task.status === "done" ? "line-through text-stone-500" : "text-stone-600"}`}>{task.memo}</div>}
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-600">
+                    {/* Issue #51: 時刻があるときだけ表示（時刻なしのタスクは従来どおり終日扱いで何も出さない） */}
+                    {formatScheduledTimeRange(task.scheduledStartTime, task.scheduledEndTime) && (
+                      <div>{formatScheduledTimeRange(task.scheduledStartTime, task.scheduledEndTime)}</div>
+                    )}
                     {/* Issue #71: medium / heavy と英語の生の値が出ていたため日本語にする */}
                     <div>{WEIGHT_LABEL[task.weight] ?? task.weight}</div>
                     {task.priority && <PriorityBadge priority={task.priority} />}

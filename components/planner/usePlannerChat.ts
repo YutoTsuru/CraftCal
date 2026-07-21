@@ -97,7 +97,11 @@ export function usePlannerChat({ tasks, projects }: Args) {
     }
 
     valid.forEach((suggestion) => {
-      rescheduleTask(suggestion.taskId, suggestion.date);
+      // Issue #51: 提案の開始/終了時刻も一緒に保存する（以前は日付だけ保存し時刻を捨てていた）
+      rescheduleTask(suggestion.taskId, suggestion.date, {
+        startTime: suggestion.startTime,
+        endTime: suggestion.endTime
+      });
     });
 
     const lines = valid.map(
