@@ -29,7 +29,10 @@ const weightClassNames: Record<TaskWeight, string> = {
 
 export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Task) => void }) {
   // Issue #48: 表示するタスクは props で受け取り、ここではアクションしか使わないため
-  // actions だけを購読する（context の state 変化では再レンダリングされない）
+  // actions だけを購読する。
+  // Issue #48 (レビュー指摘対応): context の state 購読をやめたので context 経由では再描画されない。
+  // ただし親から tasks 配列を props で受け取っており、親が再レンダリングされれば
+  // このコンポーネントも一緒に再描画される（tasks が毎回新しい配列参照になるため React.memo は付けていない）。
   const { deleteTask, updateTaskStatus } = useDevCalendarActions();
 
   if (tasks.length === 0) {

@@ -37,7 +37,10 @@ const weightClassNames: Record<TaskWeight, string> = {
 
 export function TaskBoard({ tasks }: { tasks: Task[] }) {
   // Issue #48: 表示するタスクは props で受け取り、ここでは updateTaskStatus しか使わないため
-  // actions だけを購読する（他のタスクが更新されてもこの列は再レンダリングされない）
+  // actions だけを購読する。
+  // Issue #48 (レビュー指摘対応): context の state 購読をやめたので context 経由では再描画されない。
+  // ただし親（app/tasks/page.tsx）から tasks 配列を props で受け取っており、
+  // 親が再レンダリングされればこのコンポーネントも一緒に再描画される（React.memo は付けていない）。
   const { updateTaskStatus } = useDevCalendarActions();
 
   return (

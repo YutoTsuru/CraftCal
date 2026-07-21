@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDevCalendar } from "@/components/AppProvider";
+import { useDevCalendarActions } from "@/components/AppProvider";
 import { Sparkles, ChevronRight, Clock, Pencil, Check, X } from "lucide-react";
 import { generateTasks, type PlannedTask } from "@/lib/planner-templates";
 
@@ -35,7 +35,9 @@ function formatMinutes(min: number) {
 
 export default function ProjectPlanPage() {
   const router = useRouter();
-  const { addProject, addTask } = useDevCalendar();
+  // Issue #48 (レビュー指摘対応): この画面は addProject / addTask しか使わないので
+  // actions だけを購読する。tasks などの state 変化ではこの画面は再レンダリングされない
+  const { addProject, addTask } = useDevCalendarActions();
 
   const [step, setStep] = useState<Step>("input");
   const [isSaving, setIsSaving] = useState(false);

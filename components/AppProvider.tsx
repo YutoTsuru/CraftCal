@@ -17,6 +17,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { generateSchedule } from "@/lib/schedule";
 import { createSeedData } from "@/lib/seed-data";
+import { createPersistCoordinator, type PersistRunOptions } from "@/lib/persist-coordinator";
 import { INBOX_PROJECT_ID, STORAGE_KEY, createEmptyState, ensureInboxProject, loadState } from "@/lib/storage";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -80,37 +81,70 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const projectsRef = useRef(projects);
   const sprintRef = useRef(sprint);
   const userIdRef = useRef(userId);
+  // Issue #48 (レビュー指摘対応): deleteTask / resetAll の保存失敗時に schedule を
+  // 元へ戻すため、schedule もレンダー中に ref へ同期しておく（他の ref と同じ理由）。
+  const scheduleRef = useRef(schedule);
   tasksRef.current = tasks;
   projectsRef.current = projects;
   sprintRef.current = sprint;
   userIdRef.current = userId;
+  scheduleRef.current = schedule;
 
-  // Issue #48: 保存失敗時のサーバー再取得（ロールバック）を制御する4つの ref。
-  // なぜ4つも必要か:
-  //
-  // 楽観更新は「先に画面を書き換えて、あとから DB へ送る」ので、
-  // 保存が失敗したときは「サーバーの正しい内容を取り直して画面を上書きする」＝ロールバックが要る。
-  // ところが保存は複数同時に飛ぶことがある（例: components/planner/usePlannerChat.ts の reflect() は
-  // rescheduleTask を N 件まとめて呼ぶ）。そのうち1件だけ失敗したときに素朴に再取得すると、
-  // 「まだ飛行中の他の保存」がサーバーに届く前のスナップショットを読んでしまい、
-  // 成功したはずの変更まで画面上で古い値に戻ってしまう。
-  // さらに悪いことに、戻った表示を土台にユーザーが再編集すると
-  // （lib/db-mappers.ts の toDbTaskUpdate は全カラムを送るため）DB 側の変更を実際に消してしまう。
-  // これを防ぐために「飛行中の保存が全部終わってから再取得する」「再取得中に新しい保存が
-  // 始まっていたら結果を捨ててやり直す」の2点を保証する必要があり、それぞれに ref を使う。
-  //
-  // - pendingSavesRef   : 飛行中の保存件数。0 になるまで再取得を始めない
-  // - saveSeqRef        : persist が呼ばれるたびに +1 する通し番号（世代）。
-  //                       再取得の前後で値が変わっていたら「待っている間に新しい保存が始まった」＝結果は古いので捨てる
-  // - rollbackPendingRef: 再取得が必要かどうか。失敗を検知した時点ではフラグを立てるだけにする
-  // - rollbackRunningRef: 再取得の実行中フラグ。失敗が重なっても再取得は1本にまとめる
-  //
-  // state ではなく ref なのは、同じ tick 内に複数の catch/finally が連続で走っても
-  // 再レンダリングを待たずに即座に最新値を読み書きできる必要があるため。
-  const pendingSavesRef = useRef(0);
-  const saveSeqRef = useRef(0);
-  const rollbackPendingRef = useRef(false);
-  const rollbackRunningRef = useRef(false);
+  // Issue #48 (レビュー指摘対応): 保存調整＋失敗時ロールバックのロジックは
+  // lib/persist-coordinator.ts の純モジュールへ切り出した（ユニットテスト可能にするため）。
+  // ここでは coordinator インスタンスを1つだけ生成して ref に保持する。
+  // deps は AppProvider の setter/ref を参照するクロージャで渡す。
+  // useRef の初期値を関数で1回だけ生成し（lazy init 相当）、以降は再生成しない。
+  const coordinatorRef = useRef<ReturnType<typeof createPersistCoordinator> | null>(null);
+  if (coordinatorRef.current === null) {
+    coordinatorRef.current = createPersistCoordinator<{ projects: Project[]; tasks: Task[] }>({
+      // 失敗検知後、飛行中の保存が全部終わってから最新をまとめて取得する
+      fetchServer: async () => {
+        const [dbProjects, dbTasks] = await Promise.all([listProjects(), listTasks()]);
+        return { projects: ensureInboxProject(dbProjects), tasks: dbTasks };
+      },
+      // 取得したスナップショットを state へ反映する（旧 maybeRollback の反映処理をここへ移設）
+      applyServer: ({ projects: nextProjects, tasks: nextTasks }) => {
+        // Issue #48 (レビュー指摘対応): 未ログインなら反映しない。
+        // 失敗が残ったままログアウトすると再取得が走りうるが、その結果でログアウト済みの
+        // 空状態を上書きしないようにする（旧 maybeRollback の未ログイン early-return と同じ意図）。
+        if (!userIdRef.current) {
+          return;
+        }
+        setProjects(nextProjects);
+        setTasks(nextTasks);
+
+        // schedule はメモリのみだが、deleteTask が楽観的に taskId を落としている。
+        // 削除が失敗してタスクが復活した場合に備え、サーバーに存在しない taskId だけを除去して整合させる
+        const aliveTaskIds = new Set(nextTasks.map((task) => task.id));
+        setSchedule((current) =>
+          current.map((day) => ({
+            ...day,
+            taskIds: day.taskIds.filter((taskId) => aliveTaskIds.has(taskId))
+          }))
+        );
+
+        // 取り込みカードの表示条件も初回 hydrate と同じロジックで計算し直す
+        // （importLocalData が途中で失敗したときに表示が実態とズレるのを防ぐ）。
+        // ensureInboxProject で Inbox を足す前の「DB に実在するプロジェクト数」で判定したいので、
+        // Inbox を除いた件数で serverEmpty を求める
+        const realProjectCount = nextProjects.filter((project) => project.id !== INBOX_PROJECT_ID).length;
+        const serverEmpty = nextTasks.length === 0 && realProjectCount === 0;
+        const local = loadState();
+        setCanImportLocalData(serverEmpty && local.tasks.length >= 1);
+
+        // ここまで来たら state はサーバーと一致している＝巻き戻しは完了。警告バナーを消す
+        setPersistError(false);
+      },
+      // 保存が失敗するたびに警告バナーを出す（個人データ・トークンは出さない）
+      onSaveError: () => setPersistError(true),
+      // 再取得自体が失敗したときのログ（保存失敗と文言を分ける。個人データ・トークンは出さない）
+      onFetchError: (error) => console.error("[CraftCal] 再取得に失敗:", error),
+      // 現在のコンテキスト識別子。fetch 前後でユーザーが変わっていたら反映しない
+      getContextId: () => userIdRef.current
+    });
+  }
+  const coordinator = coordinatorRef.current;
 
   useEffect(() => {
     // 未ログイン: 空状態に戻す（保護ルート外への遷移時などの防御）
@@ -166,109 +200,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Issue #48: アクション群。依存配列は [] のまま固定し、この value は二度と作り直さない。
   // 現在値が必要な処理はすべて上の ref から読む。
   const actions = useMemo<DevCalendarActions>(() => {
-    // 楽観更新が失敗したときに、サーバーの内容で state を上書きして巻き戻す (Issue #48)。
-    // 逆操作を当てる方式は連続操作で不整合になりやすいため採らない。
-    //
-    // 呼ばれるのは「persist の finally（保存が1件終わるたび）」と
-    // 「この関数自身の finally（再取得が必要なまま残っていたとき）」の2か所。
-    // 条件を満たさないときは何もせず戻り、あとで必ず呼び直される作りにしてある。
-    const maybeRollback = async () => {
-      // 再取得の必要がない
-      if (!rollbackPendingRef.current) {
-        return;
-      }
-      // まだ保存が飛んでいる。最後の1件が終わったときに persist の finally から再度呼ばれるので、
-      // ここで取りに行くと「未反映の保存」を含まない古いスナップショットを読んでしまう
-      if (pendingSavesRef.current > 0) {
-        return;
-      }
-      // すでに再取得中。二重に走らせない（この関数の finally で必要なら呼び直される）
-      if (rollbackRunningRef.current) {
-        return;
-      }
-      // 未ログインなら取りに行かない
-      const currentUserId = userIdRef.current;
-      if (!currentUserId) {
-        return;
-      }
-
-      // 実行を始める時点でフラグを下ろす。
-      // 再取得中に新たな保存失敗が起きたら再び true になり、下の finally で拾い直せる
-      rollbackPendingRef.current = false;
-      rollbackRunningRef.current = true;
-      // 待っている間に新しい保存が始まっていないかを判定するための世代
-      const startedSeq = saveSeqRef.current;
-
-      try {
-        const [dbProjects, dbTasks] = await Promise.all([listProjects(), listTasks()]);
-
-        // 待っている間にログアウト／ユーザー切替が起きていたら反映しない
-        if (userIdRef.current !== currentUserId) {
-          return;
-        }
-        // 待っている間に新しい保存が始まっていたら、取得結果はすでに古い。
-        // 反映すると新しい変更を画面から消してしまうので捨て、あとでやり直す
-        if (saveSeqRef.current !== startedSeq) {
-          rollbackPendingRef.current = true;
-          return;
-        }
-
-        // 初回 hydrate と同じ扱い: 仮想 Inbox を合成してから state に入れる
-        setProjects(ensureInboxProject(dbProjects));
-        setTasks(dbTasks);
-
-        // schedule はメモリのみだが、deleteTask が楽観的に taskId を落としている。
-        // 削除が失敗してタスクが復活した場合に備え、サーバーに存在しない taskId だけを除去して整合させる
-        const aliveTaskIds = new Set(dbTasks.map((task) => task.id));
-        setSchedule((current) =>
-          current.map((day) => ({
-            ...day,
-            taskIds: day.taskIds.filter((taskId) => aliveTaskIds.has(taskId))
-          }))
-        );
-
-        // 取り込みカードの表示条件も初回 hydrate と同じロジックで計算し直す
-        // （importLocalData が途中で失敗したときに表示が実態とズレるのを防ぐ）
-        const serverEmpty = dbTasks.length === 0 && dbProjects.length === 0;
-        const local = loadState();
-        setCanImportLocalData(serverEmpty && local.tasks.length >= 1);
-
-        // ここまで来たら state はサーバーと一致している＝巻き戻しは完了。警告バナーを消す
-        setPersistError(false);
-      } catch (error) {
-        // 再取得自体が失敗した場合はバナーを出したまま state はそのまま（無限ループを避ける）。
-        // 保存失敗と区別できるよう文言を分けている（個人データ・トークンは出さない）
-        console.error("[CraftCal] 再取得に失敗:", error);
-      } finally {
-        rollbackRunningRef.current = false;
-        // 実行中に新たな失敗が起きた／結果を捨てた場合はここで拾い直す。
-        // 「実行中だからスキップ」で終わらせると必要な再取得を取りこぼす
-        if (rollbackPendingRef.current) {
-          void maybeRollback();
-        }
-      }
-    };
-
-    // 楽観更新の非同期部分。失敗したら警告バナーを出し、サーバーの内容へ巻き戻す
-    // （個人データ・トークンは出さない）
-    const persist = (op: () => Promise<unknown>) => {
-      // 飛行中の保存として数え、世代を進める（再取得側がこの2つを見て待ち合わせる）
-      pendingSavesRef.current += 1;
-      saveSeqRef.current += 1;
-
-      void op()
-        .catch((error) => {
-          console.error("[CraftCal] 保存に失敗:", error);
-          setPersistError(true);
-          // ここでは「再取得が必要」と印を付けるだけ。
-          // 他の保存がまだ飛んでいる可能性があるため、実際の再取得は finally 側に任せる
-          rollbackPendingRef.current = true;
-        })
-        .finally(() => {
-          pendingSavesRef.current -= 1;
-          // 自分が最後の1件なら、ここで初めて再取得が走る
-          void maybeRollback();
-        });
+    // Issue #48 (レビュー指摘対応): 保存調整＋失敗時ロールバックの本体は
+    // coordinator（lib/persist-coordinator.ts）へ移設した。ここではその run を薄く呼ぶだけ。
+    // options.queueKey を渡すと同一 key の保存が送信順に直列化され、
+    // 「同一タスクの保存が逆順で完了して旧値が新値を上書きする」問題を防げる。
+    const persist = (op: () => Promise<unknown>, options?: PersistRunOptions) => {
+      coordinator.run(op, options);
     };
 
     const addTask = (input: TaskFormInput) => {
@@ -290,12 +227,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updatedAt: now
       };
 
-      // ローカル即時反映 → DB へ非同期保存
+      // ローカル即時反映 → DB へ非同期保存。
+      // Issue #48 (レビュー指摘対応): queueKey に task.id を渡し、同じタスクへの
+      // insert → 直後の delete などが送信順で直列化されるようにする
       setTasks((current) => [task, ...current]);
-      persist(() => insertTask(task));
+      persist(() => insertTask(task), { queueKey: task.id });
     };
 
     const deleteTask = (id: string) => {
+      // Issue #48 (レビュー指摘対応): schedule はメモリのみで DB 再取得では戻せないため、
+      // 楽観的に taskId を落とす前に現在の schedule を控え、保存失敗時に復元する
+      const scheduleSnapshot = scheduleRef.current;
       setTasks((current) => current.filter((task) => task.id !== id));
       setSchedule((current) =>
         current.map((day) => ({
@@ -303,7 +245,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           taskIds: day.taskIds.filter((taskId) => taskId !== id)
         }))
       );
-      persist(() => deleteTaskRow(id));
+      persist(() => deleteTaskRow(id), {
+        queueKey: id,
+        restoreOnFailure: () => setSchedule(scheduleSnapshot)
+      });
     };
 
     const updateTaskStatus = (id: string, status: TaskStatus) => {
@@ -313,7 +258,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         current.map((task) => (task.id === id ? { ...task, status, updatedAt: now } : task))
       );
       if (target) {
-        persist(() => updateTaskRow({ ...target, status, updatedAt: now }));
+        // Issue #48 (レビュー指摘対応): 同一タスクの更新を送信順に直列化する
+        persist(() => updateTaskRow({ ...target, status, updatedAt: now }), { queueKey: id });
       }
     };
 
@@ -337,7 +283,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updatedAt: now
       };
       setTasks((current) => current.map((task) => (task.id === id ? updated : task)));
-      persist(() => updateTaskRow(updated));
+      // Issue #48 (レビュー指摘対応): 同一タスクの更新を送信順に直列化する
+      persist(() => updateTaskRow(updated), { queueKey: id });
     };
 
     const rescheduleTask = (id: string, scheduledDate: string | null) => {
@@ -347,7 +294,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         current.map((task) => (task.id === id ? { ...task, scheduledDate, updatedAt: now } : task))
       );
       if (target) {
-        persist(() => updateTaskRow({ ...target, scheduledDate, updatedAt: now }));
+        // Issue #48 (レビュー指摘対応): 同一タスクの更新を送信順に直列化する
+        persist(() => updateTaskRow({ ...target, scheduledDate, updatedAt: now }), { queueKey: id });
       }
     };
 
@@ -363,7 +311,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
       setTasks((current) => current.map((task) => (task.id === id ? { ...task, ...patch } : task)));
       if (target) {
-        persist(() => updateTaskRow({ ...target, ...patch }));
+        // Issue #48 (レビュー指摘対応): 同一タスクの更新を送信順に直列化する
+        persist(() => updateTaskRow({ ...target, ...patch }), { queueKey: id });
       }
     };
 
@@ -396,7 +345,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
 
       setProjects((cur) => [project, ...cur]);
-      persist(() => insertProject(project));
+      // Issue #48 (レビュー指摘対応): 同一プロジェクトの保存を送信順に直列化する
+      persist(() => insertProject(project), { queueKey: project.id });
     };
 
     const updateProject = (id: string, patch: Partial<Project>) => {
@@ -407,7 +357,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       const updated: Project = { ...target, ...patch, updatedAt: now };
       setProjects((cur) => cur.map((pr) => (pr.id === id ? updated : pr)));
-      persist(() => updateProjectRow(updated));
+      // Issue #48 (レビュー指摘対応): 同一プロジェクトの保存を送信順に直列化する
+      persist(() => updateProjectRow(updated), { queueKey: id });
     };
 
     const deleteProject = (id: string) => {
@@ -415,21 +366,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // DB 側は行削除のみ（FK ON DELETE SET NULL でタスクの project_id が null=Inbox になる）
       setTasks((cur) => cur.map((t) => (t.projectId === id ? { ...t, projectId: INBOX_PROJECT_ID } : t)));
       setProjects((cur) => cur.filter((p) => p.id !== id));
-      persist(() => deleteProjectRow(id));
+      // Issue #48 (レビュー指摘対応): 同一プロジェクトの保存を送信順に直列化する
+      persist(() => deleteProjectRow(id), { queueKey: id });
     };
 
     const resetAll = () => {
+      // Issue #48 (レビュー指摘対応): schedule / sprint はメモリのみで DB 再取得では戻せないため、
+      // 楽観的に空へする前に現在値を控え、削除が失敗したら復元する
+      const scheduleSnapshot = scheduleRef.current;
+      const sprintSnapshot = sprintRef.current;
       const empty = createEmptyState();
       setTasks(empty.tasks);
       setSprintState(empty.sprint);
       setSchedule(empty.schedule);
       setProjects(empty.projects ?? []);
       setCanImportLocalData(false);
-      // DB からも自分の tasks → projects の順で全削除する（FK 依存のため tasks が先）
-      persist(async () => {
-        await deleteAllTasks();
-        await deleteAllProjects();
-      });
+      // DB からも自分の tasks → projects の順で全削除する（FK 依存のため tasks が先）。
+      // 一括操作なので queueKey は付けない（現状どおり並行）
+      persist(
+        async () => {
+          await deleteAllTasks();
+          await deleteAllProjects();
+        },
+        {
+          restoreOnFailure: () => {
+            setSchedule(scheduleSnapshot);
+            setSprintState(sprintSnapshot);
+          }
+        }
+      );
     };
 
     // サンプルデータ投入。既存タスクがあるときは何もしない（ボタン側でも非表示）。
