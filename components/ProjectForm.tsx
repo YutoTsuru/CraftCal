@@ -1,10 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useDevCalendar } from "@/components/AppProvider";
+import { FormEvent, memo, useState } from "react";
+import { useDevCalendarActions } from "@/components/AppProvider";
 
-export function ProjectForm() {
-  const { addProject } = useDevCalendar();
+function ProjectFormComponent() {
+  // Issue #48: このフォームは addProject しか使わないので actions だけを購読する
+  // （tasks などの state が変わってもここは再レンダリングされない）
+  const { addProject } = useDevCalendarActions();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("#10b981");
@@ -58,5 +60,11 @@ export function ProjectForm() {
     </form>
   );
 }
+
+// Issue #48 (レビュー指摘対応): このコンポーネントは props を一切受け取らないため、
+// React.memo でラップすると親（projects ページ）が再レンダリングされても
+// このフォームは再描画されない（props 比較が常に「変化なし」になり memo が完全に効く）。
+// actions だけを購読しているので context 経由でも再描画されず、実効的な再描画境界になる。
+export const ProjectForm = memo(ProjectFormComponent);
 
 export default ProjectForm;
