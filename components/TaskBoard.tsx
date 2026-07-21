@@ -7,7 +7,7 @@
  * 選択は app/tasks/page.tsx のビュー切替タブ (list / board) で行う。
  */
 
-import { useDevCalendar } from "@/components/AppProvider";
+import { useDevCalendarActions } from "@/components/AppProvider";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import type { Task, TaskStatus, TaskWeight, TaskPriority } from "@/types/dev-calendar";
 
@@ -36,7 +36,9 @@ const weightClassNames: Record<TaskWeight, string> = {
 };
 
 export function TaskBoard({ tasks }: { tasks: Task[] }) {
-  const { updateTaskStatus } = useDevCalendar();
+  // Issue #48: 表示するタスクは props で受け取り、ここでは updateTaskStatus しか使わないため
+  // actions だけを購読する（他のタスクが更新されてもこの列は再レンダリングされない）
+  const { updateTaskStatus } = useDevCalendarActions();
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

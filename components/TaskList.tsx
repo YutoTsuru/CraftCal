@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Pencil, Trash2 } from "lucide-react";
-import { useDevCalendar } from "@/components/AppProvider";
+import { useDevCalendarActions } from "@/components/AppProvider";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { Task, TaskStatus, TaskWeight, TaskPriority } from "@/types/dev-calendar";
@@ -28,7 +28,9 @@ const weightClassNames: Record<TaskWeight, string> = {
 };
 
 export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Task) => void }) {
-  const { deleteTask, updateTaskStatus } = useDevCalendar();
+  // Issue #48: 表示するタスクは props で受け取り、ここではアクションしか使わないため
+  // actions だけを購読する（context の state 変化では再レンダリングされない）
+  const { deleteTask, updateTaskStatus } = useDevCalendarActions();
 
   if (tasks.length === 0) {
     return (

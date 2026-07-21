@@ -1,10 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useDevCalendar } from "@/components/AppProvider";
+import { useDevCalendarActions } from "@/components/AppProvider";
 
 export function ProjectForm() {
-  const { addProject } = useDevCalendar();
+  // Issue #48: このフォームは addProject しか使わないので actions だけを購読する
+  // （tasks などの state が変わってもここは再レンダリングされない）
+  const { addProject } = useDevCalendarActions();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("#10b981");
