@@ -12,14 +12,14 @@
  *   - 未ログインで保護ルート  → /login へ
  *   - ログイン済みで /login /signup → / へ
  *
- * loading 中は全画面ローディングを出し、判定前のちらつき（未ログイン画面が一瞬見える等）を防ぐ。
+ * loading 中は起動画面 (SplashScreen) を出し、判定前のちらつき（未ログイン画面が一瞬見える等）を防ぐ。
  */
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppProvider } from "@/components/AppProvider";
 import { LayoutShell } from "@/components/LayoutShell";
-import { LoadingScreen } from "@/components/LoadingScreen";
+import { SplashScreen } from "@/components/SplashScreen";
 import { useAuth } from "@/components/AuthProvider";
 
 // ログイン不要でアクセスできるルート
@@ -47,9 +47,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [loading, user, isPublicRoute, pathname, router]);
 
-  // セッション判定中は全画面ローディング（紙とペンのアニメーション）
+  // セッション判定中は起動画面（アプリ名 + タグライン + 紙とペンのアニメーション / Issue #59）
   if (loading) {
-    return <LoadingScreen />;
+    return <SplashScreen />;
   }
 
   // 公開ルートはサイドバー等なしでそのまま描画
@@ -57,9 +57,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // 未ログインで保護ルートのときは、上の useEffect が /login へ遷移するまでの間ローディングを出す
+  // 未ログインで保護ルートのときは、上の useEffect が /login へ遷移するまでの間 起動画面を出す
   if (!user) {
-    return <LoadingScreen />;
+    return <SplashScreen />;
   }
 
   // ログイン済みの保護ルート: 従来どおりアプリ本体を描画

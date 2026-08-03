@@ -8,23 +8,24 @@
  *
  * message: テキスト行の文言。既定は "Loading"（末尾の明滅ドット3つは常に付く）。
  */
-export function LoadingScreen({ message = "Loading" }: { message?: string }) {
+/**
+ * PenAndPaper: 紙とペンが「文字を書いている」演出の SVG イラスト本体。
+ *
+ * LoadingScreen と SplashScreen (Issue #59) の両方から使うため、
+ * 60行ほどある SVG を二重管理しないようここに切り出して共有している。
+ * サイズだけ呼び出し側から変えられるようにしてある（起動画面では大きめに出す）。
+ */
+export function PenAndPaper({ width = 140, height = 120 }: { width?: number; height?: number }) {
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center gap-6 px-6"
-      role="status"
-      aria-live="polite"
-      aria-label={`${message}…`}
+    // viewBox 120x100 の中に紙・手書き線・ペンを配置する
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 120 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
-      {/* 紙とペンのイラスト。viewBox 120x100 の中に紙・手書き線・ペンを配置する */}
-      <svg
-        width="140"
-        height="120"
-        viewBox="0 0 120 100"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
         {/* 紙: 白の角丸長方形 + 薄い影。少しだけ傾けて可愛らしく見せる */}
         <g transform="rotate(-4 60 52)">
           {/* 影（紙の少し下に薄く敷く） */}
@@ -78,7 +79,19 @@ export function LoadingScreen({ message = "Loading" }: { message?: string }) {
           {/* 尻のキャップ（濃い緑） */}
           <path d="M77.5 38.3 L80.7 41.5 L83.3 38.9 L80.1 35.7 Z" fill="#047857" />
         </g>
-      </svg>
+    </svg>
+  );
+}
+
+export function LoadingScreen({ message = "Loading" }: { message?: string }) {
+  return (
+    <div
+      className="flex min-h-screen flex-col items-center justify-center gap-6 px-6"
+      role="status"
+      aria-live="polite"
+      aria-label={`${message}…`}
+    >
+      <PenAndPaper />
 
       {/* テキスト行。message + 明滅するドット3つ */}
       <p className="flex items-center text-sm font-medium text-slate-500">
