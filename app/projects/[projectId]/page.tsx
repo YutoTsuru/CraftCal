@@ -9,6 +9,8 @@ import { TaskInput } from "@/components/TaskInput";
 import { getTodayString } from "@/lib/schedule";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { MarkdownView } from "@/components/MarkdownView";
+import { ColorPicker } from "@/components/ColorPicker";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 import type { Task } from "@/types/dev-calendar";
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
@@ -24,7 +26,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
   const [overviewUrl, setOverviewUrl] = useState("");
-  const [color, setColor] = useState("#10b981");
+  const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
   const [status, setStatus] = useState<"active" | "paused" | "done">("active");
 
   // delete confirm state
@@ -39,7 +41,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       setDescription(project.description ?? "");
       setGoal(project.goal ?? "");
       setOverviewUrl(project.overviewUrl ?? "");
-      setColor(project.color ?? "#10b981");
+      setColor(project.color ?? DEFAULT_PROJECT_COLOR);
       setStatus(project.status ?? "active");
     }
   }, [project]);
@@ -85,7 +87,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
     setDescription(project.description ?? "");
     setGoal(project.goal ?? "");
     setOverviewUrl(project.overviewUrl ?? "");
-    setColor(project.color ?? "#10b981");
+    setColor(project.color ?? DEFAULT_PROJECT_COLOR);
     setStatus(project.status ?? "active");
     setIsEditing(false);
   };
@@ -106,8 +108,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
 
             <form className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-md">
               <div className="grid gap-3 md:grid-cols-2">
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-slate-200 px-3 py-2 outline-none" />
-                <input value={color} onChange={(e) => setColor(e.target.value)} type="color" className="w-12 rounded-xl border border-slate-200 px-3 py-2" />
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-slate-200 px-3 py-2 outline-none md:col-span-2" />
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -117,6 +118,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
                 />
                 <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
                 <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
+                {/* Issue #57: ラベルなしの type=color（謎の色付きの箱）をプリセット選択UIに置き換え */}
+                <ColorPicker value={color} onChange={setColor} className="md:col-span-2" />
 
                 <div className="flex items-center gap-2">
                   <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="rounded-xl border border-slate-200 px-3 py-2">

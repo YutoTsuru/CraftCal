@@ -13,6 +13,7 @@
 
 import { formatDate } from "@/lib/schedule";
 import { INBOX_PROJECT_ID } from "@/lib/storage";
+import { DEFAULT_PROJECT_COLOR, PROJECT_COLORS } from "@/lib/colors";
 import type { Project, Task, TaskPriority, TaskStatus, TaskWeight } from "@/types/dev-calendar";
 
 // 今日から days 日後の日付を "YYYY-MM-DD" 形式で返す（負の値なら過去）
@@ -78,7 +79,7 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
     // GitHub への導線は overviewUrl（「概要を開く」ボタン）に任せてここは平文にする
     description: "## 概要\nこのアプリ自体の開発プロジェクト。\n\nタスクは GitHub の実Issue (#3〜#16) をそのまま反映したもの。",
     overviewUrl: "https://github.com/YutoTsuru/CraftCal",
-    color: "#10b981", // アプリのテーマカラーと同じエメラルド
+    color: DEFAULT_PROJECT_COLOR, // アプリのテーマカラーと同じエメラルド
     status: "active",
     goal: "UX/UIを磨いて毎日使えるスプリント管理ツールにする",
     createdAt: now,
@@ -90,7 +91,8 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
     name: "ポートフォリオサイト",
     description: "自己紹介と制作物をまとめる静的サイト（モックデータ）",
     overviewUrl: null,
-    color: "#6366f1", // インディゴ。CraftCalと見分けやすい色にする
+    // インディゴ。CraftCalと見分けやすい色にする。Issue #57 のパレット値を使う
+    color: PROJECT_COLORS.find((c) => c.id === "indigo")!.hex,
     status: "active",
     goal: "就活・案件獲得に使えるポートフォリオを公開する",
     createdAt: now,

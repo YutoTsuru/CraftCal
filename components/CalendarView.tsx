@@ -6,6 +6,7 @@ import { useDevCalendar } from "@/components/AppProvider";
 import { formatDate, getTodayString } from "@/lib/schedule";
 import type { Task, TaskWeight } from "@/types/dev-calendar";
 import CalendarRangeHeader from "@/components/CalendarRangeHeader";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 type ViewMode = "month" | "week";
 
@@ -33,7 +34,7 @@ function TaskCard({ task }: { task: Task }) {
     <div className={`mb-2 overflow-hidden rounded-md border-l-4 bg-white p-2 text-sm shadow-sm ${priorityColor} ${overdue ? "bg-rose-50" : ""}`}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project?.color ?? "#10b981" }} />
+          <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project?.color ?? DEFAULT_PROJECT_COLOR }} />
           <div className={`truncate font-medium ${overdue ? "text-rose-600" : "text-slate-800"}`}>{task.title}</div>
         </div>
         <div className="text-xs text-slate-400">{task.estimatedMinutes ? `${task.estimatedMinutes}m` : ""}</div>

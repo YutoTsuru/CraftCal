@@ -8,6 +8,7 @@ import type { TaskStatus } from "@/types/dev-calendar";
 import { saveOrUpdateDailyLog, getLogsByDate, getRecentLogs, getAllLogs } from "@/lib/dailyLogs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 function ProjectBadge({ projectId, projects }: { projectId: string; projects: { id: string; name: string; color?: string | null }[] }) {
   const project = projects.find((p) => p.id === projectId);
@@ -15,7 +16,7 @@ function ProjectBadge({ projectId, projects }: { projectId: string; projects: { 
 
   return (
     <span className="inline-flex items-center gap-2">
-      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project.color ?? "#10b981" }} />
+      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project.color ?? DEFAULT_PROJECT_COLOR }} />
       <span className="text-xs text-slate-500">{project.name}</span>
     </span>
   );

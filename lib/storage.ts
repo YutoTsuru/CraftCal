@@ -5,6 +5,7 @@ import type {
   Sprint,
   Task
 } from "@/types/dev-calendar";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 export const STORAGE_KEY = "craftcal-state";
 export const INBOX_PROJECT_ID = "inbox";
@@ -44,7 +45,7 @@ export function createInboxProject(): Project {
     name: "Inbox",
     description: "未分類のタスク",
     overviewUrl: null,
-    color: "#10b981",
+    color: DEFAULT_PROJECT_COLOR,
     status: "active",
     goal: null,
     createdAt: now,

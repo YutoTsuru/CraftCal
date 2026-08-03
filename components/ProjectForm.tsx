@@ -2,6 +2,8 @@
 
 import { FormEvent, memo, useState } from "react";
 import { useDevCalendarActions } from "@/components/AppProvider";
+import { ColorPicker } from "@/components/ColorPicker";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 function ProjectFormComponent() {
   // Issue #48: このフォームは addProject しか使わないので actions だけを購読する
@@ -9,7 +11,7 @@ function ProjectFormComponent() {
   const { addProject } = useDevCalendarActions();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [color, setColor] = useState("#10b981");
+  const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
   const [goal, setGoal] = useState("");
   const [overviewUrl, setOverviewUrl] = useState("");
   const [status, setStatus] = useState<"active" | "paused" | "done">("active");
@@ -22,7 +24,7 @@ function ProjectFormComponent() {
 
     setName("");
     setDescription("");
-    setColor("#10b981");
+    setColor(DEFAULT_PROJECT_COLOR);
     setOverviewUrl("");
     setGoal("");
     setStatus("active");
@@ -32,18 +34,10 @@ function ProjectFormComponent() {
     <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
       <div className="grid gap-3 md:grid-cols-2">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-slate-200 px-3 py-2 outline-none" />
-        {/* テーマカラー選択。ラベルなしの type=color だけだと「謎のグレーの棒」に見えるため、
-            説明テキストと丸い色見本の形にする (Issue #37) */}
-        <label className="flex items-center gap-2">
-          <span className="text-sm text-slate-700">テーマカラー</span>
-          <input
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            type="color"
-            aria-label="プロジェクトのテーマカラー"
-            className="h-11 w-11 cursor-pointer rounded-full border border-slate-200 p-1"
-          />
-        </label>
+        {/* テーマカラー選択。ラベルなしの type=color だと「謎のグレーの棒」に見えるため
+            説明テキストを付けていたが (Issue #37)、OSのカラーダイアログが開く問題は
+            残っていたので、プリセットから選ぶ ColorPicker に置き換えた (Issue #57) */}
+        <ColorPicker value={color} onChange={setColor} label="テーマカラー" />
         <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
         <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
         <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />

@@ -12,6 +12,7 @@ import { PriorityBadge } from "@/components/PriorityBadge";
 import TodayList from "@/components/TodayList";
 import StatsCard from "@/components/StatsCard";
 import ActivityGrid from "@/components/ActivityGrid";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 import RecentLogs from "@/components/RecentLogs";
 import Achievements from "@/components/Achievements";
 import { getSprintLabel, getTodayString, getTodayTasks } from "@/lib/schedule";
@@ -149,7 +150,7 @@ export default function HomePage() {
                   <div className="pl-9">
                     <div className="font-semibold">{task.title}</div>
                     <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project?.color ?? "#10b981" }} />
+                      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project?.color ?? DEFAULT_PROJECT_COLOR }} />
                       {project?.name ?? "Inbox"}
                     </div>
 
@@ -218,7 +219,7 @@ export default function HomePage() {
                   <div className="text-sm font-semibold">{progress}%</div>
                 </div>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div style={{ width: `${progress}%`, background: p.color ?? "#10b981" }} className="h-2" />
+                  <div style={{ width: `${progress}%`, background: p.color ?? DEFAULT_PROJECT_COLOR }} className="h-2" />
                 </div>
               </div>
             );
