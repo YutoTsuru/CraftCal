@@ -1,19 +1,12 @@
 /**
- * LoadingScreen: 全画面ローディング表示。
- * 紙とペンの SVG イラストが「文字を書いている」演出を見せ、その下に「Loading…」テキストを出す。
- * 認証確認中・ログイン処理中・初回データ読み込み中など、待ち時間の共通表示として使う。
- *
- * アニメーション本体（keyframes）は app/globals.css の .loading-* クラスに定義している。
- * prefers-reduced-motion: reduce のときは globals.css 側で全アニメーションを止め、静止画+テキストになる。
- *
- * message: テキスト行の文言。既定は "Loading"（末尾の明滅ドット3つは常に付く）。
- */
-/**
  * PenAndPaper: 紙とペンが「文字を書いている」演出の SVG イラスト本体。
  *
  * LoadingScreen と SplashScreen (Issue #59) の両方から使うため、
  * 60行ほどある SVG を二重管理しないようここに切り出して共有している。
  * サイズだけ呼び出し側から変えられるようにしてある（起動画面では大きめに出す）。
+ *
+ * アニメーション本体（keyframes）は app/globals.css の .loading-* クラスに定義している。
+ * prefers-reduced-motion: reduce のときは globals.css 側で全アニメーションを止め、静止画になる。
  */
 export function PenAndPaper({ width = 140, height = 120 }: { width?: number; height?: number }) {
   return (
@@ -83,6 +76,18 @@ export function PenAndPaper({ width = 140, height = 120 }: { width?: number; hei
   );
 }
 
+/**
+ * LoadingScreen: アプリ内の待ち時間に出す全画面ローディング表示。
+ * PenAndPaper のイラストの下に「Loading…」テキストを出す。
+ *
+ * 使う場面（Issue #59 で起動時と切り分けた）:
+ *   - app/loading.tsx … ページ遷移中（ルートチャンクの読み込み中）
+ *   - app/auth/callback/page.tsx … ログイン処理中
+ * 起動の瞬間（セッション判定中・初回データ読み込み中）は、アプリ名とタグラインを出す
+ * SplashScreen を使う。遷移のたびに大きなブランド演出が出ると邪魔なため、ここでは出さない。
+ *
+ * message: テキスト行の文言。既定は "Loading"（末尾の明滅ドット3つは常に付く）。
+ */
 export function LoadingScreen({ message = "Loading" }: { message?: string }) {
   return (
     <div
