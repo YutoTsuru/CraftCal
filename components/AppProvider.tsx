@@ -14,7 +14,7 @@
  */
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { LoadingScreen } from "@/components/LoadingScreen";
+import { SplashScreen } from "@/components/SplashScreen";
 import { generateSchedule } from "@/lib/schedule";
 import { createSeedData } from "@/lib/seed-data";
 import { createPersistCoordinator, type PersistRunOptions } from "@/lib/persist-coordinator";
@@ -479,9 +479,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             サーバーへの保存に失敗しました。通信状態を確認してページを再読み込みしてください
           </div>
         )}
-        {/* 初回データ読み込み中は children の代わりにローディングを出す。
+        {/* 初回データ読み込み中は children の代わりに起動画面を出す (Issue #59)。
+            ここはセッション判定 (AuthGate) に続く「起動の続き」なので、
+            ページ遷移中の LoadingScreen ではなく SplashScreen を使って表示を揃える。
             コンテキスト自体は提供し続けるので、読み込み完了後は再マウントなしで children が表示される */}
-        {dataLoading ? <LoadingScreen /> : children}
+        {dataLoading ? <SplashScreen /> : children}
       </ActionsContext.Provider>
     </StateContext.Provider>
   );

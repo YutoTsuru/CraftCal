@@ -107,12 +107,26 @@ body {
   40% { opacity: 1; }
 }
 
+/* ===== 起動時のスプラッシュ演出（SplashScreen.tsx で使用 / Issue #59） ===== */
+/* 下から少し持ち上げつつフェードイン。イラスト→ロゴ→タグラインの順に出るよう遅延をずらす。
+   both で開始前も終了後も keyframes の値を保持し、遅延中にちらつかないようにする */
+.splash-fade { animation: splash-fade 0.6s ease-out both; }
+.splash-fade-delay-1 { animation-delay: 0.15s; }
+.splash-fade-delay-2 { animation-delay: 0.3s; }
+@keyframes splash-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .blob { animation: none !important; }
   /* ローディングも静止させる（線は書き終わり・ペンは1行目・ドットは薄く表示のまま） */
   .loading-line, .loading-pen, .loading-dot { animation: none !important; }
   .loading-line { stroke-dashoffset: 0 !important; }
+  /* 起動画面のフェードインも止める。animation: none だと both の保持も消えるため、
+     表示状態（不透明・移動なし）を明示的に戻しておく */
+  .splash-fade { animation: none !important; opacity: 1 !important; transform: none !important; }
   * { scroll-behavior: auto !important; }
 }
 
