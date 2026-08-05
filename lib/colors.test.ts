@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PROJECT_COLOR,
+  GCAL_EVENT_COLORS,
   PALETTE_COLUMNS,
   PROJECT_COLORS,
   contrastRatioOnWhite,
@@ -35,6 +36,14 @@ describe("パレット定義", () => {
       expect(Number.isInteger(id)).toBe(true);
       expect(id).toBeGreaterThanOrEqual(1);
       expect(id).toBeLessThanOrEqual(11);
+    }
+  });
+
+  // gcalColorId だけだと対応ミスに気づけないため、併記した色名と突き合わせて検証する。
+  // ID→色名の表 (GCAL_EVENT_COLORS) は3つの独立した情報源で一致を確認したもの。
+  it("gcalColorId と gcalColorName の組み合わせが Google の定義と一致する", () => {
+    for (const color of PROJECT_COLORS) {
+      expect(GCAL_EVENT_COLORS[color.gcalColorId]).toBe(color.gcalColorName);
     }
   });
 

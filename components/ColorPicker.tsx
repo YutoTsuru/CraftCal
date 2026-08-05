@@ -63,11 +63,13 @@ function ColorPickerComponent({
       return [...PROJECT_COLORS];
     }
 
+    // パレット外の色は GCal のイベント色に対応付けられないので、変換用の項目は空にする
     const current: ProjectColor = {
       id: "current",
       labelJa: "現在の色",
       hex: normalizedValue,
-      gcalColorId: ""
+      gcalColorId: "",
+      gcalColorName: ""
     };
     return [current, ...PROJECT_COLORS];
   }, [normalizedValue]);

@@ -22,13 +22,49 @@ export type ProjectColor = {
   /** 実際に保存される値。DB には従来通り HEX 文字列で入る */
   hex: string;
   /**
-   * Google カレンダーのイベント色 (colorId 1〜11) への対応。
-   * GCal片方向連携 (Stage 2b) でエクスポートする際の変換表として使う。
+   * Google カレンダーの【イベント色】(colorId 1〜11) への対応。
+   * GCal片方向連携 (Stage 2b) でタスクを予定として書き出す際の変換表として使う。
    *
-   * TODO(Stage 2b): この値は暫定。実装時に Calendar API の `colors.get` を叩いて
-   * 実際の colorId と配色を確認してから確定させること。
+   * 注意: Google カレンダーには「イベント色」と「カレンダー色」の2つのパレットがあり、
+   * 同じ色名でもIDが違う（例: Tomato はイベント色なら 11、カレンダー色なら 3）。
+   * ここはイベント色のIDなので、カレンダー自体の色を設定する用途には使えない。
    */
   gcalColorId: string;
+  /**
+   * 対応する Google カレンダーのイベント色名。
+   * gcalColorId だけだと対応が合っているか目視で確認できないため併記する
+   * （テストでIDと名前の組み合わせを検証している）。
+   */
+  gcalColorName: string;
+};
+
+/**
+ * Google カレンダーのイベント色: colorId → 色名。
+ *
+ * 出典（3つの独立した情報源で一致を確認済み）:
+ *   - Google Calendar API リファレンス (Colors)
+ *     https://developers.google.com/workspace/calendar/api/v3/reference/colors
+ *   - gcsa (Google Calendar Simple API) ドキュメント
+ *     https://google-calendar-simple-api.readthedocs.io/en/latest/colors.html
+ *   - 色名→ID対応の gist
+ *     https://gist.github.com/ansaso/accaddab0892a3b47d5f4884fda0468b
+ *
+ * 実際の配色は API の `colors.get` が返す hex が正だが、ID と色名の対応は上記で固定。
+ * CraftCal 側のパレットは自前の配色を使い、書き出し時にここでIDへ変換する
+ * （GCal のパステル配色をそのままUIに持ち込むと現行デザインから浮くため）。
+ */
+export const GCAL_EVENT_COLORS: Readonly<Record<string, string>> = {
+  "1": "Lavender",
+  "2": "Sage",
+  "3": "Grape",
+  "4": "Flamingo",
+  "5": "Banana",
+  "6": "Tangerine",
+  "7": "Peacock",
+  "8": "Graphite",
+  "9": "Blueberry",
+  "10": "Basil",
+  "11": "Tomato"
 };
 
 /**
@@ -43,16 +79,16 @@ export type ProjectColor = {
  *   - slate … 「色で主張させたくないプロジェクト」用の無彩色枠。
  */
 export const PROJECT_COLORS: readonly ProjectColor[] = [
-  { id: "rose", labelJa: "ローズ", hex: "#e11d48", gcalColorId: "11" },
-  { id: "orange", labelJa: "オレンジ", hex: "#ea580c", gcalColorId: "6" },
-  { id: "yellow", labelJa: "イエロー", hex: "#a16207", gcalColorId: "5" },
-  { id: "lime", labelJa: "ライム", hex: "#65a30d", gcalColorId: "10" },
-  { id: "emerald", labelJa: "エメラルド", hex: "#059669", gcalColorId: "2" },
-  { id: "cyan", labelJa: "シアン", hex: "#0891b2", gcalColorId: "7" },
-  { id: "blue", labelJa: "ブルー", hex: "#2563eb", gcalColorId: "9" },
-  { id: "indigo", labelJa: "インディゴ", hex: "#4f46e5", gcalColorId: "1" },
-  { id: "violet", labelJa: "バイオレット", hex: "#7c3aed", gcalColorId: "3" },
-  { id: "slate", labelJa: "グレー", hex: "#475569", gcalColorId: "8" }
+  { id: "rose", labelJa: "ローズ", hex: "#e11d48", gcalColorId: "11", gcalColorName: "Tomato" },
+  { id: "orange", labelJa: "オレンジ", hex: "#ea580c", gcalColorId: "6", gcalColorName: "Tangerine" },
+  { id: "yellow", labelJa: "イエロー", hex: "#a16207", gcalColorId: "5", gcalColorName: "Banana" },
+  { id: "lime", labelJa: "ライム", hex: "#65a30d", gcalColorId: "10", gcalColorName: "Basil" },
+  { id: "emerald", labelJa: "エメラルド", hex: "#059669", gcalColorId: "2", gcalColorName: "Sage" },
+  { id: "cyan", labelJa: "シアン", hex: "#0891b2", gcalColorId: "7", gcalColorName: "Peacock" },
+  { id: "blue", labelJa: "ブルー", hex: "#2563eb", gcalColorId: "9", gcalColorName: "Blueberry" },
+  { id: "indigo", labelJa: "インディゴ", hex: "#4f46e5", gcalColorId: "1", gcalColorName: "Lavender" },
+  { id: "violet", labelJa: "バイオレット", hex: "#7c3aed", gcalColorId: "3", gcalColorName: "Grape" },
+  { id: "slate", labelJa: "グレー", hex: "#475569", gcalColorId: "8", gcalColorName: "Graphite" }
 ] as const;
 
 /** グリッドの列数。ColorPicker の見た目と矢印キー移動の両方でこの値を使う */
