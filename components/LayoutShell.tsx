@@ -26,7 +26,8 @@ import { useAuth } from "@/components/AuthProvider";
 // ナビ項目（5画面）。サイドバー・ボトムタブで共通に使う。
 // 並び順 = 利用フロー順（Home → Projects → Tasks → Sprint → Calendar）
 const sidebarItems = [
-  { href: "/", label: "Home", icon: Home },
+  // Issue #64: ダッシュボードは / から /home に移動（/ は公開ランディング）
+  { href: "/home", label: "Home", icon: Home },
   { href: "/projects", label: "Projects", icon: Folder },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/sprint", label: "Sprint", icon: Rocket },
@@ -65,7 +66,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex lg:flex-col border-slate-200 bg-white px-3 py-3 lg:fixed lg:inset-y-0 lg:left-0 lg:w-56 lg:border-r">
         {/* ロゴ。クリックでダッシュボード (/) へ */}
         <div className="mb-6">
-          <Link href="/" className="block">
+          <Link href="/home" className="block">
             <h1 className="text-2xl font-bold tracking-tight">CraftCal</h1>
           </Link>
         </div>
@@ -117,7 +118,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       <header className="lg:hidden sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         {/* relative + 中央絶対配置のロゴ。右端にログアウトアイコンボタンを置く */}
         <div className="relative flex items-center justify-center px-2 py-3">
-          <Link href="/" className="text-lg font-bold tracking-tight text-slate-900">
+          <Link href="/home" className="text-lg font-bold tracking-tight text-slate-900">
             CraftCal
           </Link>
           {/* ログアウトボタン。タップ領域 44px を確保 (h-11 w-11) */}

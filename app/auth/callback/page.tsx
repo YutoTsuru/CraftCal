@@ -16,9 +16,9 @@ export default function AuthCallbackPage() {
   const { session, loading } = useAuth();
 
   useEffect(() => {
-    // セッションが張れたらホームへ
+    // セッションが張れたらアプリ本体へ（Issue #64: / は公開ランディングになったので /home）
     if (!loading && session) {
-      router.replace("/");
+      router.replace("/home");
       return;
     }
 
