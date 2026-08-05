@@ -66,12 +66,12 @@ export function LandingPage() {
         <section className="grid items-center gap-10 py-14 md:grid-cols-[1.15fr_1fr] md:py-20">
           <div className="flex flex-col items-start gap-6">
             <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
-              作りたいものを、
+              「いつかやる」を、
               <br />
-              終わる形に割る。
+              「今日やる」に。
             </h1>
             <p className="max-w-md text-lg leading-relaxed text-slate-600">
-              {SITE_DESCRIPTION}。プロジェクトをタスクに分解し、カレンダーに置いて、今日ぶんだけに集中するための道具です。
+              作りたいものをタスクに分解し、カレンダーに置いて、今日ぶんだけに集中する。{SITE_DESCRIPTION}です。
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Link
