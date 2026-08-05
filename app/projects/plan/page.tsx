@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useDevCalendarActions } from "@/components/AppProvider";
 import { Sparkles, ChevronRight, Clock, Pencil, Check, X } from "lucide-react";
 import { generateTasks, type PlannedTask } from "@/lib/planner-templates";
+import { ColorPicker } from "@/components/ColorPicker";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 type Step = "input" | "review";
 
@@ -46,7 +48,8 @@ export default function ProjectPlanPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
-  const [color, setColor] = useState("#6366f1");
+  // Issue #57: 以前はここだけ初期値が indigo で他画面 (emerald) と食い違っていたため揃えた
+  const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
 
   // generated tasks
   const [tasks, setTasks] = useState<PlannedTask[]>([]);
@@ -192,15 +195,8 @@ export default function ProjectPlanPage() {
               />
             </div>
 
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-slate-700">プロジェクトカラー</label>
-              <input
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                type="color"
-                className="h-9 w-12 cursor-pointer rounded-lg border border-slate-200 p-1"
-              />
-            </div>
+            {/* Issue #57: OSのカラーダイアログではなくプリセットから選ぶ */}
+            <ColorPicker value={color} onChange={setColor} label="プロジェクトカラー" />
 
             <button
               onClick={handleGenerate}

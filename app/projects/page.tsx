@@ -6,6 +6,7 @@ import { useDevCalendar } from "@/components/AppProvider";
 import ProjectForm from "@/components/ProjectForm";
 import { MarkdownView } from "@/components/MarkdownView";
 import { Sparkles } from "lucide-react";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 export default function ProjectsPage() {
   const { projects = [], tasks } = useDevCalendar();
@@ -60,7 +61,7 @@ export default function ProjectsPage() {
                   <div className="flex items-center gap-3">
                     <div className="text-sm">{progress}%</div>
                     <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-100">
-                      <div style={{ width: `${progress}%`, background: project.color ?? "#10b981" }} className="h-2" />
+                      <div style={{ width: `${progress}%`, background: project.color ?? DEFAULT_PROJECT_COLOR }} className="h-2" />
                     </div>
                   </div>
                 </div>
