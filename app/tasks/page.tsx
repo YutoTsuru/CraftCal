@@ -27,9 +27,9 @@ export default function TasksPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <p className="text-sm text-indigo-600">Task Management</p>
+        <p className="text-sm text-stone-500">Task Management</p>
         <h2 className="mt-2 text-3xl font-bold">タスク管理</h2>
-        <p className="mt-2 text-slate-400">今やるべき作業を小さく分けて登録します。</p>
+        <p className="mt-2 text-stone-400">今やるべき作業を小さく分けて登録します。</p>
       </div>
 
       {/* モバイルでも3列のまま並べる (Issue #37)。縦積みだとカード1枚ずつが巨大になりスクロールが長くなる */}
@@ -42,8 +42,8 @@ export default function TasksPage() {
       <TaskInput editingTask={editingTask} onCancel={() => setEditingTask(null)} />
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm text-slate-700">プロジェクトで絞る:</label>
-        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value as any)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none">
+        <label className="text-sm text-stone-700">プロジェクトで絞る:</label>
+        <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value as any)} className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none">
           <option value="all">すべてのプロジェクト</option>
           {projects.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
@@ -56,8 +56,8 @@ export default function TasksPage() {
             onClick={() => setView("list")}
             className={`min-h-11 rounded-xl border px-4 text-sm transition ${
               view === "list"
-                ? "border-emerald-600 bg-emerald-600 text-white"
-                : "border-slate-200 bg-white text-slate-700"
+                ? "border-lime-700 bg-lime-700 text-white"
+                : "border-stone-200 bg-surface text-stone-700"
             }`}
           >
             リスト
@@ -66,8 +66,8 @@ export default function TasksPage() {
             onClick={() => setView("board")}
             className={`min-h-11 rounded-xl border px-4 text-sm transition ${
               view === "board"
-                ? "border-emerald-600 bg-emerald-600 text-white"
-                : "border-slate-200 bg-white text-slate-700"
+                ? "border-lime-700 bg-lime-700 text-white"
+                : "border-stone-200 bg-surface text-stone-700"
             }`}
           >
             ボード

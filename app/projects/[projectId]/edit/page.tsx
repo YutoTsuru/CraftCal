@@ -35,8 +35,8 @@ export default function ProjectEditPage({ params }: { params: Promise<{ projectI
   if (!project) {
     return (
       <div className="grid gap-4">
-        <p className="text-slate-600">プロジェクトが見つかりません。</p>
-        <Link href="/projects" className="text-sm text-indigo-600">プロジェクト一覧へ戻る</Link>
+        <p className="text-stone-600">プロジェクトが見つかりません。</p>
+        <Link href="/projects" className="text-sm text-lime-700">プロジェクト一覧へ戻る</Link>
       </div>
     );
   }
@@ -64,32 +64,32 @@ export default function ProjectEditPage({ params }: { params: Promise<{ projectI
   return (
     <div className="grid gap-6">
       <div>
-        <p className="text-sm text-indigo-600">Edit Project</p>
+        <p className="text-sm text-stone-500">Edit Project</p>
         <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
-        <p className="mt-2 text-slate-400">プロジェクト情報を編集します。</p>
+        <p className="mt-2 text-stone-400">プロジェクト情報を編集します。</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+      <form onSubmit={handleSubmit} className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
         <div className="grid gap-3 md:grid-cols-2">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-slate-200 px-3 py-2 outline-none md:col-span-2" />
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
-          <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
-          <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-stone-200 px-3 py-2 outline-none md:col-span-2" />
+          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
+          <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
+          <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
           {/* Issue #57: ラベルなしの type=color（謎の色付きの箱）をプリセット選択UIに置き換え */}
           <ColorPicker value={color} onChange={setColor} className="md:col-span-2" />
 
           <div className="flex items-center gap-2">
-            <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="rounded-xl border border-slate-200 px-3 py-2">
+            <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="rounded-xl border border-stone-200 px-3 py-2">
               <option value="active">Active</option>
               <option value="paused">Paused</option>
               <option value="done">Done</option>
             </select>
 
             <div className="ml-auto flex gap-2">
-              <button type="button" onClick={handleCancel} className="rounded-xl border border-slate-200 px-4 py-2 text-sm">
+              <button type="button" onClick={handleCancel} className="rounded-xl border border-stone-200 px-4 py-2 text-sm">
                 キャンセル
               </button>
-              <button type="submit" className="rounded-xl bg-emerald-500 px-4 py-2 text-white">
+              <button type="submit" className="rounded-xl bg-lime-600 px-4 py-2 text-white">
                 保存
               </button>
             </div>

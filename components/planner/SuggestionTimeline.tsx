@@ -79,7 +79,7 @@ export function SuggestionTimeline({ suggestions }: { suggestions: ScheduleSugge
         return (
           <div key={date} className="min-w-[180px] flex-1">
             {/* 列ヘッダー: 今日/明日 などの dateLabel を表示 */}
-            <p className="mb-2 text-xs font-semibold text-emerald-700">{items[0]?.dateLabel}</p>
+            <p className="mb-2 text-xs font-semibold text-lime-800">{items[0]?.dateLabel}</p>
 
             {/* 時間軸本体。区切り線と提案ブロックを重ねるため relative にする */}
             <div className="relative" style={{ height: `${columnHeight}px` }}>
@@ -87,10 +87,10 @@ export function SuggestionTimeline({ suggestions }: { suggestions: ScheduleSugge
               {hours.map((hour, index) => (
                 <div
                   key={hour}
-                  className="absolute left-0 right-0 border-t border-slate-100"
+                  className="absolute left-0 right-0 border-t border-stone-100"
                   style={{ top: `${index * HOUR_HEIGHT}px` }}
                 >
-                  <span className="text-xs text-slate-400">{`${String(hour).padStart(2, "0")}:00`}</span>
+                  <span className="text-xs text-stone-400">{`${String(hour).padStart(2, "0")}:00`}</span>
                 </div>
               ))}
 
@@ -105,7 +105,7 @@ export function SuggestionTimeline({ suggestions }: { suggestions: ScheduleSugge
                   <div
                     key={`${item.taskId}-${item.startTime}`}
                     data-testid="timeline-block"
-                    className="absolute left-10 right-1 overflow-hidden rounded-lg bg-emerald-500/90 px-2 py-1 text-white"
+                    className="absolute left-10 right-1 overflow-hidden rounded-lg bg-lime-600/90 px-2 py-1 text-white"
                     style={{ top: `${top}px`, height: `${height}px` }}
                   >
                     {/* 1行目: 開始〜終了時刻 */}

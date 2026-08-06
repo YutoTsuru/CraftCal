@@ -49,8 +49,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
   if (!project) {
     return (
       <div>
-        <p className="text-slate-600">プロジェクトが見つかりません。</p>
-        <Link href="/projects" className="text-sm text-indigo-600">プロジェクト一覧へ</Link>
+        <p className="text-stone-600">プロジェクトが見つかりません。</p>
+        <Link href="/projects" className="text-sm text-lime-700">プロジェクト一覧へ</Link>
       </div>
     );
   }
@@ -102,35 +102,35 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       <div>
         {isEditing ? (
           <div>
-            <p className="text-sm text-indigo-600">Edit Project</p>
+            <p className="text-sm text-stone-500">Edit Project</p>
             <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
-            <p className="mt-2 text-slate-400">プロジェクト情報を編集します。</p>
+            <p className="mt-2 text-stone-400">プロジェクト情報を編集します。</p>
 
-            <form className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+            <form className="mt-4 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
               <div className="grid gap-3 md:grid-cols-2">
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-slate-200 px-3 py-2 outline-none md:col-span-2" />
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-stone-200 px-3 py-2 outline-none md:col-span-2" />
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={"説明 (Markdown が使えます)\n\n例:\n## 概要\n- 機能A\n- 機能B"}
                   rows={8}
-                  className="resize-y rounded-xl border border-slate-200 px-3 py-2 font-mono text-sm outline-none md:col-span-2"
+                  className="resize-y rounded-xl border border-stone-200 px-3 py-2 font-mono text-sm outline-none md:col-span-2"
                 />
-                <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
-                <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
+                <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
+                <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
                 {/* Issue #57: ラベルなしの type=color（謎の色付きの箱）をプリセット選択UIに置き換え */}
                 <ColorPicker value={color} onChange={setColor} className="md:col-span-2" />
 
                 <div className="flex items-center gap-2">
-                  <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="rounded-xl border border-slate-200 px-3 py-2">
+                  <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="rounded-xl border border-stone-200 px-3 py-2">
                     <option value="active">Active</option>
                     <option value="paused">Paused</option>
                     <option value="done">Done</option>
                   </select>
 
                   <div className="ml-auto flex gap-2">
-                    <button type="button" onClick={handleCancel} className="rounded-xl border border-slate-200 px-4 py-2 text-sm">キャンセル</button>
-                    <button type="button" onClick={handleSave} className="rounded-xl bg-emerald-500 px-4 py-2 text-white">保存</button>
+                    <button type="button" onClick={handleCancel} className="rounded-xl border border-stone-200 px-4 py-2 text-sm">キャンセル</button>
+                    <button type="button" onClick={handleSave} className="rounded-xl bg-lime-600 px-4 py-2 text-white">保存</button>
                   </div>
                 </div>
               </div>
@@ -139,19 +139,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         ) : (
           <div className="flex items-start gap-4">
             <div className="flex-1">
-              <p className="text-sm text-indigo-600">Project</p>
+              <p className="text-sm text-stone-500">Project</p>
               <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
               {project.description && (
-                <div className="mt-3 rounded-xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+                <div className="mt-3 rounded-xl border border-stone-200 bg-surface p-4 text-sm shadow-sm">
                   <MarkdownView content={project.description} />
                 </div>
               )}
             </div>
             <div className="flex flex-col gap-2">
               {project.overviewUrl && (
-                <a href={project.overviewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-indigo-600 hover:bg-slate-100">概要を開く</a>
+                <a href={project.overviewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-2 text-sm text-lime-700 hover:bg-stone-200">概要を開く</a>
               )}
-              <button onClick={() => setIsEditing(true)} className="inline-flex items-center gap-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">編集</button>
+              <button onClick={() => setIsEditing(true)} className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-2 text-sm text-stone-700 hover:bg-stone-200">編集</button>
               <button
                 onClick={() => setConfirmDelete(true)}
                 className="inline-flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100"
@@ -183,7 +183,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-stone-200 bg-surface px-4 py-2 text-sm text-stone-700 hover:bg-stone-100"
                 >
                   キャンセル
                 </button>
@@ -193,15 +193,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         </div>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+      <section className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm text-slate-600">ゴール</div>
+            <div className="text-sm text-stone-600">ゴール</div>
             <div className="mt-1 text-lg font-medium">{project.goal ?? "(未設定)"}</div>
           </div>
           <div className="text-right">
-            <div className="text-sm text-slate-500">進捗: {progress}%</div>
-            <div className="mt-2 text-sm text-slate-500">ステータス: {project.status}</div>
+            <div className="text-sm text-stone-500">進捗: {progress}%</div>
+            <div className="mt-2 text-sm text-stone-500">ステータス: {project.status}</div>
           </div>
         </div>
       </section>
@@ -211,19 +211,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       )}
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+        <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
           <h3 className="text-lg font-semibold">タスク一覧</h3>
           <div className="mt-3">
             <TaskList tasks={projectTasks} onEdit={setEditingTask} />
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+        <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
           <h3 className="text-lg font-semibold">今日のタスク</h3>
-          {todays.length === 0 ? <p className="mt-3 text-slate-400">今日のタスクはありません。</p> : <TaskList tasks={todays} onEdit={setEditingTask} />}
+          {todays.length === 0 ? <p className="mt-3 text-stone-400">今日のタスクはありません。</p> : <TaskList tasks={todays} onEdit={setEditingTask} />}
 
           <h3 className="mt-6 text-lg font-semibold">期限が近いタスク</h3>
-          {dueSoon.length === 0 ? <p className="mt-3 text-slate-400">今後7日以内の期限はありません。</p> : <TaskList tasks={dueSoon} onEdit={setEditingTask} />}
+          {dueSoon.length === 0 ? <p className="mt-3 text-stone-400">今後7日以内の期限はありません。</p> : <TaskList tasks={dueSoon} onEdit={setEditingTask} />}
         </div>
       </section>
     </div>

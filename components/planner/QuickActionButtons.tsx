@@ -25,7 +25,7 @@ export function QuickActionButtons({ onPick }: Props) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.03 }}
           onClick={() => onPick(action)}
-          className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+          className="rounded-full border border-lime-200 bg-lime-50 px-4 py-2 text-sm font-medium text-lime-800 transition hover:border-lime-300 hover:bg-lime-100"
         >
           {action}
         </motion.button>

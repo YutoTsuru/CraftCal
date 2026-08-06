@@ -18,7 +18,7 @@ function isMultiDayTask(t: Task) {
 
 // Issue #46: セル内チップ／週バーの状態色（done=緑 / doing=青 / その他=amber）。バーと同じ配色に統一。
 function statusChipColor(status: Task["status"]) {
-  return status === "done" ? "bg-emerald-200" : status === "doing" ? "bg-blue-200" : "bg-amber-200";
+  return status === "done" ? "bg-lime-200" : status === "doing" ? "bg-amber-200" : "bg-amber-200";
 }
 
 function TaskCard({ task }: { task: Task }) {
@@ -28,18 +28,18 @@ function TaskCard({ task }: { task: Task }) {
   const overdue = task.dueDate && task.dueDate < today && task.status !== "done";
 
   const priorityColor =
-    task.priority === "high" ? "border-rose-500" : task.priority === "medium" ? "border-amber-400" : "border-emerald-400";
+    task.priority === "high" ? "border-rose-500" : task.priority === "medium" ? "border-amber-400" : "border-lime-500";
 
   return (
-    <div className={`mb-2 overflow-hidden rounded-md border-l-4 bg-white p-2 text-sm shadow-sm ${priorityColor} ${overdue ? "bg-rose-50" : ""}`}>
+    <div className={`mb-2 overflow-hidden rounded-md border-l-4 bg-surface p-2 text-sm shadow-sm ${priorityColor} ${overdue ? "bg-rose-50" : ""}`}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project?.color ?? DEFAULT_PROJECT_COLOR }} />
-          <div className={`truncate font-medium ${overdue ? "text-rose-600" : "text-slate-800"}`}>{task.title}</div>
+          <div className={`truncate font-medium ${overdue ? "text-rose-600" : "text-stone-800"}`}>{task.title}</div>
         </div>
-        <div className="text-xs text-slate-400">{task.estimatedMinutes ? `${task.estimatedMinutes}m` : ""}</div>
+        <div className="text-xs text-stone-400">{task.estimatedMinutes ? `${task.estimatedMinutes}m` : ""}</div>
       </div>
-      <div className="mt-1 text-xs text-slate-500 truncate">{task.memo}</div>
+      <div className="mt-1 text-xs text-stone-500 truncate">{task.memo}</div>
     </div>
   );
 }
@@ -456,18 +456,18 @@ export default function CalendarView() {
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-emerald-600">Calendar</p>
+            <p className="text-sm text-lime-700">Calendar</p>
             <h2 className="mt-2 text-3xl font-bold">カレンダー</h2>
-            <p className="mt-1 text-slate-400">月表示・週表示でタスクを確認できます。</p>
+            <p className="mt-1 text-stone-400">月表示・週表示でタスクを確認できます。</p>
           </div>
 
           {/* 月表示/週表示の切替タブ。
               以前は hidden sm:flex でモバイル非表示だったが、モバイルでも切替できるよう常時表示に変更 (Issue #14)。
               py-2 はタップ領域確保のため */}
           <div className="flex items-center gap-4">
-            <div className="flex items-center rounded-md bg-slate-50 p-1">
-              <button onClick={() => setMode("month")} className={`rounded px-3 py-2 text-sm ${mode === "month" ? "bg-emerald-600 text-white" : "text-slate-700"}`}>Month</button>
-              <button onClick={() => setMode("week")} className={`rounded px-3 py-2 text-sm ${mode === "week" ? "bg-emerald-600 text-white" : "text-slate-700"}`}>Week</button>
+            <div className="flex items-center rounded-md bg-stone-100 p-1">
+              <button onClick={() => setMode("month")} className={`rounded px-3 py-2 text-sm ${mode === "month" ? "bg-lime-700 text-white" : "text-stone-700"}`}>Month</button>
+              <button onClick={() => setMode("week")} className={`rounded px-3 py-2 text-sm ${mode === "week" ? "bg-lime-700 text-white" : "text-stone-700"}`}>Week</button>
             </div>
           </div>
         </div>
@@ -487,11 +487,11 @@ export default function CalendarView() {
 
       {/* 未配置タスク置き場: 予定日がまだ決まっていないタスク */}
       {unplacedTasks.length > 0 && (
-        <section className={`rounded-xl border bg-white p-4 shadow-md ${placingTask ? "border-emerald-400" : "border-slate-200"}`}>
+        <section className={`rounded-xl border bg-surface p-4 shadow-md ${placingTask ? "border-lime-500" : "border-stone-200"}`}>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold text-slate-700">未配置のタスク（{unplacedTasks.length}件）</h3>
-              <p className="mt-1 text-xs text-slate-500">
+              <h3 className="text-sm font-semibold text-stone-700">未配置のタスク（{unplacedTasks.length}件）</h3>
+              <p className="mt-1 text-xs text-stone-500">
                 {placingTask
                   ? `「${placingTask.title}」を配置する日をカレンダーでクリックしてください`
                   : "タスクを選んでからカレンダーの日付をクリックすると、予定日を設定できます。"}
@@ -500,7 +500,7 @@ export default function CalendarView() {
             {placingTask && (
               <button
                 onClick={() => setPlacingTaskId(null)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-stone-200 bg-surface px-3 py-1 text-xs text-stone-600 hover:bg-stone-100"
               >
                 選択解除
               </button>
@@ -513,12 +513,12 @@ export default function CalendarView() {
                 onClick={() => setPlacingTaskId(placingTaskId === t.id ? null : t.id)}
                 className={`rounded-full border px-3 py-1.5 text-sm transition ${
                   placingTaskId === t.id
-                    ? "border-emerald-500 bg-emerald-50 font-semibold text-emerald-700"
-                    : "border-slate-200 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
+                    ? "border-lime-600 bg-lime-50 font-semibold text-lime-800"
+                    : "border-stone-200 bg-stone-100 text-stone-700 hover:border-lime-300 hover:bg-lime-50"
                 }`}
               >
                 {t.title}
-                {t.dueDate && <span className="ml-2 text-xs text-slate-500">期限 {t.dueDate}</span>}
+                {t.dueDate && <span className="ml-2 text-xs text-stone-500">期限 {t.dueDate}</span>}
               </button>
             ))}
           </div>
@@ -528,7 +528,7 @@ export default function CalendarView() {
       {/* Issue #42 なぞって期間指定モードの案内バー。
           開始日から終了日までなぞる操作を促し、キャンセルできるようにする */}
       {rangeSelecting && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-lime-300 bg-lime-50 px-4 py-3 text-sm text-lime-900">
           <span>開始日から終了日までカレンダーをなぞってください</span>
           <button
             onClick={() => {
@@ -536,7 +536,7 @@ export default function CalendarView() {
               setRangeStart(null);
               setRangeEnd(null);
             }}
-            className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs text-emerald-700 hover:bg-emerald-100"
+            className="rounded-lg border border-lime-300 bg-surface px-3 py-1.5 text-xs text-lime-800 hover:bg-lime-100"
           >
             キャンセル
           </button>
@@ -548,7 +548,7 @@ export default function CalendarView() {
           preventDefault はせず、縦スクロールやタップ（日付選択・配置）を妨げない。
           範囲選択モード中（rangeSelecting）は誤発火防止のためスワイプを無効化する */}
       <section
-        className="rounded-xl border border-slate-200 bg-white p-4 shadow-md"
+        className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md"
         onTouchStart={(e) => {
           if (rangeSelecting) return;
           beginSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
@@ -572,7 +572,7 @@ export default function CalendarView() {
               {/* weekday headers */}
               <div className="grid grid-cols-7 gap-1">
                 {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
-                  <div key={d} className="py-2 text-center text-xs font-semibold text-slate-500">{d}</div>
+                  <div key={d} className="py-2 text-center text-xs font-semibold text-stone-500">{d}</div>
                 ))}
               </div>
 
@@ -715,14 +715,14 @@ export default function CalendarView() {
                               if (placeTask(key)) return;
                               setSelectedDate(isSelected ? null : key);
                             }}
-                            className={`cursor-pointer h-24 sm:h-32 overflow-hidden rounded-md border p-1.5 sm:p-2 ${rangeSelecting ? 'touch-none' : ''} ${isCurrentMonth ? 'bg-white' : 'bg-slate-50 opacity-60'} ${inRange ? 'bg-emerald-100 ring-2 ring-emerald-300' : ''} ${isSelected ? 'ring-2 ring-emerald-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-emerald-400' : ''}`}
+                            className={`cursor-pointer h-24 sm:h-32 overflow-hidden rounded-md border p-1.5 sm:p-2 ${rangeSelecting ? 'touch-none' : ''} ${isCurrentMonth ? 'bg-surface' : 'bg-stone-100 opacity-60'} ${inRange ? 'bg-lime-100 ring-2 ring-lime-300' : ''} ${isSelected ? 'ring-2 ring-lime-300' : ''} ${placingTaskId ? 'hover:ring-2 hover:ring-lime-500' : ''}`}
                           >
                             {/* セル上段: 日付の数字（今日は緑丸で強調）と、タスク件数 */}
                             <div className="flex items-center justify-between">
-                              <div className={`text-xs sm:text-sm ${isToday ? 'rounded-full bg-emerald-600 px-1.5 py-0.5 sm:px-2 sm:py-1 text-white' : 'text-slate-700'}`}>
+                              <div className={`text-xs sm:text-sm ${isToday ? 'rounded-full bg-lime-700 px-1.5 py-0.5 sm:px-2 sm:py-1 text-white' : 'text-stone-700'}`}>
                                 <span>{d.getDate()}</span>
                               </div>
-                              <div className="hidden sm:block text-xs text-slate-400">{items.length ? `${items.length}` : ''}</div>
+                              <div className="hidden sm:block text-xs text-stone-400">{items.length ? `${items.length}` : ''}</div>
                             </div>
 
                             {/* Issue #46: 複数日バー用にセル上部へ確保する余白（デスクトップのみ）。
@@ -740,16 +740,16 @@ export default function CalendarView() {
                                 <div
                                   key={t.id}
                                   title={t.title}
-                                  className={`pointer-events-none truncate rounded px-1 py-0.5 text-[10px] leading-tight text-slate-800 sm:text-xs ${statusChipColor(t.status)}`}
+                                  className={`pointer-events-none truncate rounded px-1 py-0.5 text-[10px] leading-tight text-stone-800 sm:text-xs ${statusChipColor(t.status)}`}
                                 >
                                   {t.title}
                                 </div>
                               ))}
                               {moreCountDesktop > 0 && (
-                                <div className="hidden text-[10px] leading-tight text-slate-500 sm:block sm:text-xs">+{moreCountDesktop}件</div>
+                                <div className="hidden text-[10px] leading-tight text-stone-500 sm:block sm:text-xs">+{moreCountDesktop}件</div>
                               )}
                               {moreCountMobile > 0 && (
-                                <div className="text-[10px] leading-tight text-slate-500 sm:hidden">+{moreCountMobile}件</div>
+                                <div className="text-[10px] leading-tight text-stone-500 sm:hidden">+{moreCountMobile}件</div>
                               )}
                             </div>
                           </div>
@@ -769,7 +769,7 @@ export default function CalendarView() {
                               {row.map((seg, i) => {
                                 const left = (seg.startIndex / 7) * 100;
                                 const width = (seg.length / 7) * 100;
-                                const bg = seg.task.status === 'done' ? 'bg-emerald-200' : seg.task.status === 'doing' ? 'bg-blue-200' : 'bg-amber-200';
+                                const bg = seg.task.status === 'done' ? 'bg-lime-200' : seg.task.status === 'doing' ? 'bg-amber-200' : 'bg-amber-200';
                                 // Issue #42: このセグメントがタスクの実際の開始日/終了日を含むか。
                                 // 含む端にだけドラッグハンドルを出す（週をまたぐタスクの中間セグメントには出さない）
                                 const taskStartKey = seg.task.scheduledDate ?? seg.task.dueDate ?? null;
@@ -777,7 +777,7 @@ export default function CalendarView() {
                                 const isStartSeg = taskStartKey !== null && formatDate(seg.segStart) === taskStartKey;
                                 const isEndSeg = taskEndKey !== null && formatDate(seg.segEnd) === taskEndKey;
                                 return (
-                                  <div key={seg.task.id} title={seg.task.title} className={`absolute h-7 overflow-hidden text-xs font-medium text-slate-800 shadow-sm`} style={{ left: `${left}%`, width: `${width}%` }}>
+                                  <div key={seg.task.id} title={seg.task.title} className={`absolute h-7 overflow-hidden text-xs font-medium text-stone-800 shadow-sm`} style={{ left: `${left}%`, width: `${width}%` }}>
                                     <div className={`${bg} rounded-md px-2 py-1 truncate` + (seg.startIndex === 0 ? ' rounded-l-lg' : '') + (seg.startIndex + seg.length === 7 ? ' rounded-r-lg' : '')}>
                                       {seg.task.title}
                                     </div>
@@ -788,7 +788,7 @@ export default function CalendarView() {
                                       <div
                                         onPointerDown={(e) => startBarDrag(seg.task, "start", e)}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="absolute left-0 top-0 h-7 w-2 cursor-ew-resize rounded-l-md bg-slate-500/30 pointer-events-auto hover:bg-slate-600/50"
+                                        className="absolute left-0 top-0 h-7 w-2 cursor-ew-resize rounded-l-md bg-stone-500/30 pointer-events-auto hover:bg-stone-600/50"
                                         aria-label="開始日を変更"
                                       />
                                     )}
@@ -796,7 +796,7 @@ export default function CalendarView() {
                                       <div
                                         onPointerDown={(e) => startBarDrag(seg.task, "end", e)}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="absolute right-0 top-0 h-7 w-2 cursor-ew-resize rounded-r-md bg-slate-500/30 pointer-events-auto hover:bg-slate-600/50"
+                                        className="absolute right-0 top-0 h-7 w-2 cursor-ew-resize rounded-r-md bg-stone-500/30 pointer-events-auto hover:bg-stone-600/50"
                                         aria-label="終了日を変更"
                                       />
                                     )}
@@ -809,7 +809,7 @@ export default function CalendarView() {
                           {/* more indicator */}
                           {rows.length > maxRows && (
                             <div className="absolute right-2" style={{ top: maxRows * 28 }}>
-                              <div className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">+{rows.length - maxRows} more</div>
+                              <div className="rounded-full bg-stone-100 px-2 py-1 text-xs text-stone-600">+{rows.length - maxRows} more</div>
                             </div>
                           )}
                         </div>
@@ -858,15 +858,15 @@ export default function CalendarView() {
                         if (rangeSelecting) return;
                         placeTask(key);
                       }}
-                      className={`rounded-md border bg-white p-3 ${rangeSelecting ? 'touch-none' : ''} ${inRange ? 'bg-emerald-100 ring-2 ring-emerald-300' : ''} ${!isStart && !isEnd ? '' : 'opacity-100'} ${placingTaskId ? 'cursor-pointer hover:ring-2 hover:ring-emerald-400' : ''}`}
+                      className={`rounded-md border bg-surface p-3 ${rangeSelecting ? 'touch-none' : ''} ${inRange ? 'bg-lime-100 ring-2 ring-lime-300' : ''} ${!isStart && !isEnd ? '' : 'opacity-100'} ${placingTaskId ? 'cursor-pointer hover:ring-2 hover:ring-lime-500' : ''}`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">
                           {d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                          {isStart && <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">開始</span>}
+                          {isStart && <span className="ml-2 rounded-full bg-lime-100 px-2 py-0.5 text-xs text-lime-800">開始</span>}
                           {isEnd && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">終了</span>}
                         </div>
-                        <div className="text-xs text-slate-400">{d.toLocaleDateString(undefined, { weekday: 'short' })}</div>
+                        <div className="text-xs text-stone-400">{d.toLocaleDateString(undefined, { weekday: 'short' })}</div>
                       </div>
 
                       <div className="mt-3">
@@ -882,7 +882,7 @@ export default function CalendarView() {
                               {visible.map((t) => (
                                 <TaskCard key={t.id} task={t} />
                               ))}
-                              {more > 0 && <div className="mt-1 text-xs text-slate-500">他{more}件</div>}
+                              {more > 0 && <div className="mt-1 text-xs text-stone-500">他{more}件</div>}
                             </>
                           );
                         })()}
@@ -897,10 +897,10 @@ export default function CalendarView() {
       </section>
 
       {selectedDate && (
-        <section className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+        <section className="mt-4 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-600">{selectedDate}</p>
+              <p className="text-sm text-stone-600">{selectedDate}</p>
               <h3 className="mt-1 text-lg font-semibold">この日のタスク</h3>
             </div>
             <div>
@@ -911,7 +911,7 @@ export default function CalendarView() {
                   resetAddForm();
                   resetEditForm();
                 }}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm"
+                className="rounded-xl border border-stone-200 bg-surface px-3 py-1 text-sm"
               >
                 閉じる
               </button>
@@ -920,7 +920,7 @@ export default function CalendarView() {
 
           <div className="mt-3">
             {tasksForSelectedKey(selectedDate).length === 0 ? (
-              <p className="text-sm text-slate-500">この日のタスクはありません。</p>
+              <p className="text-sm text-stone-500">この日のタスクはありません。</p>
             ) : (
               tasksForSelectedKey(selectedDate).map((t) => (
                 <div key={t.id} className="flex flex-col gap-2 sm:flex-row sm:items-start">
@@ -945,28 +945,28 @@ export default function CalendarView() {
                           }
                         }}
                         placeholder="タスクのタイトル"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                        className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                       />
 
                       {/* 開始日 / 終了日（初期値はタスクの scheduledDate / dueDate。空も許容） */}
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <label className="flex flex-col">
-                          <span className="mb-1 text-xs text-slate-600">開始日</span>
+                          <span className="mb-1 text-xs text-stone-600">開始日</span>
                           <input
                             type="date"
                             value={editStart ?? ""}
                             onChange={(e) => setEditStart(e.target.value || null)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                            className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                             aria-label="開始日"
                           />
                         </label>
                         <label className="flex flex-col">
-                          <span className="mb-1 text-xs text-slate-600">終了日（任意）</span>
+                          <span className="mb-1 text-xs text-stone-600">終了日（任意）</span>
                           <input
                             type="date"
                             value={editEnd ?? ""}
                             onChange={(e) => setEditEnd(e.target.value || null)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                            className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                             aria-label="終了日"
                           />
                         </label>
@@ -975,11 +975,11 @@ export default function CalendarView() {
                       {/* 重さ / 見積時間 */}
                       <div className="flex flex-wrap items-end gap-3">
                         <label className="flex flex-col">
-                          <span className="mb-1 text-xs text-slate-600">重さ</span>
+                          <span className="mb-1 text-xs text-stone-600">重さ</span>
                           <select
                             value={editWeight}
                             onChange={(e) => setEditWeight(e.target.value as TaskWeight)}
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                            className="rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                             aria-label="重さ"
                           >
                             <option value="light">軽め</option>
@@ -988,7 +988,7 @@ export default function CalendarView() {
                           </select>
                         </label>
                         <label className="flex flex-col">
-                          <span className="mb-1 text-xs text-slate-600">見積時間 (h)</span>
+                          <span className="mb-1 text-xs text-stone-600">見積時間 (h)</span>
                           <input
                             type="number"
                             min={0}
@@ -996,7 +996,7 @@ export default function CalendarView() {
                             value={editEstimateHours === "" ? "" : String(editEstimateHours)}
                             onChange={(e) => setEditEstimateHours(e.target.value === "" ? "" : Number(e.target.value))}
                             placeholder="h"
-                            className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                            className="w-24 rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                             aria-label="見積時間"
                           />
                         </label>
@@ -1009,14 +1009,14 @@ export default function CalendarView() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => submitEdit(t)}
-                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-emerald-700 transition hover:border-emerald-400/50 hover:bg-emerald-100"
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-lime-800 transition hover:border-lime-500/50 hover:bg-lime-100"
                           aria-label="編集を保存"
                         >
                           <Check size={18} />
                         </button>
                         <button
                           onClick={resetEditForm}
-                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100"
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-600 transition hover:bg-stone-200"
                           aria-label="編集をキャンセル"
                         >
                           <X size={18} />
@@ -1034,7 +1034,7 @@ export default function CalendarView() {
                         {/* 編集ボタン（鉛筆） */}
                         <button
                           onClick={() => openEdit(t)}
-                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-700 transition hover:border-lime-500/50 hover:bg-lime-100 hover:text-lime-700"
                           aria-label="タスクを編集"
                         >
                           <Pencil size={18} />
@@ -1042,7 +1042,7 @@ export default function CalendarView() {
                         {/* 削除ボタン（ゴミ箱） */}
                         <button
                           onClick={() => handleDelete(t)}
-                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-rose-400/50 hover:bg-rose-100 hover:text-rose-600"
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-700 transition hover:border-rose-400/50 hover:bg-rose-100 hover:text-rose-600"
                           aria-label="タスクを削除"
                         >
                           <Trash2 size={18} />
@@ -1050,7 +1050,7 @@ export default function CalendarView() {
                         {t.scheduledDate && (
                           <button
                             onClick={() => rescheduleTask(t.id, null)}
-                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                            className="rounded-lg border border-stone-200 bg-surface px-2 py-1 text-xs text-stone-600 hover:bg-stone-100"
                             title="予定日を外して未配置に戻す"
                           >
                             未配置に戻す
@@ -1066,7 +1066,7 @@ export default function CalendarView() {
 
           {/* Issue #38/#42 追加: パネル下部の「+ この日にタスクを追加」。
               押すとタイトル・期間（開始日/終了日）・重さ・見積時間を入力できるインラインフォームに切り替わる */}
-          <div className="mt-3 border-t border-slate-100 pt-3">
+          <div className="mt-3 border-t border-stone-100 pt-3">
             {isAdding ? (
               <div className="flex flex-col gap-3">
                 {/* タイトル（IMEの変換確定Enterでは送信しない） */}
@@ -1086,28 +1086,28 @@ export default function CalendarView() {
                     }
                   }}
                   placeholder="タスクのタイトル"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                  className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                 />
 
                 {/* 開始日 / 終了日（TaskInput.tsx の同項目が手本） */}
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <label className="flex flex-col">
-                    <span className="mb-1 text-xs text-slate-600">開始日</span>
+                    <span className="mb-1 text-xs text-stone-600">開始日</span>
                     <input
                       type="date"
                       value={newStart ?? ""}
                       onChange={(e) => setNewStart(e.target.value || null)}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                       aria-label="開始日"
                     />
                   </label>
                   <label className="flex flex-col">
-                    <span className="mb-1 text-xs text-slate-600">終了日（任意）</span>
+                    <span className="mb-1 text-xs text-stone-600">終了日（任意）</span>
                     <input
                       type="date"
                       value={newEnd ?? ""}
                       onChange={(e) => setNewEnd(e.target.value || null)}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      className="w-full rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                       aria-label="終了日"
                     />
                   </label>
@@ -1116,11 +1116,11 @@ export default function CalendarView() {
                 {/* 重さ / 見積時間 / なぞって期間指定トグル */}
                 <div className="flex flex-wrap items-end gap-3">
                   <label className="flex flex-col">
-                    <span className="mb-1 text-xs text-slate-600">重さ</span>
+                    <span className="mb-1 text-xs text-stone-600">重さ</span>
                     <select
                       value={newWeight}
                       onChange={(e) => setNewWeight(e.target.value as TaskWeight)}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      className="rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                       aria-label="重さ"
                     >
                       <option value="light">軽め</option>
@@ -1129,7 +1129,7 @@ export default function CalendarView() {
                     </select>
                   </label>
                   <label className="flex flex-col">
-                    <span className="mb-1 text-xs text-slate-600">見積時間 (h)</span>
+                    <span className="mb-1 text-xs text-stone-600">見積時間 (h)</span>
                     <input
                       type="number"
                       min={0}
@@ -1137,7 +1137,7 @@ export default function CalendarView() {
                       value={newEstimateHours === "" ? "" : String(newEstimateHours)}
                       onChange={(e) => setNewEstimateHours(e.target.value === "" ? "" : Number(e.target.value))}
                       placeholder="h"
-                      className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-400"
+                      className="w-24 rounded-lg border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none focus:border-lime-500"
                       aria-label="見積時間"
                     />
                   </label>
@@ -1155,8 +1155,8 @@ export default function CalendarView() {
                     }}
                     className={`h-11 rounded-lg border px-3 py-2 text-sm transition ${
                       rangeSelecting
-                        ? "border-emerald-500 bg-emerald-50 font-semibold text-emerald-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-emerald-400 hover:text-emerald-700"
+                        ? "border-lime-600 bg-lime-50 font-semibold text-lime-800"
+                        : "border-stone-200 bg-surface text-stone-600 hover:border-lime-500 hover:text-lime-800"
                     }`}
                   >
                     {rangeSelecting ? "なぞり選択を終了" : "カレンダーで期間を選ぶ"}
@@ -1169,13 +1169,13 @@ export default function CalendarView() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={submitAdd}
-                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                    className="rounded-lg bg-lime-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-lime-600"
                   >
                     追加
                   </button>
                   <button
                     onClick={resetAddForm}
-                    className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                    className="rounded-lg border border-stone-200 bg-surface px-4 py-2 text-sm text-stone-600 hover:bg-stone-100"
                   >
                     キャンセル
                   </button>
@@ -1184,7 +1184,7 @@ export default function CalendarView() {
             ) : (
               <button
                 onClick={openAdd}
-                className="flex items-center gap-1 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 transition hover:border-emerald-400 hover:text-emerald-700"
+                className="flex items-center gap-1 rounded-lg border border-dashed border-stone-300 bg-surface px-3 py-2 text-sm text-stone-600 transition hover:border-lime-500 hover:text-lime-800"
               >
                 <Plus size={16} />
                 この日にタスクを追加

@@ -30,8 +30,8 @@ const weightLabels: Record<TaskWeight, string> = {
 };
 
 const weightClassNames: Record<TaskWeight, string> = {
-  light: "border-sky-400/40 bg-sky-50 text-sky-700",
-  medium: "border-emerald-400/40 bg-emerald-50 text-emerald-700",
+  light: "border-stone-400/40 bg-stone-100 text-stone-700",
+  medium: "border-lime-500/40 bg-lime-50 text-lime-800",
   heavy: "border-orange-400/40 bg-orange-50 text-orange-700"
 };
 
@@ -51,27 +51,27 @@ export function TaskBoard({ tasks }: { tasks: Task[] }) {
         const nextStatus = columnIndex < statusOrder.length - 1 ? statusOrder[columnIndex + 1] : null;
 
         return (
-          <div key={status} className="rounded-xl bg-slate-50/80 p-3">
+          <div key={status} className="rounded-xl bg-stone-100/80 p-3">
             {/* 列ヘッダー: ステータスの日本語ラベルと件数バッジ */}
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-medium text-slate-800">{statusLabels[status]}</h3>
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600">
+              <h3 className="font-medium text-stone-800">{statusLabels[status]}</h3>
+              <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs text-stone-600">
                 {columnTasks.length}
               </span>
             </div>
 
             {columnTasks.length === 0 ? (
-              <p className="text-sm text-slate-400">タスクなし</p>
+              <p className="text-sm text-stone-400">タスクなし</p>
             ) : (
               <div className="grid gap-3">
                 {columnTasks.map((task) => (
                   <article
                     key={task.id}
-                    className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
+                    className="rounded-lg border border-stone-200 bg-surface p-3 shadow-sm"
                   >
                     <h4
                       className={`font-medium ${
-                        task.status === "done" ? "text-slate-500 line-through opacity-60" : "text-slate-900"
+                        task.status === "done" ? "text-stone-500 line-through opacity-60" : "text-stone-900"
                       }`}
                     >
                       {task.title}
@@ -84,7 +84,7 @@ export function TaskBoard({ tasks }: { tasks: Task[] }) {
                       {task.priority && <PriorityBadge priority={task.priority as TaskPriority} />}
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-stone-600">
                       {typeof task.estimatedMinutes === "number" && (
                         <div>{Math.round((task.estimatedMinutes / 60) * 10) / 10}h</div>
                       )}
@@ -96,7 +96,7 @@ export function TaskBoard({ tasks }: { tasks: Task[] }) {
                       {prevStatus && (
                         <button
                           onClick={() => updateTaskStatus(task.id, prevStatus)}
-                          className="min-h-11 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 text-sm text-slate-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
+                          className="min-h-11 flex-1 rounded-lg border border-stone-200 bg-stone-100 px-2 text-sm text-stone-700 transition hover:border-lime-500/50 hover:bg-lime-100 hover:text-lime-700"
                         >
                           ← 前へ
                         </button>
@@ -104,7 +104,7 @@ export function TaskBoard({ tasks }: { tasks: Task[] }) {
                       {nextStatus && (
                         <button
                           onClick={() => updateTaskStatus(task.id, nextStatus)}
-                          className="min-h-11 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 text-sm text-slate-700 transition hover:border-emerald-400/50 hover:bg-emerald-100 hover:text-emerald-600"
+                          className="min-h-11 flex-1 rounded-lg border border-stone-200 bg-stone-100 px-2 text-sm text-stone-700 transition hover:border-lime-500/50 hover:bg-lime-100 hover:text-lime-700"
                         >
                           次へ →
                         </button>

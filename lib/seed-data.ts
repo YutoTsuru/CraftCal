@@ -79,7 +79,7 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
     // GitHub への導線は overviewUrl（「概要を開く」ボタン）に任せてここは平文にする
     description: "## 概要\nこのアプリ自体の開発プロジェクト。\n\nタスクは GitHub の実Issue (#3〜#16) をそのまま反映したもの。",
     overviewUrl: "https://github.com/YutoTsuru/CraftCal",
-    color: DEFAULT_PROJECT_COLOR, // アプリのテーマカラーと同じエメラルド
+    color: DEFAULT_PROJECT_COLOR, // プロジェクト色の既定値（パレットのエメラルド）
     status: "active",
     goal: "UX/UIを磨いて毎日使えるスプリント管理ツールにする",
     createdAt: now,

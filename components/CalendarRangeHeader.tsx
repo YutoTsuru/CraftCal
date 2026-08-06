@@ -30,26 +30,26 @@ export default function CalendarRangeHeader({
 }) {
   return (
     <div className="mb-4 flex w-full items-center justify-between">
-      <div className="rounded-lg bg-white px-4 py-3 shadow-sm">
-        <div className="hidden sm:flex items-center gap-3 text-sm text-slate-700">
+      <div className="rounded-lg bg-surface px-4 py-3 shadow-sm">
+        <div className="hidden sm:flex items-center gap-3 text-sm text-stone-700">
           <span aria-hidden>📅</span>
           <span className="font-medium">表示中：</span>
-          <span className="text-slate-800">{fmtFull(startDate)}〜 {fmtFull(endDate)}</span>
-          <span className="text-slate-400">｜{totalDays}日間</span>
+          <span className="text-stone-800">{fmtFull(startDate)}〜 {fmtFull(endDate)}</span>
+          <span className="text-stone-400">｜{totalDays}日間</span>
         </div>
 
         <div className="flex sm:hidden flex-col gap-1">
-          <div className="text-sm font-medium text-slate-800">{fmtCompact(startDate)}〜 {fmtCompact(endDate)}</div>
-          <div className="text-xs text-slate-500">{totalDays}日間</div>
+          <div className="text-sm font-medium text-stone-800">{fmtCompact(startDate)}〜 {fmtCompact(endDate)}</div>
+          <div className="text-xs text-stone-500">{totalDays}日間</div>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <button onClick={onPrev} className="rounded-md bg-slate-50 p-2 text-slate-700 hover:bg-slate-100" aria-label="前へ">
+        <button onClick={onPrev} className="rounded-md bg-stone-100 p-2 text-stone-700 hover:bg-stone-200" aria-label="前へ">
           <ChevronLeft size={16} />
         </button>
-        <button onClick={onToday} className="rounded-md bg-emerald-600 px-3 py-2 text-sm text-white">今日</button>
-        <button onClick={onNext} className="rounded-md bg-slate-50 p-2 text-slate-700 hover:bg-slate-100" aria-label="次へ">
+        <button onClick={onToday} className="rounded-md bg-lime-700 px-3 py-2 text-sm text-white">今日</button>
+        <button onClick={onNext} className="rounded-md bg-stone-100 p-2 text-stone-700 hover:bg-stone-200" aria-label="次へ">
           <ChevronRight size={16} />
         </button>
       </div>

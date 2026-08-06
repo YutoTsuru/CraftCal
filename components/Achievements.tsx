@@ -27,7 +27,7 @@ export default function Achievements() {
   }, [tasks]);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+    <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
       <h3 className="text-lg font-semibold">Achievements</h3>
       <div className="mt-3 grid gap-2">
         <Badge name="初めての一歩" achieved={achieved.firstStep} />
@@ -42,9 +42,9 @@ export default function Achievements() {
 
 function Badge({ name, achieved }: { name: string; achieved?: boolean }) {
   return (
-    <div className={`flex items-center justify-between rounded-md border px-3 py-2 ${achieved ? 'bg-amber-50' : 'bg-slate-50'} `}>
-      <div className={`font-medium ${achieved ? 'text-amber-800' : 'text-slate-400'}`}>{name}</div>
-      <div className={`text-sm ${achieved ? 'text-amber-600' : 'text-slate-300'}`}>{achieved ? '達成' : '未達成'}</div>
+    <div className={`flex items-center justify-between rounded-md border px-3 py-2 ${achieved ? 'bg-amber-50' : 'bg-stone-100'} `}>
+      <div className={`font-medium ${achieved ? 'text-amber-800' : 'text-stone-400'}`}>{name}</div>
+      <div className={`text-sm ${achieved ? 'text-amber-600' : 'text-stone-300'}`}>{achieved ? '達成' : '未達成'}</div>
     </div>
   );
 }

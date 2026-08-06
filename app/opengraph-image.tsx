@@ -20,12 +20,13 @@ export const alt = `${SITE_NAME} — 個人開発を短期集中で進めるた�
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// アプリのテーマカラー（lib/colors.ts の emerald-600 / 700 と同じ値）
-const EMERALD = "#059669";
-const EMERALD_DEEP = "#047857";
-const INK = "#0f172a";
-const MUTED = "#64748b";
-const PAPER_LINE = "#cbd5e1";
+// アプリのアクセント色（Issue #67 でエメラルドから暖色のオリーブへ変更）。
+// 起動画面のペン (components/LoadingScreen.tsx) と同じ値にしてブランドを揃える
+const ACCENT = "#4d7c0f";
+const ACCENT_DEEP = "#3f6212";
+const INK = "#1c1917";
+const MUTED = "#78716c";
+const PAPER_LINE = "#d6d3d1";
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -35,12 +36,12 @@ export default function OpengraphImage() {
           width: "100%",
           height: "100%",
           display: "flex",
-          background: "#ffffff",
+          background: "#fffdf9",
           fontFamily: "sans-serif"
         }}
       >
-        {/* 左端のブランドバー。起動画面のペンと同じエメラルド */}
-        <div style={{ display: "flex", width: 24, background: EMERALD }} />
+        {/* 左端のブランドバー。起動画面のペンと同じオリーブ */}
+        <div style={{ display: "flex", width: 24, background: ACCENT }} />
 
         <div
           style={{
@@ -65,13 +66,13 @@ export default function OpengraphImage() {
             >
               {SITE_NAME}
             </div>
-            {/* エメラルドの下線。ワードマークの幅より短くして「線を引いた」印象にする */}
+            {/* アクセント色の下線。ワードマークの幅より短くして「線を引いた」印象にする */}
             <div
               style={{
                 display: "flex",
                 width: 180,
                 height: 8,
-                background: EMERALD,
+                background: ACCENT,
                 marginTop: 28,
                 borderRadius: 4
               }}
@@ -97,7 +98,7 @@ export default function OpengraphImage() {
               flexDirection: "column",
               width: 240,
               height: 300,
-              background: "#ffffff",
+              background: "#fffdf9",
               border: `3px solid ${PAPER_LINE}`,
               borderRadius: 20,
               padding: 32,
@@ -123,7 +124,7 @@ export default function OpengraphImage() {
                 display: "flex",
                 height: 12,
                 width: "60%",
-                background: EMERALD_DEEP,
+                background: ACCENT_DEEP,
                 borderRadius: 6,
                 marginTop: 32
               }}

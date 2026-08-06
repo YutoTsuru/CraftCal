@@ -104,34 +104,34 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
           event.preventDefault();
         }
       }}
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-md"
+      className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md"
     >
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="タスク名"
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 w-full box-border"
+          className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none transition placeholder:text-stone-500 focus:border-lime-500 w-full box-border"
         />
         <input
           value={memo}
           onChange={(event) => setMemo(event.target.value)}
           placeholder="メモ"
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 w-full box-border"
+          className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none transition placeholder:text-stone-500 focus:border-lime-500 w-full box-border"
         />
         <div className="flex flex-wrap gap-2 md:col-span-2 lg:col-span-1 items-center">
-          <select value={projectId ?? ""} onChange={(e) => setProjectId(e.target.value || null)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none">
+          <select value={projectId ?? ""} onChange={(e) => setProjectId(e.target.value || null)} className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none">
             {projects.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
 
           <label className="flex items-center gap-2">
-            <span className="text-sm text-slate-700">優先度</span>
+            <span className="text-sm text-stone-700">優先度</span>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as TaskPriority)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none"
+              className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none"
             >
               <option value="low">低</option>
               <option value="medium">中</option>
@@ -142,29 +142,29 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-2 items-center md:col-span-2 lg:col-span-2">
             <label className="flex flex-col">
-              <span className="text-xs text-slate-600 mb-1">開始日</span>
+              <span className="text-xs text-stone-600 mb-1">開始日</span>
               <input
                 type="date"
                 value={startDate ?? ""}
                 onChange={(e) => setStartDate(e.target.value || null)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none w-full box-border"
+                className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none w-full box-border"
                 aria-label="開始日"
               />
             </label>
 
             <label className="flex flex-col">
-              <span className="text-xs text-slate-600 mb-1">終了日</span>
+              <span className="text-xs text-stone-600 mb-1">終了日</span>
               <input
                 type="date"
                 value={endDate ?? ""}
                 onChange={(e) => setEndDate(e.target.value || null)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none w-full box-border"
+                className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none w-full box-border"
                 aria-label="終了日"
               />
             </label>
 
             <label className="flex flex-col">
-              <span className="text-xs text-slate-600 mb-1">見積時間 (h)</span>
+              <span className="text-xs text-stone-600 mb-1">見積時間 (h)</span>
               <input
                 type="number"
                 min={0}
@@ -172,18 +172,18 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
                 value={estimateHours === "" ? "" : String(estimateHours)}
                 onChange={(e) => setEstimateHours(e.target.value === "" ? "" : Number(e.target.value))}
                 placeholder="h"
-                className="w-full sm:w-20 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none time-input box-border"
+                className="w-full sm:w-20 rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none time-input box-border"
               />
             </label>
         </div>
 
         <div className="flex items-center gap-2 md:col-span-2 lg:col-span-3 justify-end">
-          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-white transition hover:bg-emerald-400 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-lime-600 px-4 py-2 font-semibold text-white transition hover:bg-lime-500 disabled:opacity-50">
             <Plus size={16} />
             {editingTask ? "保存" : "追加"}
           </button>
           {editingTask && (
-            <button type="button" onClick={() => onCancel?.()} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-slate-700">
+            <button type="button" onClick={() => onCancel?.()} className="rounded-xl border border-stone-200 bg-surface px-4 py-2 text-stone-700">
               キャンセル
             </button>
           )}

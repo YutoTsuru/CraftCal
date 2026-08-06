@@ -44,23 +44,23 @@ export default function StatsCard() {
   const completedCount = tasks.filter((t) => t.status === "done").length;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+    <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
       <h3 className="text-lg font-semibold">Stats</h3>
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div className="rounded-md border p-3 text-center">
-          <div className="text-sm text-slate-500">今週の作業日数</div>
+          <div className="text-sm text-stone-500">今週の作業日数</div>
           <div className="mt-1 text-2xl font-bold">{thisWeekDays}日</div>
         </div>
         <div className="rounded-md border p-3 text-center">
-          <div className="text-sm text-slate-500">連続作業</div>
+          <div className="text-sm text-stone-500">連続作業</div>
           <div className="mt-1 text-2xl font-bold">{streak}日</div>
         </div>
         <div className="rounded-md border p-3 text-center">
-          <div className="text-sm text-slate-500">累計作業ログ</div>
+          <div className="text-sm text-stone-500">累計作業ログ</div>
           <div className="mt-1 text-2xl font-bold">{totalLogs}件</div>
         </div>
         <div className="rounded-md border p-3 text-center">
-          <div className="text-sm text-slate-500">完了タスク</div>
+          <div className="text-sm text-stone-500">完了タスク</div>
           <div className="mt-1 text-2xl font-bold">{completedCount}件</div>
         </div>
       </div>

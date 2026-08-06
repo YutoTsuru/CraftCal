@@ -22,9 +22,9 @@ export function PenAndPaper({ width = 140, height = 120 }: { width?: number; hei
         {/* 紙: 白の角丸長方形 + 薄い影。少しだけ傾けて可愛らしく見せる */}
         <g transform="rotate(-4 60 52)">
           {/* 影（紙の少し下に薄く敷く） */}
-          <rect x="28" y="20" width="64" height="72" rx="8" fill="#0f172a" opacity="0.06" />
+          <rect x="28" y="20" width="64" height="72" rx="8" fill="#1c1917" opacity="0.06" />
           {/* 紙本体 */}
-          <rect x="26" y="16" width="64" height="72" rx="8" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1.5" />
+          <rect x="26" y="16" width="64" height="72" rx="8" fill="#fffdf9" stroke="#e7e5e4" strokeWidth="1.5" />
 
           {/* 手書きの3本線。stroke-dasharray/dashoffset で順番に左→右へ伸びる */}
           <line
@@ -33,7 +33,7 @@ export function PenAndPaper({ width = 140, height = 120 }: { width?: number; hei
             y1="34"
             x2="80"
             y2="34"
-            stroke="#cbd5e1"
+            stroke="#d6d3d1"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -43,7 +43,7 @@ export function PenAndPaper({ width = 140, height = 120 }: { width?: number; hei
             y1="50"
             x2="80"
             y2="50"
-            stroke="#cbd5e1"
+            stroke="#d6d3d1"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -53,7 +53,7 @@ export function PenAndPaper({ width = 140, height = 120 }: { width?: number; hei
             y1="66"
             x2="68"
             y2="66"
-            stroke="#cbd5e1"
+            stroke="#d6d3d1"
             strokeWidth="3"
             strokeLinecap="round"
           />
@@ -66,11 +66,11 @@ export function PenAndPaper({ width = 140, height = 120 }: { width?: number; hei
           {/* ペン先（木の削り部分: 薄いベージュ） */}
           <path d="M63 56 L66.2 49.6 L69.4 52.8 Z" fill="#d6c6a8" />
           {/* 芯（先端の小さな三角） */}
-          <path d="M63 56 L64.2 53.6 L65.4 54.8 Z" fill="#1e293b" />
-          {/* 軸（emerald の平行四辺形。45度で上右方向へ） */}
-          <path d="M66.2 49.6 L69.4 52.8 L80.7 41.5 L77.5 38.3 Z" fill="#059669" />
+          <path d="M63 56 L64.2 53.6 L65.4 54.8 Z" fill="#292524" />
+          {/* 軸（オリーブの平行四辺形。45度で上右方向へ） */}
+          <path d="M66.2 49.6 L69.4 52.8 L80.7 41.5 L77.5 38.3 Z" fill="#4d7c0f" />
           {/* 尻のキャップ（濃い緑） */}
-          <path d="M77.5 38.3 L80.7 41.5 L83.3 38.9 L80.1 35.7 Z" fill="#047857" />
+          <path d="M77.5 38.3 L80.7 41.5 L83.3 38.9 L80.1 35.7 Z" fill="#3f6212" />
         </g>
     </svg>
   );
@@ -99,7 +99,7 @@ export function LoadingScreen({ message = "Loading" }: { message?: string }) {
       <PenAndPaper />
 
       {/* テキスト行。message + 明滅するドット3つ */}
-      <p className="flex items-center text-sm font-medium text-slate-500">
+      <p className="flex items-center text-sm font-medium text-stone-500">
         <span>{message}</span>
         {/* ドットは専用ラッパ内に置く（nth-child で delay をずらして順に明滅させるため） */}
         <span className="loading-dots" aria-hidden="true">
