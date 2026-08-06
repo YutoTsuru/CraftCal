@@ -45,8 +45,8 @@ Secret / Service Role キーは使いません（ブラウザから直接 Supaba
 | 領域 | 使用技術 |
 | --- | --- |
 | フレームワーク | Next.js 15 (App Router) / React 19 |
-| 言語 | TypeScript 5.6 |
-| スタイル | Tailwind CSS 3.4 |
+| 言語 | TypeScript 5 |
+| スタイル | Tailwind CSS 3 |
 | アニメーション | Framer Motion |
 | 認証・DB | Supabase (Auth + Postgres, Row Level Security) |
 | テスト | Vitest |
@@ -82,7 +82,7 @@ supabase/schema.sql     テーブル・RLS・トリガー（冪等）
 npm run dev          # 開発サーバー
 npm run build        # 本番ビルド
 npm run start        # 本番ビルドの起動確認
-npm test             # Vitest (116件 / lib の純関数)
+npm test             # Vitest (lib の純関数)
 npm run test:watch   # 監視モード
 npx tsc --noEmit     # 型チェック
 ```
