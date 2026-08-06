@@ -63,7 +63,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
       {/* ===== デスクトップ用: 左固定サイドバー (lg 以上でのみ表示) =====
           flex-col にしてナビを上、ユーザー情報+ログアウトを下端 (mt-auto) に配置する */}
-      <aside className="hidden lg:flex lg:flex-col border-slate-200 bg-white px-3 py-3 lg:fixed lg:inset-y-0 lg:left-0 lg:w-56 lg:border-r">
+      <aside className="hidden lg:flex lg:flex-col border-stone-200 bg-surface px-3 py-3 lg:fixed lg:inset-y-0 lg:left-0 lg:w-56 lg:border-r">
         {/* ロゴ。クリックでダッシュボード (/) へ */}
         <div className="mb-6">
           <Link href="/home" className="block">
@@ -84,7 +84,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
                   active
                     ? "bg-emerald-600 text-white shadow-md" // 現在の画面: 緑背景で強調
-                    : "bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    : "bg-stone-100 text-stone-700 hover:bg-stone-200 hover:text-stone-900"
                 }`}
               >
                 <Icon size={18} />
@@ -96,15 +96,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
         {/* ===== サイドバー下部: ログイン中のメールアドレス + ログアウトボタン =====
             mt-auto で常に一番下に貼り付ける */}
-        <div className="mt-auto border-t border-slate-200 pt-3">
+        <div className="mt-auto border-t border-stone-200 pt-3">
           {/* メールアドレス（長い場合は truncate で省略） */}
-          <p className="mb-2 truncate px-1 text-xs text-slate-500" title={user?.email ?? ""}>
+          <p className="mb-2 truncate px-1 text-xs text-stone-500" title={user?.email ?? ""}>
             {user?.email}
           </p>
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex w-full items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+            className="flex w-full items-center gap-2 rounded-xl bg-stone-100 px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-200 hover:text-stone-900"
           >
             <LogOut size={18} />
             <span>ログアウト</span>
@@ -115,10 +115,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       {/* ===== モバイル用: 上部の薄いヘッダー (lg 未満でのみ表示) =====
           ナビはここには置かず、ロゴだけにして縦スペースを節約する。
           ロゴタップでダッシュボード (/) へ移動できる */}
-      <header className="lg:hidden sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="lg:hidden sticky top-0 z-40 border-b border-stone-200 bg-surface/90 backdrop-blur">
         {/* relative + 中央絶対配置のロゴ。右端にログアウトアイコンボタンを置く */}
         <div className="relative flex items-center justify-center px-2 py-3">
-          <Link href="/home" className="text-lg font-bold tracking-tight text-slate-900">
+          <Link href="/home" className="text-lg font-bold tracking-tight text-stone-900">
             CraftCal
           </Link>
           {/* ログアウトボタン。タップ領域 44px を確保 (h-11 w-11) */}
@@ -126,7 +126,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={handleSignOut}
             aria-label="ログアウト"
-            className="absolute right-1 flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            className="absolute right-1 flex h-11 w-11 items-center justify-center rounded-xl text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
           >
             <LogOut size={20} />
           </button>
@@ -151,7 +151,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           - fixed bottom-0 で常に画面下に張り付く
           - pb-[env(safe-area-inset-bottom)] は iPhone のホームバー領域を避けるための余白 */}
       <nav
-        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+        className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
         aria-label="メインナビゲーション"
       >
         <div className="grid grid-cols-5">
@@ -165,7 +165,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 // min-h-[56px]: タップ領域を44px以上確保するため (Issue #13 の調査より)
                 className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] transition ${
-                  active ? "text-emerald-600 font-semibold" : "text-slate-500 hover:text-slate-800"
+                  active ? "text-emerald-600 font-semibold" : "text-stone-500 hover:text-stone-800"
                 }`}
               >
                 <Icon size={22} />

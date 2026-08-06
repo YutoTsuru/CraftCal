@@ -37,7 +37,7 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
 
   if (tasks.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-700">
+      <div className="rounded-xl border border-dashed border-stone-200 bg-surface p-6 text-center text-stone-700">
         まだタスクがありません。まずは小さめの作業から追加してみてください。
       </div>
     );
@@ -53,7 +53,7 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -16 }}
-            className={`rounded-xl border border-slate-200 bg-white p-4 shadow-md ${
+            className={`rounded-xl border border-stone-200 bg-surface p-4 shadow-md ${
               task.status === "done" ? "opacity-60" : ""
             }`}
           >
@@ -71,9 +71,9 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
                     {task.priority && <PriorityBadge priority={task.priority as TaskPriority} />}
                   </div>
                 </div>
-                {task.memo && <p className={`mt-2 text-sm text-slate-700 ${task.status === "done" ? "line-through" : ""}`}>{task.memo}</p>}
+                {task.memo && <p className={`mt-2 text-sm text-stone-700 ${task.status === "done" ? "line-through" : ""}`}>{task.memo}</p>}
 
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-stone-600">
                   {task.dueDate && <div>期限: {task.dueDate}</div>}
                   {task.scheduledDate && <div>予定日: {task.scheduledDate}</div>}
                   {typeof task.estimatedMinutes === "number" && <div>見積: {Math.round(task.estimatedMinutes / 60 * 10) / 10}h</div>}
@@ -87,7 +87,7 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
                 <select
                   value={task.status}
                   onChange={(event) => updateTaskStatus(task.id, event.target.value as TaskStatus)}
-                  className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+                  className="min-h-11 rounded-xl border border-stone-200 bg-surface px-3 py-2 text-sm text-stone-900 outline-none"
                 >
                   {Object.entries(statusLabels).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -100,7 +100,7 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
                 {onEdit && (
                   <button
                     onClick={() => onEdit(task)}
-                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
                     aria-label="タスクを編集"
                   >
                     <Pencil size={18} />
@@ -109,7 +109,7 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
                 {/* 削除ボタン（ゴミ箱アイコン） */}
                 <button
                   onClick={() => deleteTask(task.id)}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:border-rose-400/50 hover:bg-rose-100 hover:text-rose-600"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-700 transition hover:border-rose-400/50 hover:bg-rose-100 hover:text-rose-600"
                   aria-label="タスクを削除"
                 >
                   <Trash2 size={18} />

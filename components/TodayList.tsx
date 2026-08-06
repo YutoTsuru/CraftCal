@@ -17,7 +17,7 @@ function ProjectBadge({ projectId, projects }: { projectId: string; projects: { 
   return (
     <span className="inline-flex items-center gap-2">
       <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project.color ?? DEFAULT_PROJECT_COLOR }} />
-      <span className="text-xs text-slate-500">{project.name}</span>
+      <span className="text-xs text-stone-500">{project.name}</span>
     </span>
   );
 }
@@ -36,16 +36,16 @@ export default function TodayList() {
 
   return (
     <div className="grid gap-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
-        <p className="text-sm text-slate-700">今日の日付</p>
+      <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+        <p className="text-sm text-stone-700">今日の日付</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <h2 className="text-2xl font-bold">{today}</h2>
-          <p className="text-sm text-slate-700">今日のタスク {tasksForToday.length} 件</p>
+          <p className="text-sm text-stone-700">今日のタスク {tasksForToday.length} 件</p>
         </div>
       </div>
 
       {tasksForToday.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-700">
+        <div className="rounded-xl border border-dashed border-stone-200 bg-surface p-6 text-center text-stone-700">
           今日に割り振られたタスクはありません。
         </div>
       ) : (
@@ -55,7 +55,7 @@ export default function TodayList() {
               sm(640px)以上: 左に内容、右にボタンの横並び (sm:flex-row)
               — 横並び固定だとボタン群が375px幅からはみ出すため (Issue #14) */}
           {tasksForToday.map((task) => (
-            <li key={task.id} className={`flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between ${task.status === "done" ? "opacity-60" : ""}`}>
+            <li key={task.id} className={`flex flex-col gap-3 rounded-xl border border-stone-200 bg-surface p-3 sm:flex-row sm:items-center sm:justify-between ${task.status === "done" ? "opacity-60" : ""}`}>
               <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
@@ -75,11 +75,11 @@ export default function TodayList() {
                     <ProjectBadge projectId={task.projectId} projects={projects} />
                     <div className="flex items-center gap-2">
                       <StatusBadge status={task.status} size="sm" />
-                      <div className={`font-medium ${task.status === "done" ? "line-through text-slate-500" : "text-slate-900"}`}>{task.title}</div>
+                      <div className={`font-medium ${task.status === "done" ? "line-through text-stone-500" : "text-stone-900"}`}>{task.title}</div>
                     </div>
                   </div>
-                  {task.memo && <div className={`text-sm ${task.status === "done" ? "line-through text-slate-500" : "text-slate-600"}`}>{task.memo}</div>}
-                  <div className="mt-1 text-xs text-slate-600 flex items-center gap-2">
+                  {task.memo && <div className={`text-sm ${task.status === "done" ? "line-through text-stone-500" : "text-stone-600"}`}>{task.memo}</div>}
+                  <div className="mt-1 text-xs text-stone-600 flex items-center gap-2">
                     <div>{task.weight}</div>
                     {task.priority && <PriorityBadge priority={task.priority} />}
                     {typeof task.estimatedMinutes === "number" && <div>{Math.round(task.estimatedMinutes / 60 * 10) / 10}h</div>}
@@ -93,7 +93,7 @@ export default function TodayList() {
                 <select
                   value={task.status}
                   onChange={(event) => updateTaskStatus(task.id, event.target.value as TaskStatus)}
-                  className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-900 outline-none"
+                  className="min-h-11 rounded-xl border border-stone-200 bg-surface px-3 py-1 text-sm text-stone-900 outline-none"
                 >
                   <option value="todo">未着手</option>
                   <option value="doing">進行中</option>
@@ -139,9 +139,9 @@ export default function TodayList() {
 
       {editingTaskId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-lg">
+          <div className="w-full max-w-lg rounded-xl bg-surface p-6 shadow-lg">
             <h3 className="text-lg font-semibold">作業ログを記録</h3>
-            <p className="text-sm text-slate-500">今日やったこと・詰まったこと・次にやることを入力してください。空でも保存できます。</p>
+            <p className="text-sm text-stone-500">今日やったこと・詰まったこと・次にやることを入力してください。空でも保存できます。</p>
 
             <div className="mt-4 grid gap-3">
               <label className="text-sm">今日やったこと (did)</label>

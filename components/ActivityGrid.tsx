@@ -11,7 +11,7 @@ function formatDate(d: Date) {
 function getColorForLevel(level: number) {
   switch (level) {
     case 0:
-      return "bg-slate-100";
+      return "bg-stone-100";
     case 1:
       return "bg-green-200";
     case 2:
@@ -21,7 +21,7 @@ function getColorForLevel(level: number) {
     case 4:
       return "bg-emerald-800";
     default:
-      return "bg-slate-100";
+      return "bg-stone-100";
   }
 }
 
@@ -85,26 +85,26 @@ export default function ActivityGrid({ days = 90 }: { days?: number }) {
   }, [weeks]);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+    <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
       <h3 className="text-lg font-semibold">Craft Activity</h3>
 
       <div className="mt-3 flex gap-3">
         {/* Weekday labels */}
         <div className="hidden md:flex md:flex-col md:items-end md:gap-[4px] md:pr-2" style={{ width: 48 }}>
           <div className="h-3" />
-          <div className="text-xs text-slate-500" style={{ lineHeight: '12px' }}>Mon</div>
-          <div className="text-xs text-slate-500" style={{ lineHeight: '12px' }}>Tue</div>
-          <div className="text-xs text-slate-500" style={{ lineHeight: '12px' }}>Wed</div>
-          <div className="text-xs text-slate-500" style={{ lineHeight: '12px' }}>Thu</div>
-          <div className="text-xs text-slate-500" style={{ lineHeight: '12px' }}>Fri</div>
-          <div className="text-xs text-slate-500" style={{ lineHeight: '12px' }}>Sat</div>
-          <div className="text-xs text-slate-500" style={{ lineHeight: '12px' }}>Sun</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Mon</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Tue</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Wed</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Thu</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Fri</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Sat</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Sun</div>
         </div>
 
         <div className="flex-1 overflow-x-auto">
           <div className="mb-2 flex items-center gap-3">
             {Object.values(monthLabels).map((m) => (
-              <div key={m} className="text-xs text-slate-500" style={{ minWidth: 48 }}>{m}</div>
+              <div key={m} className="text-xs text-stone-500" style={{ minWidth: 48 }}>{m}</div>
             ))}
           </div>
 
@@ -122,7 +122,7 @@ export default function ActivityGrid({ days = 90 }: { days?: number }) {
               // render 7 rows per column
               new Array(7).fill(0).map((_, ri) => {
                 const cell = col?.[ri];
-                const cls = cell ? getColorForLevel(cell.level) : 'bg-slate-100';
+                const cls = cell ? getColorForLevel(cell.level) : 'bg-stone-100';
                 const title = cell ? `${cell.date} — logs:${cell.logs} doneToday:${cell.level >= 2 ? 1 : 0} dones:${cell.dones}` : 'No data';
                 return (
                   <div key={`${ci}-${ri}`} title={title} className={`${cls} rounded-sm`} style={{ width: 12, height: 12 }} />

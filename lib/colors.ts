@@ -147,10 +147,27 @@ export function relativeLuminance(hex: string): number {
 }
 
 /**
- * 白背景 (#ffffff) に対するコントラスト比。
- * バッジのドットや進捗バーは白カード上に置かれるため、この値が
+ * カード面の色。tailwind.config.ts の `surface` と同じ値。
+ *
+ * 暖色化 (Issue #67) 以前は純白 (#ffffff) だったが、下地との明度差が無く
+ * カードの輪郭が消えていたため、下地を暖色に落としカード面を温かい白にした。
+ * パレットのコントラスト検証はこの実際の背景色に対して行う必要がある。
+ */
+export const SURFACE_COLOR = "#fffdf9";
+
+/** 2色間のコントラスト比 (WCAG 2.x)。明るい側／暗い側の順序は自動で判定する */
+export function contrastRatio(a: string, b: string): number {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/**
+ * カード面 (SURFACE_COLOR) に対するコントラスト比。
+ * バッジのドットや進捗バーはカードの上に置かれるため、この値が
  * 非テキスト要素の基準 3:1 (WCAG 1.4.11) を満たしている必要がある。
  */
-export function contrastRatioOnWhite(hex: string): number {
-  return 1.05 / (relativeLuminance(hex) + 0.05);
+export function contrastRatioOnSurface(hex: string): number {
+  return contrastRatio(hex, SURFACE_COLOR);
 }

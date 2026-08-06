@@ -28,7 +28,7 @@ export default function ProjectsPage() {
         <div>
           <p className="text-sm text-indigo-600">Projects</p>
           <h2 className="mt-2 text-3xl font-bold">プロジェクト一覧</h2>
-          <p className="mt-2 text-slate-400">プロジェクト単位でタスクを管理します。</p>
+          <p className="mt-2 text-stone-400">プロジェクト単位でタスクを管理します。</p>
         </div>
         <Link
           href="/projects/plan"
@@ -44,23 +44,23 @@ export default function ProjectsPage() {
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map(({ project, total, done, todo, progress }) => (
             <Link key={project.id} href={`/projects/${project.id}`} className="block">
-              <article className="group relative rounded-xl border border-slate-200 bg-white p-4 shadow-md hover:shadow-lg transition-all">
-                <div className="absolute top-3 right-3 text-xs rounded-full px-2 py-1 bg-slate-100 text-slate-700">{project.status}</div>
+              <article className="group relative rounded-xl border border-stone-200 bg-surface p-4 shadow-md hover:shadow-lg transition-all">
+                <div className="absolute top-3 right-3 text-xs rounded-full px-2 py-1 bg-stone-100 text-stone-700">{project.status}</div>
 
                 <div>
                   <h3 className="text-lg font-semibold">{project.name}</h3>
                   {project.description && (
-                    <div className="mt-1 line-clamp-2 text-sm text-slate-600 [&_*]:m-0 [&_*]:inline">
+                    <div className="mt-1 line-clamp-2 text-sm text-stone-600 [&_*]:m-0 [&_*]:inline">
                       <MarkdownView content={project.description} />
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
+                <div className="mt-4 flex items-center justify-between text-sm text-stone-600">
                   <div>未完了: {todo}</div>
                   <div className="flex items-center gap-3">
                     <div className="text-sm">{progress}%</div>
-                    <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-2 w-24 overflow-hidden rounded-full bg-stone-100">
                       <div style={{ width: `${progress}%`, background: project.color ?? DEFAULT_PROJECT_COLOR }} className="h-2" />
                     </div>
                   </div>

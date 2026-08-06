@@ -21,7 +21,7 @@ export function ChatMessage({
       className={`flex ${isUser ? "justify-end" : "justify-start"}`}
     >
       <div className={`flex max-w-[92%] flex-col gap-2 sm:max-w-[80%] ${isUser ? "items-end" : "items-start"}`}>
-        <div className={`rounded-3xl border px-4 py-3 shadow-sm ${isUser ? "border-emerald-500/20 bg-emerald-500 text-white" : "border-slate-200 bg-white text-slate-800"}`}>
+        <div className={`rounded-3xl border px-4 py-3 shadow-sm ${isUser ? "border-emerald-500/20 bg-emerald-500 text-white" : "border-stone-200 bg-surface text-stone-800"}`}>
           <p className="whitespace-pre-line text-sm leading-6">{message.content}</p>
           {!isUser && message.suggestions && message.suggestions.length > 0 && (
             <div className="mt-4">
@@ -37,7 +37,7 @@ export function ChatMessage({
                 key={choice.label}
                 type="button"
                 onClick={() => onChoose?.(choice)}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700"
+                className="rounded-full border border-stone-200 px-4 py-2 text-sm text-stone-700 transition hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700"
               >
                 {choice.label}
               </button>

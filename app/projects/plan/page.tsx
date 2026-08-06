@@ -19,7 +19,7 @@ const WEIGHT_LABEL: Record<string, string> = {
 const PRIORITY_COLOR: Record<string, string> = {
   high: "bg-red-100 text-red-700",
   medium: "bg-amber-100 text-amber-700",
-  low: "bg-slate-100 text-slate-600",
+  low: "bg-stone-100 text-stone-600",
 };
 
 const PRIORITY_LABEL: Record<string, string> = {
@@ -144,25 +144,25 @@ export default function ProjectPlanPage() {
       <div>
         <p className="text-sm text-indigo-600">Projects / Plan</p>
         <h2 className="mt-2 text-3xl font-bold">プロジェクトを計画する</h2>
-        <p className="mt-2 text-slate-400">プロジェクトの概要を入力すると、タスクに自動分解します。</p>
+        <p className="mt-2 text-stone-400">プロジェクトの概要を入力すると、タスクに自動分解します。</p>
       </div>
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 text-sm">
-        <span className={`rounded-full px-3 py-1 font-medium ${step === "input" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"}`}>
+        <span className={`rounded-full px-3 py-1 font-medium ${step === "input" ? "bg-indigo-600 text-white" : "bg-stone-100 text-stone-500"}`}>
           1 プロジェクト入力
         </span>
-        <ChevronRight size={16} className="text-slate-400" />
-        <span className={`rounded-full px-3 py-1 font-medium ${step === "review" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"}`}>
+        <ChevronRight size={16} className="text-stone-400" />
+        <span className={`rounded-full px-3 py-1 font-medium ${step === "review" ? "bg-indigo-600 text-white" : "bg-stone-100 text-stone-500"}`}>
           2 タスク確認・編集
         </span>
       </div>
 
       {step === "input" && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
+        <div className="rounded-xl border border-stone-200 bg-surface p-6 shadow-md">
           <div className="grid gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-stone-700">
                 プロジェクト名 <span className="text-red-500">*</span>
               </label>
               <input
@@ -170,28 +170,28 @@ export default function ProjectPlanPage() {
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
                 placeholder="例: ユーザー認証機能の実装"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">説明</label>
+              <label className="mb-1 block text-sm font-medium text-stone-700">説明</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="例: メールとパスワードでのログイン、JWT認証、パスワードリセット機能を実装する"
                 rows={3}
-                className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full resize-none rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">ゴール</label>
+              <label className="mb-1 block text-sm font-medium text-stone-700">ゴール</label>
               <input
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 placeholder="例: ユーザーが安全にログイン・ログアウトできる状態"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
 
@@ -213,16 +213,16 @@ export default function ProjectPlanPage() {
       {step === "review" && (
         <div className="grid gap-4">
           {/* summary bar */}
-          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-sm">
-            <div className="flex items-center gap-2 text-sm text-slate-600">
+          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-stone-200 bg-surface px-5 py-3 shadow-sm">
+            <div className="flex items-center gap-2 text-sm text-stone-600">
               <span className="h-3 w-3 rounded-full" style={{ background: color }} />
               <span className="font-medium">{name}</span>
             </div>
-            <div className="flex items-center gap-1 text-sm text-slate-500">
+            <div className="flex items-center gap-1 text-sm text-stone-500">
               <Clock size={14} />
               合計 {formatMinutes(totalMinutes)}
             </div>
-            <div className="text-sm text-slate-500">{tasks.length} タスク</div>
+            <div className="text-sm text-stone-500">{tasks.length} タスク</div>
             <button
               onClick={() => setStep("input")}
               className="ml-auto text-xs text-indigo-600 hover:underline"
@@ -232,16 +232,16 @@ export default function ProjectPlanPage() {
           </div>
 
           {/* task list */}
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md">
-            <div className="border-b border-slate-100 px-5 py-3">
-              <p className="text-sm text-slate-500">
+          <div className="overflow-hidden rounded-xl border border-stone-200 bg-surface shadow-md">
+            <div className="border-b border-stone-100 px-5 py-3">
+              <p className="text-sm text-stone-500">
                 タスクの順序・内容を確認・編集してください
               </p>
             </div>
-            <ol className="divide-y divide-slate-100">
+            <ol className="divide-y divide-stone-100">
               {tasks.map((task, i) => (
                 <li key={i} className="group flex items-start gap-3 px-5 py-4">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-xs font-bold text-stone-500">
                     {i + 1}
                   </span>
 
@@ -256,14 +256,14 @@ export default function ProjectPlanPage() {
                           className="w-full rounded-lg border border-indigo-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-100"
                         />
                         <div className="flex items-center gap-2">
-                          <label className="text-xs text-slate-500">所要時間(分)</label>
+                          <label className="text-xs text-stone-500">所要時間(分)</label>
                           <input
                             type="number"
                             min={5}
                             max={480}
                             value={editMinutes}
                             onChange={(e) => setEditMinutes(Number(e.target.value))}
-                            className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm outline-none"
+                            className="w-20 rounded-lg border border-stone-200 px-2 py-1 text-sm outline-none"
                           />
                           <button
                             onClick={commitEdit}
@@ -273,7 +273,7 @@ export default function ProjectPlanPage() {
                           </button>
                           <button
                             onClick={cancelEdit}
-                            className="flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600"
+                            className="flex items-center gap-1 rounded-md bg-stone-100 px-2 py-1 text-xs text-stone-600"
                           >
                             <X size={12} /> キャンセル
                           </button>
@@ -281,20 +281,20 @@ export default function ProjectPlanPage() {
                       </div>
                     ) : (
                       <>
-                        <p className="text-sm font-medium text-slate-800">{task.title}</p>
+                        <p className="text-sm font-medium text-stone-800">{task.title}</p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <span className="flex items-center gap-1 text-xs text-slate-500">
+                          <span className="flex items-center gap-1 text-xs text-stone-500">
                             <Clock size={11} />
                             {formatMinutes(task.estimatedMinutes)}
                           </span>
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PRIORITY_COLOR[task.priority]}`}>
                             優先度: {PRIORITY_LABEL[task.priority]}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                          <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
                             {WEIGHT_LABEL[task.weight]}
                           </span>
                           {task.dependency && (
-                            <span className="text-xs text-slate-400">↳ {task.dependency}</span>
+                            <span className="text-xs text-stone-400">↳ {task.dependency}</span>
                           )}
                         </div>
                       </>
@@ -306,18 +306,18 @@ export default function ProjectPlanPage() {
                       <button
                         onClick={() => moveUp(i)}
                         disabled={i === 0}
-                        className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+                        className="rounded p-1 text-stone-400 hover:bg-stone-200 disabled:opacity-30"
                         title="上へ"
                       >↑</button>
                       <button
                         onClick={() => moveDown(i)}
                         disabled={i === tasks.length - 1}
-                        className="rounded p-1 text-slate-400 hover:bg-slate-100 disabled:opacity-30"
+                        className="rounded p-1 text-stone-400 hover:bg-stone-200 disabled:opacity-30"
                         title="下へ"
                       >↓</button>
                       <button
                         onClick={() => startEdit(i)}
-                        className="rounded p-1 text-slate-400 hover:bg-slate-100"
+                        className="rounded p-1 text-stone-400 hover:bg-stone-200"
                         title="編集"
                       >
                         <Pencil size={14} />
@@ -339,7 +339,7 @@ export default function ProjectPlanPage() {
           <div className="flex justify-end gap-3">
             <button
               onClick={() => { setStep("input"); setTasks([]); }}
-              className="rounded-xl border border-slate-200 px-5 py-2 text-sm text-slate-600 hover:bg-slate-50"
+              className="rounded-xl border border-stone-200 px-5 py-2 text-sm text-stone-600 hover:bg-stone-100"
             >
               最初からやり直す
             </button>

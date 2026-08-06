@@ -23,9 +23,9 @@ export const contentType = "image/png";
 // アプリのテーマカラー（lib/colors.ts の emerald-600 / 700 と同じ値）
 const EMERALD = "#059669";
 const EMERALD_DEEP = "#047857";
-const INK = "#0f172a";
-const MUTED = "#64748b";
-const PAPER_LINE = "#cbd5e1";
+const INK = "#1c1917";
+const MUTED = "#78716c";
+const PAPER_LINE = "#d6d3d1";
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -35,7 +35,7 @@ export default function OpengraphImage() {
           width: "100%",
           height: "100%",
           display: "flex",
-          background: "#ffffff",
+          background: "#fffdf9",
           fontFamily: "sans-serif"
         }}
       >
@@ -97,7 +97,7 @@ export default function OpengraphImage() {
               flexDirection: "column",
               width: 240,
               height: 300,
-              background: "#ffffff",
+              background: "#fffdf9",
               border: `3px solid ${PAPER_LINE}`,
               borderRadius: 20,
               padding: 32,

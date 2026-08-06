@@ -87,10 +87,10 @@ export function SuggestionTimeline({ suggestions }: { suggestions: ScheduleSugge
               {hours.map((hour, index) => (
                 <div
                   key={hour}
-                  className="absolute left-0 right-0 border-t border-slate-100"
+                  className="absolute left-0 right-0 border-t border-stone-100"
                   style={{ top: `${index * HOUR_HEIGHT}px` }}
                 >
-                  <span className="text-xs text-slate-400">{`${String(hour).padStart(2, "0")}:00`}</span>
+                  <span className="text-xs text-stone-400">{`${String(hour).padStart(2, "0")}:00`}</span>
                 </div>
               ))}
 

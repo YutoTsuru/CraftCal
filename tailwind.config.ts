@@ -6,6 +6,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // カード面（暖かい白）。以前は #ffffff で、下地 #f8fafc（slate-50）との
+        // 明度差がほぼ無く、カードの輪郭が消えて「白ばかりで見にくい」状態だった。
+        // 下地は app/globals.css の html/body 側で暖色に落としてある（#f5f0e9）。
+        // この値は lib/colors.ts の SURFACE_COLOR と一致させること
+        // （パレットのコントラスト検証がこの背景色を前提にしているため。テストで固定している）。
+        surface: "#fffdf9",
         mint: {
           DEFAULT: "#34D399",
           50: "#ECFDF6",
@@ -41,7 +47,9 @@ const config: Config = {
         rose: colors.rose
       },
       boxShadow: {
-        soft: "0 24px 80px rgba(15, 23, 42, 0.08)"
+        // 影も寒色（slate-900 系）から暖色（stone-900 系）へ。
+        // 暖色の下地に寒色の影が落ちると灰色く濁って見えるため
+        soft: "0 24px 80px rgba(28, 25, 23, 0.10)"
       }
     }
   },

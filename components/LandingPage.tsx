@@ -51,10 +51,10 @@ export function LandingPage() {
     <div className="min-h-screen">
       {/* ヘッダー: ワードマークとログイン導線だけの軽いもの */}
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <span className="text-xl font-bold tracking-tight text-slate-900">{SITE_NAME}</span>
+        <span className="text-xl font-bold tracking-tight text-stone-900">{SITE_NAME}</span>
         <Link
           href="/login"
-          className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white hover:text-slate-900"
+          className="rounded-xl px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-surface hover:text-stone-900"
         >
           ログイン
         </Link>
@@ -65,12 +65,12 @@ export function LandingPage() {
             ワードマークではなく「何ができるか」を置く */}
         <section className="grid items-center gap-10 py-14 md:grid-cols-[1.15fr_1fr] md:py-20">
           <div className="flex flex-col items-start gap-6">
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 md:text-5xl">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-stone-900 md:text-5xl">
               「いつかやる」を、
               <br />
               「今日やる」に。
             </h1>
-            <p className="max-w-md text-lg leading-relaxed text-slate-600">
+            <p className="max-w-md text-lg leading-relaxed text-stone-600">
               作りたいものをタスクに分解し、カレンダーに置いて、今日ぶんだけに集中する。{SITE_DESCRIPTION}です。
             </p>
             <div className="flex flex-wrap items-center gap-3">
@@ -82,7 +82,7 @@ export function LandingPage() {
               </Link>
               <Link
                 href="/login"
-                className="rounded-xl border border-slate-300 bg-white px-6 py-3 font-medium text-slate-700 transition hover:border-slate-400"
+                className="rounded-xl border border-stone-300 bg-surface px-6 py-3 font-medium text-stone-700 transition hover:border-stone-400"
               >
                 ログイン
               </Link>
@@ -97,18 +97,18 @@ export function LandingPage() {
 
         {/* 機能 */}
         <section className="py-12">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">できること</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-stone-900">できること</h2>
           <div className="mt-7 grid gap-4 md:grid-cols-3">
             {FEATURES.map((feature) => {
               const Icon = feature.icon;
               return (
                 <article
                   key={feature.title}
-                  className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                  className="rounded-xl border border-stone-200 bg-surface p-5 shadow-sm"
                 >
                   <Icon size={22} className="text-emerald-600" aria-hidden="true" />
-                  <h3 className="mt-3 font-bold text-slate-900">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{feature.body}</p>
+                  <h3 className="mt-3 font-bold text-stone-900">{feature.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-stone-600">{feature.body}</p>
                 </article>
               );
             })}
@@ -117,15 +117,15 @@ export function LandingPage() {
 
         {/* 使い方。ol にして順序を構造としても表現する */}
         <section className="py-12">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">使い方</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-stone-900">使い方</h2>
           <ol className="mt-7 grid gap-4 md:grid-cols-3">
             {STEPS.map((step) => (
-              <li key={step.n} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <li key={step.n} className="rounded-xl border border-stone-200 bg-surface p-5 shadow-sm">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
                   {step.n}
                 </span>
-                <h3 className="mt-3 font-bold text-slate-900">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{step.body}</p>
+                <h3 className="mt-3 font-bold text-stone-900">{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-stone-600">{step.body}</p>
               </li>
             ))}
           </ol>
@@ -134,10 +134,10 @@ export function LandingPage() {
         {/* 末尾の導線 */}
         <section className="py-14">
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-10 text-center">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h2 className="text-2xl font-bold tracking-tight text-stone-900">
               今日ぶんを決めるところから
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-slate-600">
+            <p className="mx-auto mt-3 max-w-md text-stone-600">
               アカウントを作れば、すぐにプロジェクトを立てて使いはじめられます。
             </p>
             <Link
@@ -151,11 +151,11 @@ export function LandingPage() {
       </main>
 
       <footer className="mx-auto max-w-5xl px-6 py-10">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 text-sm text-slate-500">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-200 pt-6 text-sm text-stone-500">
           <span>{SITE_NAME}</span>
           <a
             href="https://github.com/YutoTsuru/CraftCal"
-            className="transition hover:text-slate-700"
+            className="transition hover:text-stone-700"
             target="_blank"
             rel="noopener noreferrer"
           >

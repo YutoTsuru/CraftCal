@@ -31,20 +31,20 @@ function ProjectFormComponent() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
       <div className="grid gap-3 md:grid-cols-2">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-slate-200 px-3 py-2 outline-none md:col-span-2" />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-stone-200 px-3 py-2 outline-none md:col-span-2" />
         {/* テーマカラー選択。ラベルなしの type=color だと「謎のグレーの棒」に見えるため
             説明テキストを付けていたが (Issue #37)、OSのカラーダイアログが開く問題は
             残っていたので、プリセットから選ぶ ColorPicker に置き換えた (Issue #57)。
             md:col-span-2 で独立した行にする。入力欄と同じ行に置くと、グリッドの
             align-items: stretch で入力欄がピッカーの高さまで引き伸ばされてしまう */}
         <ColorPicker value={color} onChange={setColor} label="テーマカラー" className="md:col-span-2" />
-        <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
-        <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
-        <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-slate-200 px-3 py-2 md:col-span-2" />
+        <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
+        <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
+        <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
         <div className="flex items-center gap-2">
-          <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="rounded-xl border border-slate-200 px-3 py-2">
+          <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="rounded-xl border border-stone-200 px-3 py-2">
             <option value="active">Active</option>
             <option value="paused">Paused</option>
             <option value="done">Done</option>

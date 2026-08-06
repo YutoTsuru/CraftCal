@@ -96,7 +96,7 @@ function ColorPickerComponent({
 
   return (
     <div className={className}>
-      <span id={labelId} className="text-sm font-medium text-slate-700">
+      <span id={labelId} className="text-sm font-medium text-stone-700">
         {label}
       </span>
 
@@ -124,11 +124,11 @@ function ColorPickerComponent({
               tabIndex={isSelected || (selectedIndex === -1 && index === 0) ? 0 : -1}
               onClick={() => onChange(color.hex)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              className="flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+              className="flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900"
               style={{
                 backgroundColor: color.hex,
                 // 選択中はその色自身でリングを描く（白い隙間を挟んで二重丸に見せる）
-                boxShadow: isSelected ? `0 0 0 2px #fff, 0 0 0 4px ${color.hex}` : undefined
+                boxShadow: isSelected ? `0 0 0 2px #fffdf9, 0 0 0 4px ${color.hex}` : undefined
               }}
             >
               {/* 選択状態を色以外でも示すためのチェックマーク */}

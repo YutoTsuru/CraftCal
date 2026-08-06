@@ -4,11 +4,14 @@ import {
   GCAL_EVENT_COLORS,
   PALETTE_COLUMNS,
   PROJECT_COLORS,
-  contrastRatioOnWhite,
+  SURFACE_COLOR,
+  contrastRatio,
+  contrastRatioOnSurface,
   findPaletteColor,
   isPaletteColor,
   normalizeHex
 } from "@/lib/colors";
+import tailwindConfig from "@/tailwind.config";
 
 describe("パレット定義", () => {
   it("10色ちょうどで、列数で割り切れる（グリッドが欠けない）", () => {
@@ -47,29 +50,38 @@ describe("パレット定義", () => {
     }
   });
 
+  it("SURFACE_COLOR が tailwind.config.ts の surface と一致する", () => {
+    // 片方だけ変えると、コントラスト検証が実際の描画色とズレて意味を失う。
+    // リテラルの二重管理にならないよう、実際の設定を読んで突き合わせる。
+    const surface = (tailwindConfig.theme?.extend?.colors as Record<string, string> | undefined)
+      ?.surface;
+    expect(surface).toBe(SURFACE_COLOR);
+  });
+
   it("デフォルト色がパレットに含まれている", () => {
     expect(isPaletteColor(DEFAULT_PROJECT_COLOR)).toBe(true);
   });
 });
 
 describe("コントラスト (Issue #57 の受け入れ基準)", () => {
-  // バッジのドットや進捗バーは白いカードの上に置かれるため、
+  // バッジのドットや進捗バーはカードの上に置かれるため、
   // 非テキスト要素の基準 3:1 (WCAG 1.4.11) を全色が満たす必要がある。
+  // 背景は純白ではなく実際のカード面 (SURFACE_COLOR) で測る (Issue #67 の暖色化)。
   it.each(PROJECT_COLORS.map((c) => [c.labelJa, c.hex] as const))(
-    "%s (%s) は白背景に対して 3:1 以上",
+    "%s (%s) はカード面に対して 3:1 以上",
     (_label, hex) => {
-      expect(contrastRatioOnWhite(hex)).toBeGreaterThanOrEqual(3);
+      expect(contrastRatioOnSurface(hex)).toBeGreaterThanOrEqual(3);
     }
   );
 
   it("既知の値と一致する（計算式の回帰チェック）", () => {
     // 黒は 21:1、白は 1:1 になるのが WCAG の定義
-    expect(contrastRatioOnWhite("#000000")).toBeCloseTo(21, 5);
-    expect(contrastRatioOnWhite("#ffffff")).toBeCloseTo(1, 5);
+    expect(contrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 5);
+    expect(contrastRatio("#ffffff", "#ffffff")).toBeCloseTo(1, 5);
   });
 
   it("旧デフォルトの emerald-500 は基準を割っていた（変更の根拠）", () => {
-    expect(contrastRatioOnWhite("#10b981")).toBeLessThan(3);
+    expect(contrastRatioOnSurface("#10b981")).toBeLessThan(3);
   });
 });
 

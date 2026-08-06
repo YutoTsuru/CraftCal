@@ -37,12 +37,12 @@ export function SplashScreen() {
       </div>
 
       {/* ワードマーク。サイドバー (components/LayoutShell.tsx) のロゴと同じ字面に揃える */}
-      <h1 className="splash-fade splash-fade-delay-1 text-4xl font-bold tracking-tight text-slate-900">
+      <h1 className="splash-fade splash-fade-delay-1 text-4xl font-bold tracking-tight text-stone-900">
         CraftCal
       </h1>
 
       {/* タグライン。スマホで2行に折れても中央で揃うようにする */}
-      <p className="splash-fade splash-fade-delay-2 max-w-xs text-center text-sm text-slate-500">
+      <p className="splash-fade splash-fade-delay-2 max-w-xs text-center text-sm text-stone-500">
         {TAGLINE}
       </p>
     </div>
