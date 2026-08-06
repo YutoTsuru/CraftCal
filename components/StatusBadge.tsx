@@ -25,7 +25,7 @@ export function StatusBadge({
   const taskMap: Record<TaskStatus, string> = {
     todo: "bg-stone-100 text-stone-700 border border-stone-100",
     doing: "bg-accent-blue/10 text-accent-blue border border-accent-blue/20",
-    done: "bg-emerald-50 text-emerald-700 border border-emerald-100"
+    done: "bg-lime-50 text-lime-800 border border-lime-100"
     ,
     expired: "bg-red-50 text-red-700 border border-red-100",
     paused: "bg-stone-100 text-stone-500 border border-stone-100",

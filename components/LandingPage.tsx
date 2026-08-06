@@ -76,7 +76,7 @@ export function LandingPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/signup"
-                className="rounded-xl bg-emerald-600 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-emerald-700"
+                className="rounded-xl bg-lime-700 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-lime-800"
               >
                 無料ではじめる
               </Link>
@@ -106,7 +106,7 @@ export function LandingPage() {
                   key={feature.title}
                   className="rounded-xl border border-stone-200 bg-surface p-5 shadow-sm"
                 >
-                  <Icon size={22} className="text-emerald-600" aria-hidden="true" />
+                  <Icon size={22} className="text-lime-700" aria-hidden="true" />
                   <h3 className="mt-3 font-bold text-stone-900">{feature.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-stone-600">{feature.body}</p>
                 </article>
@@ -121,7 +121,7 @@ export function LandingPage() {
           <ol className="mt-7 grid gap-4 md:grid-cols-3">
             {STEPS.map((step) => (
               <li key={step.n} className="rounded-xl border border-stone-200 bg-surface p-5 shadow-sm">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-lime-700 text-sm font-bold text-white">
                   {step.n}
                 </span>
                 <h3 className="mt-3 font-bold text-stone-900">{step.title}</h3>
@@ -133,7 +133,7 @@ export function LandingPage() {
 
         {/* 末尾の導線 */}
         <section className="py-14">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-10 text-center">
+          <div className="rounded-xl border border-lime-200 bg-lime-50 px-6 py-10 text-center">
             <h2 className="text-2xl font-bold tracking-tight text-stone-900">
               今日ぶんを決めるところから
             </h2>
@@ -142,7 +142,7 @@ export function LandingPage() {
             </p>
             <Link
               href="/signup"
-              className="mt-6 inline-block rounded-xl bg-emerald-600 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-emerald-700"
+              className="mt-6 inline-block rounded-xl bg-lime-700 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-lime-800"
             >
               無料ではじめる
             </Link>

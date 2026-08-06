@@ -54,14 +54,14 @@ export default function HomePage() {
           サンプルカードと同型 (emerald)。取り込み後は canImportLocalData が false になり自動で消える。
           サンプルカードより優先し、両方は同時に出さない */}
       {canImportLocalData && (
-        <section className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-6">
+        <section className="rounded-xl border border-dashed border-lime-300 bg-lime-50/60 p-6">
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-lime-950">
                 <Sparkles size={18} />
                 以前このブラウザに保存したデータが見つかりました
               </h3>
-              <p className="mt-1 text-sm text-emerald-800">
+              <p className="mt-1 text-sm text-lime-900">
                 ログイン前にこのブラウザへ保存したタスク・プロジェクトを、あなたのアカウントに取り込めます。
               </p>
             </div>
@@ -71,7 +71,7 @@ export default function HomePage() {
                 importLocalData();
               }}
               disabled={importing}
-              className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="shrink-0 rounded-xl bg-lime-700 px-4 py-2.5 font-semibold text-white transition hover:bg-lime-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {importing ? "取り込み中..." : "データを取り込む"}
             </button>
@@ -84,20 +84,20 @@ export default function HomePage() {
           ただし取り込みカードを出しているときは重複を避けて非表示にする。
           ボタンを押すと AppProvider の seedSampleData() が lib/seed-data.ts のデータを投入する */}
       {tasks.length === 0 && !canImportLocalData && (
-        <section className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-6">
+        <section className="rounded-xl border border-dashed border-lime-300 bg-lime-50/60 p-6">
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-emerald-900">
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-lime-950">
                 <Sparkles size={18} />
                 まずはサンプルデータで試してみる
               </h3>
-              <p className="mt-1 text-sm text-emerald-800">
+              <p className="mt-1 text-sm text-lime-900">
                 CraftCal自身の開発タスク（実際のGitHub Issue）とモックプロジェクトを読み込んで、各画面の使い方を確認できます。
               </p>
             </div>
             <button
               onClick={seedSampleData}
-              className="shrink-0 rounded-xl bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-500"
+              className="shrink-0 rounded-xl bg-lime-700 px-4 py-2.5 font-semibold text-white transition hover:bg-lime-600"
             >
               サンプルデータを読み込む
             </button>
@@ -113,7 +113,7 @@ export default function HomePage() {
             横並びのままだと統計カードが本文の横に押し込まれ、ラベルが縦に折り返してしまう */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-indigo-600">Home</p>
+            <p className="text-sm font-medium text-stone-500">Home</p>
             <h2 className="mt-2 text-2xl font-bold">今日のダッシュボード</h2>
             <p className="mt-2 text-stone-500">今日やること・進捗・実績をここで確認します。</p>
           </div>
@@ -133,7 +133,7 @@ export default function HomePage() {
         <section className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">今日やるべき Top3</h3>
-            <Link href="/tasks" className="text-sm text-indigo-600">すべて見る</Link>
+            <Link href="/tasks" className="text-sm text-lime-700">すべて見る</Link>
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-3">
@@ -143,7 +143,7 @@ export default function HomePage() {
               return (
                 <div key={task.id} className="relative rounded-xl border border-stone-200 bg-surface p-4 shadow-sm">
                   {/* 順位バッジ (1〜3位)。カード左上に固定表示 */}
-                  <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+                  <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-stone-700 text-sm font-semibold text-white">
                     {index + 1}
                   </span>
 
@@ -167,14 +167,14 @@ export default function HomePage() {
                       {task.status === "todo" ? (
                         <button
                           onClick={() => updateTaskStatus(task.id, "doing")}
-                          className="min-h-11 w-full rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                          className="min-h-11 w-full rounded-xl bg-amber-700 px-3 text-sm font-semibold text-white transition hover:bg-amber-800"
                         >
                           開始
                         </button>
                       ) : (
                         <button
                           onClick={() => completeTask(task.id)}
-                          className="min-h-11 w-full rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white transition hover:bg-emerald-500"
+                          className="min-h-11 w-full rounded-xl bg-amber-700 px-3 text-sm font-semibold text-white transition hover:bg-amber-800"
                         >
                           完了
                         </button>
@@ -236,7 +236,7 @@ export default function HomePage() {
         <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">期限が近いタスク</h3>
-            <Link href="/tasks" className="text-sm text-indigo-600">すべて見る</Link>
+            <Link href="/tasks" className="text-sm text-lime-700">すべて見る</Link>
           </div>
 
           {dueSoon.length === 0 ? (

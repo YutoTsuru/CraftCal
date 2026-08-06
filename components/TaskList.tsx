@@ -22,8 +22,8 @@ const weightLabels: Record<TaskWeight, string> = {
 };
 
 const weightClassNames: Record<TaskWeight, string> = {
-  light: "border-sky-400/40 bg-sky-50 text-sky-700",
-  medium: "border-emerald-400/40 bg-emerald-50 text-emerald-700",
+  light: "border-stone-400/40 bg-stone-100 text-stone-700",
+  medium: "border-lime-500/40 bg-lime-50 text-lime-800",
   heavy: "border-orange-400/40 bg-orange-50 text-orange-700"
 };
 
@@ -100,7 +100,7 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
                 {onEdit && (
                   <button
                     onClick={() => onEdit(task)}
-                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-700 transition hover:border-indigo-400/50 hover:bg-indigo-100 hover:text-indigo-600"
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-700 transition hover:border-lime-500/50 hover:bg-lime-100 hover:text-lime-700"
                     aria-label="タスクを編集"
                   >
                     <Pencil size={18} />

@@ -111,7 +111,7 @@ export default function TodayList() {
                     const url = prompt("関連URL（任意）", "") || null;
                     completeTask(task.id, note, url);
                   }}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-3 py-1 text-sm font-semibold text-white transition hover:bg-emerald-400"
+                  className="inline-flex items-center gap-2 rounded-xl bg-lime-600 px-3 py-1 text-sm font-semibold text-white transition hover:bg-lime-500"
                 >
                   <CheckCircle2 size={16} />
                   完了
@@ -127,7 +127,7 @@ export default function TodayList() {
                     setBlocked(existing?.blocked ?? "");
                     setNext(existing?.next ?? "");
                   }}
-                  className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-3 py-1 text-sm font-semibold text-white transition hover:bg-sky-400"
+                  className="inline-flex items-center gap-2 rounded-xl bg-lime-700 px-3 py-1 text-sm font-semibold text-white transition hover:bg-lime-600"
                 >
                   今日分完了 / メモを書く
                 </button>
@@ -161,7 +161,7 @@ export default function TodayList() {
                   saveOrUpdateDailyLog({ taskId: editingTaskId!, date: today, did, blocked, next, doneToday: true });
                   setEditingTaskId(null);
                 }}
-                className="rounded-md bg-emerald-500 px-3 py-1 text-white"
+                className="rounded-md bg-lime-600 px-3 py-1 text-white"
               >
                 保存して今日分完了にする
               </button>

@@ -48,7 +48,7 @@ export default function CalendarRangeHeader({
         <button onClick={onPrev} className="rounded-md bg-stone-100 p-2 text-stone-700 hover:bg-stone-200" aria-label="前へ">
           <ChevronLeft size={16} />
         </button>
-        <button onClick={onToday} className="rounded-md bg-emerald-600 px-3 py-2 text-sm text-white">今日</button>
+        <button onClick={onToday} className="rounded-md bg-lime-700 px-3 py-2 text-sm text-white">今日</button>
         <button onClick={onNext} className="rounded-md bg-stone-100 p-2 text-stone-700 hover:bg-stone-200" aria-label="次へ">
           <ChevronRight size={16} />
         </button>

@@ -142,18 +142,18 @@ export default function ProjectPlanPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <p className="text-sm text-indigo-600">Projects / Plan</p>
+        <p className="text-sm text-stone-500">Projects / Plan</p>
         <h2 className="mt-2 text-3xl font-bold">プロジェクトを計画する</h2>
         <p className="mt-2 text-stone-400">プロジェクトの概要を入力すると、タスクに自動分解します。</p>
       </div>
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 text-sm">
-        <span className={`rounded-full px-3 py-1 font-medium ${step === "input" ? "bg-indigo-600 text-white" : "bg-stone-100 text-stone-500"}`}>
+        <span className={`rounded-full px-3 py-1 font-medium ${step === "input" ? "bg-lime-700 text-white" : "bg-stone-100 text-stone-500"}`}>
           1 プロジェクト入力
         </span>
         <ChevronRight size={16} className="text-stone-400" />
-        <span className={`rounded-full px-3 py-1 font-medium ${step === "review" ? "bg-indigo-600 text-white" : "bg-stone-100 text-stone-500"}`}>
+        <span className={`rounded-full px-3 py-1 font-medium ${step === "review" ? "bg-lime-700 text-white" : "bg-stone-100 text-stone-500"}`}>
           2 タスク確認・編集
         </span>
       </div>
@@ -170,7 +170,7 @@ export default function ProjectPlanPage() {
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
                 placeholder="例: ユーザー認証機能の実装"
-                className="w-full rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-100"
               />
             </div>
 
@@ -181,7 +181,7 @@ export default function ProjectPlanPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="例: メールとパスワードでのログイン、JWT認証、パスワードリセット機能を実装する"
                 rows={3}
-                className="w-full resize-none rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full resize-none rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-100"
               />
             </div>
 
@@ -191,7 +191,7 @@ export default function ProjectPlanPage() {
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 placeholder="例: ユーザーが安全にログイン・ログアウトできる状態"
-                className="w-full rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-100"
               />
             </div>
 
@@ -201,7 +201,7 @@ export default function ProjectPlanPage() {
             <button
               onClick={handleGenerate}
               disabled={!name.trim()}
-              className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-xl bg-lime-700 px-6 py-3 font-medium text-white transition hover:bg-lime-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Sparkles size={18} />
               タスクを自動生成
@@ -225,7 +225,7 @@ export default function ProjectPlanPage() {
             <div className="text-sm text-stone-500">{tasks.length} タスク</div>
             <button
               onClick={() => setStep("input")}
-              className="ml-auto text-xs text-indigo-600 hover:underline"
+              className="ml-auto text-xs text-lime-700 hover:underline"
             >
               入力に戻る
             </button>
@@ -253,7 +253,7 @@ export default function ProjectPlanPage() {
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && commitEdit()}
-                          className="w-full rounded-lg border border-indigo-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-100"
+                          className="w-full rounded-lg border border-stone-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-lime-100"
                         />
                         <div className="flex items-center gap-2">
                           <label className="text-xs text-stone-500">所要時間(分)</label>
@@ -267,7 +267,7 @@ export default function ProjectPlanPage() {
                           />
                           <button
                             onClick={commitEdit}
-                            className="flex items-center gap-1 rounded-md bg-emerald-500 px-2 py-1 text-xs text-white"
+                            className="flex items-center gap-1 rounded-md bg-lime-600 px-2 py-1 text-xs text-white"
                           >
                             <Check size={12} /> 保存
                           </button>
@@ -346,7 +346,7 @@ export default function ProjectPlanPage() {
             <button
               onClick={handleSave}
               disabled={tasks.length === 0 || isSaving}
-              className="rounded-xl bg-emerald-500 px-6 py-2 font-medium text-white transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-xl bg-lime-600 px-6 py-2 font-medium text-white transition hover:bg-lime-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? "保存中..." : "保存してプロジェクトを作成"}
             </button>

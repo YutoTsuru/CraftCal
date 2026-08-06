@@ -21,8 +21,8 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 // アプリのテーマカラー（lib/colors.ts の emerald-600 / 700 と同じ値）
-const EMERALD = "#059669";
-const EMERALD_DEEP = "#047857";
+const EMERALD = "#4d7c0f";
+const EMERALD_DEEP = "#3f6212";
 const INK = "#1c1917";
 const MUTED = "#78716c";
 const PAPER_LINE = "#d6d3d1";

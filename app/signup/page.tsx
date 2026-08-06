@@ -77,7 +77,7 @@ export default function SignupPage() {
           </div>
         )}
         {notice && (
-          <div role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          <div role="status" className="mb-4 rounded-xl border border-lime-200 bg-lime-50 px-3 py-2 text-sm text-lime-800">
             {notice}
           </div>
         )}
@@ -91,7 +91,7 @@ export default function SignupPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="min-h-[44px] rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-emerald-400"
+              className="min-h-[44px] rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-lime-500"
               placeholder="you@example.com"
             />
           </label>
@@ -104,7 +104,7 @@ export default function SignupPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="min-h-[44px] rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-emerald-400"
+              className="min-h-[44px] rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-lime-500"
               placeholder="6文字以上"
             />
           </label>
@@ -112,7 +112,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="min-h-[44px] rounded-xl bg-emerald-500 px-4 py-2 font-medium text-white transition hover:bg-emerald-600 disabled:opacity-60"
+            className="min-h-[44px] rounded-xl bg-lime-600 px-4 py-2 font-medium text-white transition hover:bg-lime-700 disabled:opacity-60"
           >
             {submitting ? "処理中..." : "登録する"}
           </button>
@@ -135,7 +135,7 @@ export default function SignupPage() {
 
         <p className="mt-5 text-center text-sm text-stone-500">
           すでにアカウントをお持ちの方は{" "}
-          <Link href="/login" className="font-medium text-emerald-600 hover:underline">
+          <Link href="/login" className="font-medium text-lime-700 hover:underline">
             ログイン
           </Link>
         </p>

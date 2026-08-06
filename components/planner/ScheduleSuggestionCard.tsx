@@ -29,7 +29,7 @@ export function ScheduleSuggestionCard({ suggestions, compact = false, onReflect
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-emerald-700">提案された予定</p>
+          <p className="text-sm font-semibold text-lime-800">提案された予定</p>
           <p className="mt-1 text-xs text-stone-500">空き時間に合わせた仮プランです</p>
         </div>
         <div className="flex items-center gap-2">
@@ -39,14 +39,14 @@ export function ScheduleSuggestionCard({ suggestions, compact = false, onReflect
               <button
                 type="button"
                 onClick={() => setView("timeline")}
-                className={`rounded-full px-3 py-1 font-semibold transition ${view === "timeline" ? "bg-emerald-600 text-white" : "text-stone-600"}`}
+                className={`rounded-full px-3 py-1 font-semibold transition ${view === "timeline" ? "bg-lime-700 text-white" : "text-stone-600"}`}
               >
                 タイムライン
               </button>
               <button
                 type="button"
                 onClick={() => setView("list")}
-                className={`rounded-full px-3 py-1 font-semibold transition ${view === "list" ? "bg-emerald-600 text-white" : "text-stone-600"}`}
+                className={`rounded-full px-3 py-1 font-semibold transition ${view === "list" ? "bg-lime-700 text-white" : "text-stone-600"}`}
               >
                 リスト
               </button>
@@ -67,7 +67,7 @@ export function ScheduleSuggestionCard({ suggestions, compact = false, onReflect
             {suggestions.map((item) => (
               <div key={`${item.taskId}-${item.date}-${item.startTime}`} className="rounded-2xl border border-stone-200 bg-stone-100 p-4">
                 <div className="flex flex-col gap-1">
-                  <p className="text-xs font-medium text-emerald-700">{item.dateLabel}</p>
+                  <p className="text-xs font-medium text-lime-800">{item.dateLabel}</p>
                   <p className="text-sm font-semibold text-stone-900">
                     {item.startTime}〜{item.endTime}
                   </p>
@@ -89,7 +89,7 @@ export function ScheduleSuggestionCard({ suggestions, compact = false, onReflect
 
       {!compact && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" onClick={onReflect} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500">
+          <button type="button" onClick={onReflect} className="rounded-full bg-lime-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-lime-600">
             この予定を反映する
           </button>
           <button type="button" onClick={onMakeLighter} className="rounded-full border border-stone-200 bg-surface px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100">

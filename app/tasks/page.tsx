@@ -27,7 +27,7 @@ export default function TasksPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <p className="text-sm text-indigo-600">Task Management</p>
+        <p className="text-sm text-stone-500">Task Management</p>
         <h2 className="mt-2 text-3xl font-bold">タスク管理</h2>
         <p className="mt-2 text-stone-400">今やるべき作業を小さく分けて登録します。</p>
       </div>
@@ -56,7 +56,7 @@ export default function TasksPage() {
             onClick={() => setView("list")}
             className={`min-h-11 rounded-xl border px-4 text-sm transition ${
               view === "list"
-                ? "border-emerald-600 bg-emerald-600 text-white"
+                ? "border-lime-700 bg-lime-700 text-white"
                 : "border-stone-200 bg-surface text-stone-700"
             }`}
           >
@@ -66,7 +66,7 @@ export default function TasksPage() {
             onClick={() => setView("board")}
             className={`min-h-11 rounded-xl border px-4 text-sm transition ${
               view === "board"
-                ? "border-emerald-600 bg-emerald-600 text-white"
+                ? "border-lime-700 bg-lime-700 text-white"
                 : "border-stone-200 bg-surface text-stone-700"
             }`}
           >

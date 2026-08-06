@@ -83,7 +83,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
                   active
-                    ? "bg-emerald-600 text-white shadow-md" // 現在の画面: 緑背景で強調
+                    ? "bg-lime-700 text-white shadow-md" // 現在の画面: 緑背景で強調
                     : "bg-stone-100 text-stone-700 hover:bg-stone-200 hover:text-stone-900"
                 }`}
               >
@@ -165,7 +165,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 // min-h-[56px]: タップ領域を44px以上確保するため (Issue #13 の調査より)
                 className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] transition ${
-                  active ? "text-emerald-600 font-semibold" : "text-stone-500 hover:text-stone-800"
+                  active ? "text-lime-700 font-semibold" : "text-stone-500 hover:text-stone-800"
                 }`}
               >
                 <Icon size={22} />

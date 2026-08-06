@@ -36,7 +36,7 @@ export default function ProjectEditPage({ params }: { params: Promise<{ projectI
     return (
       <div className="grid gap-4">
         <p className="text-stone-600">プロジェクトが見つかりません。</p>
-        <Link href="/projects" className="text-sm text-indigo-600">プロジェクト一覧へ戻る</Link>
+        <Link href="/projects" className="text-sm text-lime-700">プロジェクト一覧へ戻る</Link>
       </div>
     );
   }
@@ -64,7 +64,7 @@ export default function ProjectEditPage({ params }: { params: Promise<{ projectI
   return (
     <div className="grid gap-6">
       <div>
-        <p className="text-sm text-indigo-600">Edit Project</p>
+        <p className="text-sm text-stone-500">Edit Project</p>
         <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
         <p className="mt-2 text-stone-400">プロジェクト情報を編集します。</p>
       </div>
@@ -89,7 +89,7 @@ export default function ProjectEditPage({ params }: { params: Promise<{ projectI
               <button type="button" onClick={handleCancel} className="rounded-xl border border-stone-200 px-4 py-2 text-sm">
                 キャンセル
               </button>
-              <button type="submit" className="rounded-xl bg-emerald-500 px-4 py-2 text-white">
+              <button type="submit" className="rounded-xl bg-lime-600 px-4 py-2 text-white">
                 保存
               </button>
             </div>

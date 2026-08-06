@@ -83,7 +83,7 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="min-h-[44px] rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-emerald-400"
+              className="min-h-[44px] rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-lime-500"
               placeholder="you@example.com"
             />
           </label>
@@ -96,7 +96,7 @@ export default function LoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="min-h-[44px] rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-emerald-400"
+              className="min-h-[44px] rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-lime-500"
               placeholder="6文字以上"
             />
           </label>
@@ -104,7 +104,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="min-h-[44px] rounded-xl bg-emerald-500 px-4 py-2 font-medium text-white transition hover:bg-emerald-600 disabled:opacity-60"
+            className="min-h-[44px] rounded-xl bg-lime-600 px-4 py-2 font-medium text-white transition hover:bg-lime-700 disabled:opacity-60"
           >
             {submitting ? "処理中..." : "ログイン"}
           </button>
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
         <p className="mt-5 text-center text-sm text-stone-500">
           アカウントをお持ちでない方は{" "}
-          <Link href="/signup" className="font-medium text-emerald-600 hover:underline">
+          <Link href="/signup" className="font-medium text-lime-700 hover:underline">
             新規登録
           </Link>
         </p>

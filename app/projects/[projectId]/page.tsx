@@ -50,7 +50,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
     return (
       <div>
         <p className="text-stone-600">プロジェクトが見つかりません。</p>
-        <Link href="/projects" className="text-sm text-indigo-600">プロジェクト一覧へ</Link>
+        <Link href="/projects" className="text-sm text-lime-700">プロジェクト一覧へ</Link>
       </div>
     );
   }
@@ -102,7 +102,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       <div>
         {isEditing ? (
           <div>
-            <p className="text-sm text-indigo-600">Edit Project</p>
+            <p className="text-sm text-stone-500">Edit Project</p>
             <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
             <p className="mt-2 text-stone-400">プロジェクト情報を編集します。</p>
 
@@ -130,7 +130,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
 
                   <div className="ml-auto flex gap-2">
                     <button type="button" onClick={handleCancel} className="rounded-xl border border-stone-200 px-4 py-2 text-sm">キャンセル</button>
-                    <button type="button" onClick={handleSave} className="rounded-xl bg-emerald-500 px-4 py-2 text-white">保存</button>
+                    <button type="button" onClick={handleSave} className="rounded-xl bg-lime-600 px-4 py-2 text-white">保存</button>
                   </div>
                 </div>
               </div>
@@ -139,7 +139,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         ) : (
           <div className="flex items-start gap-4">
             <div className="flex-1">
-              <p className="text-sm text-indigo-600">Project</p>
+              <p className="text-sm text-stone-500">Project</p>
               <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
               {project.description && (
                 <div className="mt-3 rounded-xl border border-stone-200 bg-surface p-4 text-sm shadow-sm">
@@ -149,7 +149,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
             </div>
             <div className="flex flex-col gap-2">
               {project.overviewUrl && (
-                <a href={project.overviewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-2 text-sm text-indigo-600 hover:bg-stone-200">概要を開く</a>
+                <a href={project.overviewUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-2 text-sm text-lime-700 hover:bg-stone-200">概要を開く</a>
               )}
               <button onClick={() => setIsEditing(true)} className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-2 text-sm text-stone-700 hover:bg-stone-200">編集</button>
               <button

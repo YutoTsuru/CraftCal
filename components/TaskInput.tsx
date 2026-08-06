@@ -111,13 +111,13 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="タスク名"
-          className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 w-full box-border"
+          className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none transition placeholder:text-stone-500 focus:border-lime-500 w-full box-border"
         />
         <input
           value={memo}
           onChange={(event) => setMemo(event.target.value)}
           placeholder="メモ"
-          className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none transition placeholder:text-stone-500 focus:border-emerald-400 w-full box-border"
+          className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none transition placeholder:text-stone-500 focus:border-lime-500 w-full box-border"
         />
         <div className="flex flex-wrap gap-2 md:col-span-2 lg:col-span-1 items-center">
           <select value={projectId ?? ""} onChange={(e) => setProjectId(e.target.value || null)} className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none">
@@ -178,7 +178,7 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
         </div>
 
         <div className="flex items-center gap-2 md:col-span-2 lg:col-span-3 justify-end">
-          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-white transition hover:bg-emerald-400 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-lime-600 px-4 py-2 font-semibold text-white transition hover:bg-lime-500 disabled:opacity-50">
             <Plus size={16} />
             {editingTask ? "保存" : "追加"}
           </button>

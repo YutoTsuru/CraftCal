@@ -50,7 +50,7 @@ function ProjectFormComponent() {
             <option value="done">Done</option>
           </select>
 
-          <button className="ml-auto rounded-xl bg-emerald-500 px-4 py-2 text-white">追加</button>
+          <button className="ml-auto rounded-xl bg-lime-600 px-4 py-2 text-white">追加</button>
         </div>
       </div>
     </form>

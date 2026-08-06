@@ -19,7 +19,7 @@ export default function SprintPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <p className="text-sm font-semibold text-emerald-700">AI Planner</p>
+        <p className="text-sm font-semibold text-lime-800">AI Planner</p>
         <h2 className="mt-2 text-3xl font-bold tracking-tight text-stone-900">予定アシスタント</h2>
         <p className="mt-2 text-stone-600">Googleカレンダーの空き時間とタスクをもとに、作業予定をチャット形式で提案します。</p>
       </div>
@@ -38,7 +38,7 @@ export default function SprintPage() {
               <p className="text-sm font-semibold text-stone-500">チャット</p>
               <p className="mt-1 text-lg font-semibold text-stone-900">相談内容をそのまま入力してください</p>
             </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">Mock Planner</span>
+            <span className="rounded-full bg-lime-50 px-3 py-1 text-xs font-medium text-lime-800">Mock Planner</span>
           </div>
 
           <div className="mt-4 flex max-h-[34rem] flex-col gap-4 overflow-y-auto pr-1">
@@ -73,14 +73,14 @@ export default function SprintPage() {
                   }
                 }}
                 placeholder="例: 今日の空き時間で軽めに進めたい"
-                className="min-w-0 flex-1 rounded-2xl border border-stone-200 bg-surface px-4 py-3 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-emerald-400"
+                className="min-w-0 flex-1 rounded-2xl border border-stone-200 bg-surface px-4 py-3 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-lime-500"
               />
-              <button type="submit" className="rounded-2xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-500">
+              <button type="submit" className="rounded-2xl bg-lime-700 px-5 py-3 font-semibold text-white transition hover:bg-lime-600">
                 送信
               </button>
             </form>
 
-            {notice && <p className="text-sm text-emerald-700">{notice}</p>}
+            {notice && <p className="text-sm text-lime-800">{notice}</p>}
           </div>
         </div>
 

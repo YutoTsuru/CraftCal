@@ -17,9 +17,9 @@ function getColorForLevel(level: number) {
     case 2:
       return "bg-green-400";
     case 3:
-      return "bg-emerald-600";
+      return "bg-lime-700";
     case 4:
-      return "bg-emerald-800";
+      return "bg-lime-900";
     default:
       return "bg-stone-100";
   }

@@ -25,10 +25,10 @@ export function MarkdownView({ content }: { content: string }) {
         },
         pre: ({ children }) => <pre className="mb-3 overflow-x-auto rounded-lg bg-stone-100 p-0">{children}</pre>,
         blockquote: ({ children }) => (
-          <blockquote className="mb-3 border-l-4 border-indigo-300 pl-4 italic text-stone-600">{children}</blockquote>
+          <blockquote className="mb-3 border-l-4 border-stone-300 pl-4 italic text-stone-600">{children}</blockquote>
         ),
         a: ({ href, children }) => (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline underline-offset-2 hover:text-indigo-800">
+          <a href={href} target="_blank" rel="noopener noreferrer" className="text-lime-700 underline underline-offset-2 hover:text-lime-800">
             {children}
           </a>
         ),
