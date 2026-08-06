@@ -3,7 +3,7 @@
 /**
  * /signup: メール+パスワードで新規登録、または Google で登録する画面（公開ルート）。
  * AuthGate によりログイン済みなら / へ自動リダイレクトされる。
- * UI トーンは /login と揃える（白カード / rounded-xl / emerald ボタン / 44px タップ領域）。
+ * UI トーンは /login と揃える（カード面 / rounded-xl / オリーブのボタン / 44px タップ領域）。
  */
 
 import { FormEvent, useState } from "react";

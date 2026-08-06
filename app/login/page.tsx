@@ -3,7 +3,7 @@
 /**
  * /login: メール+パスワード、または Google でログインする画面（公開ルート）。
  * AuthGate によりログイン済みなら / へ自動リダイレクトされる。
- * UI トーンは既存に合わせる（白カード / rounded-xl / emerald ボタン / 44px タップ領域 / モバイル対応）。
+ * UI トーンは既存に合わせる（カード面 / rounded-xl / オリーブのボタン / 44px タップ領域 / モバイル対応）。
  */
 
 import { FormEvent, useState } from "react";

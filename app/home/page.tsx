@@ -51,7 +51,7 @@ export default function HomePage() {
   return (
     <div className="grid gap-6">
       {/* 以前このブラウザ (localStorage) に保存したデータが見つかったときの取り込み案内カード。
-          サンプルカードと同型 (emerald)。取り込み後は canImportLocalData が false になり自動で消える。
+          サンプルカードと同型 (アクセント色)。取り込み後は canImportLocalData が false になり自動で消える。
           サンプルカードより優先し、両方は同時に出さない */}
       {canImportLocalData && (
         <section className="rounded-xl border border-dashed border-lime-300 bg-lime-50/60 p-6">

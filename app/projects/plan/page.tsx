@@ -48,7 +48,7 @@ export default function ProjectPlanPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
-  // Issue #57: 以前はここだけ初期値が indigo で他画面 (emerald) と食い違っていたため揃えた
+  // Issue #57: 以前はここだけ初期値が別の色で他画面と食い違っていたため揃えた
   const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
 
   // generated tasks
