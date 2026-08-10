@@ -247,10 +247,12 @@ export default function HomePage() {
         <RecentLogs />
         <Achievements />
 
-        <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
-          <div className="flex items-center justify-between">
+        {/* min-w-0: グリッドアイテムは既定が min-width:auto で中身の最小幅より小さくなれない。
+            付けないと中の行がカードからはみ出す (Issue #69) */}
+        <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+          <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold">期限が近いタスク</h3>
-            <Link href="/tasks" className="text-sm text-lime-700">すべて見る</Link>
+            <Link href="/tasks" className="shrink-0 text-sm text-lime-700">すべて見る</Link>
           </div>
 
           {dueSoon.length === 0 ? (
@@ -263,18 +265,17 @@ export default function HomePage() {
                 return (
                   <li
                     key={task.id}
-                    // 左端の色帯で危険度を示す。色だけに頼らないよう残り日数のテキストも併記する
-                    className={`rounded-lg border border-l-4 px-3 py-2 ${tone.row}`}
+                    // 左端の色帯で危険度を示す。色だけに頼らないよう残り日数のテキストも併記する。
+                    // min-w-0 がないとグリッドアイテムが中身の最小幅で固定され、カードからはみ出す
+                    className={`min-w-0 rounded-lg border border-l-4 px-3 py-2 ${tone.row}`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="truncate font-medium">{task.title}</div>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                          {/* 「あと3日」「今日まで」「2日超過」。生の日付より状況が分かる */}
-                          <span className={`font-semibold ${tone.label}`}>{due.label}</span>
-                          <span className="text-stone-500">{task.dueDate}</span>
-                        </div>
-                      </div>
+                    <div className="truncate font-medium">{task.title}</div>
+                    {/* 残り日数・期限日・優先度は1つの折り返す行にまとめる。
+                        タイトルの横にバッジを置くと、3カラムの狭い幅で横幅を取り合ってはみ出す */}
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                      {/* 「あと3日」「今日まで」「2日超過」。生の日付より状況が分かる */}
+                      <span className={`font-semibold ${tone.label}`}>{due.label}</span>
+                      <span className="text-stone-500">{task.dueDate}</span>
                       {task.priority && <PriorityBadge priority={task.priority} />}
                     </div>
                   </li>
