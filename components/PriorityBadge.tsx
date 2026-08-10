@@ -1,16 +1,33 @@
 import React from "react";
 
+/**
+ * PriorityBadge: タスクの優先度バッジ。
+ *
+ * Issue #69 で直した点:
+ *   - `high` / `medium` / `low` と英語の生の値をそのまま出しており、
+ *     日本語UIの中で浮くうえ意味が伝わらなかった → 日本語表記にする
+ *   - 低優先度が soft-sky（水色）で、Issue #67 の暖色化から取り残されていた
+ *     （独自カラー名だったため一括置換から漏れていた）→ 無彩色にする
+ */
+
 type Priority = "high" | "medium" | "low";
 
-export function PriorityBadge({ priority, size = "sm" }: { priority: Priority; size?: "sm" | "md" }) {
-  const base = "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium";
-  const map: Record<Priority, string> = {
-    high: "bg-soft-rose/10 text-soft-rose border border-soft-rose/20",
-    medium: "bg-accent-amber/10 text-accent-amber border border-accent-amber/20",
-    low: "bg-soft-sky/10 text-soft-sky border border-soft-sky/20"
-  };
+const LABEL: Record<Priority, string> = {
+  high: "優先度 高",
+  medium: "優先度 中",
+  low: "優先度 低"
+};
 
+// 高＝注意を引く赤、中＝琥珀、低＝無彩色。低は「急がない」ので色を持たせない
+const TONE: Record<Priority, string> = {
+  high: "bg-rose-50 text-rose-700 border-rose-200",
+  medium: "bg-amber-50 text-amber-800 border-amber-200",
+  low: "bg-stone-100 text-stone-600 border-stone-200"
+};
+
+export function PriorityBadge({ priority, size = "sm" }: { priority: Priority; size?: "sm" | "md" }) {
+  const base = "inline-flex items-center rounded-full border px-2.5 py-1 font-medium";
   const sizeClass = size === "md" ? "text-sm px-3 py-1" : "text-xs";
 
-  return <span className={`${base} ${sizeClass} ${map[priority]}`}>{priority}</span>;
+  return <span className={`${base} ${sizeClass} ${TONE[priority]}`}>{LABEL[priority]}</span>;
 }
