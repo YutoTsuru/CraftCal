@@ -12,14 +12,17 @@ export default function RecentLogs() {
     setLogs(getRecentLogs(5));
   }, []);
 
+  // min-w-0: グリッドアイテムは既定が min-width:auto で、中身の最小幅より小さくなれない。
+  // 付けないと長い内容でカードが横にはみ出す (Issue #69)
   return (
-    <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
       <h3 className="text-lg font-semibold">Recent Logs</h3>
       <ul className="mt-3 grid gap-3">
         {logs.map((l) => {
           const task = tasks.find((t) => t.id === l.taskId);
           return (
-            <li key={l.id} className="rounded-md border p-3">
+            // break-words: 作業ログは自由入力で、長いURLなど折り返せない文字列が入りうる
+            <li key={l.id} className="min-w-0 break-words rounded-md border p-3">
               <div className="text-sm text-stone-500">{l.date} — {task?.title ?? "(Unknown)"}</div>
               {l.did && <div className="mt-1 text-sm">{l.did}</div>}
               {l.blocked && <div className="mt-1 text-sm text-amber-600">詰まったこと: {l.blocked}</div>}

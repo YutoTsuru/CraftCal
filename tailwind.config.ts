@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss";
-import colors from "tailwindcss/colors";
 
 const config: Config = {
   content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}"],
@@ -11,40 +10,13 @@ const config: Config = {
         // 下地は app/globals.css の html/body 側で暖色に落としてある（#f5f0e9）。
         // この値は lib/colors.ts の SURFACE_COLOR と一致させること
         // （パレットのコントラスト検証がこの背景色を前提にしているため。テストで固定している）。
-        surface: "#fffdf9",
-        mint: {
-          DEFAULT: "#34D399",
-          50: "#ECFDF6",
-          100: "#D1FAE5",
-          600: "#059669"
-        },
-        "accent-blue": {
-          DEFAULT: "#60A5FA",
-          50: "#EFF6FF"
-        },
-        "accent-purple": {
-          DEFAULT: "#A78BFA",
-          50: "#F5F3FF"
-        },
-        "accent-amber": {
-          DEFAULT: "#F59E0B",
-          50: "#FFFBEB"
-        },
-        "soft-rose": {
-          DEFAULT: "#FB7185",
-          50: "#FFF1F2"
-        },
-        "soft-sky": {
-          DEFAULT: "#7DD3FC",
-          50: "#F0F9FF"
-        },
-        // keep tailwind's default useful colors available
-        slate: colors.slate,
-        emerald: colors.emerald,
-        violet: colors.violet,
-        amber: colors.amber,
-        sky: colors.sky,
-        rose: colors.rose
+        surface: "#fffdf9"
+        // Issue #69: mint / accent-blue / accent-purple / accent-amber / soft-rose / soft-sky を削除した。
+        // すべて未使用になったうえ、独自カラー名だったため Issue #67 の暖色化（slate→stone の
+        // 一括置換）から漏れて寒色が残る原因になっていた。定義を消して再混入を防ぐ。
+        //
+        // slate / emerald などを再エクスポートしていた行も削除した。
+        // theme.extend.colors は Tailwind の既定パレットを保持するため、元々不要だった。
       },
       boxShadow: {
         // 影も寒色（slate-900 系）から暖色（stone-900 系）へ。

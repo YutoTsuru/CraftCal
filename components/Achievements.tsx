@@ -26,8 +26,9 @@ export default function Achievements() {
     });
   }, [tasks]);
 
+  // min-w-0: グリッドアイテムが中身の最小幅で固定され、カードがはみ出すのを防ぐ (Issue #69)
   return (
-    <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
       <h3 className="text-lg font-semibold">Achievements</h3>
       <div className="mt-3 grid gap-2">
         <Badge name="初めての一歩" achieved={achieved.firstStep} />
@@ -43,8 +44,9 @@ export default function Achievements() {
 function Badge({ name, achieved }: { name: string; achieved?: boolean }) {
   return (
     <div className={`flex items-center justify-between rounded-md border px-3 py-2 ${achieved ? 'bg-amber-50' : 'bg-stone-100'} `}>
-      <div className={`font-medium ${achieved ? 'text-amber-800' : 'text-stone-400'}`}>{name}</div>
-      <div className={`text-sm ${achieved ? 'text-amber-600' : 'text-stone-300'}`}>{achieved ? '達成' : '未達成'}</div>
+      {/* バッジ名が長くても「達成/未達成」と横幅を取り合わないようにする (Issue #69) */}
+      <div className={`min-w-0 break-words font-medium ${achieved ? 'text-amber-800' : 'text-stone-400'}`}>{name}</div>
+      <div className={`shrink-0 text-sm ${achieved ? 'text-amber-600' : 'text-stone-300'}`}>{achieved ? '達成' : '未達成'}</div>
     </div>
   );
 }

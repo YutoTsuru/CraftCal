@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
-import { StatCard } from "@/components/StatCard";
+import { StatCard, type StatTone } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
 // Today (旧 /today) の機能をこのホームに統合するために配置するコンポーネント群 (Issue #27)。
@@ -17,6 +17,19 @@ import RecentLogs from "@/components/RecentLogs";
 import Achievements from "@/components/Achievements";
 import { getSprintLabel, getTodayString, getTodayTasks } from "@/lib/schedule";
 import { selectTopTasks } from "@/lib/top-tasks";
+import { selectDueSoonTasks, type DueSeverity } from "@/lib/due-status";
+
+/**
+ * 期限の危険度ごとの見た目 (Issue #69)。
+ * 行の左端に色帯を出しつつ、残り日数のテキストにも同じ色を当てる。
+ * 色が見分けられなくても「今日まで」「2日超過」の文言で危険度が伝わるようにしている。
+ */
+const DUE_TONE: Record<DueSeverity, { row: string; label: string }> = {
+  overdue: { row: "border-stone-200 border-l-rose-600 bg-rose-50/60", label: "text-rose-700" },
+  today: { row: "border-stone-200 border-l-rose-500 bg-rose-50/40", label: "text-rose-700" },
+  soon: { row: "border-stone-200 border-l-amber-500 bg-amber-50/40", label: "text-amber-800" },
+  upcoming: { row: "border-stone-200 border-l-stone-300", label: "text-stone-600" }
+};
 
 export default function HomePage() {
   const { tasks, sprint, schedule, seedSampleData, updateTaskStatus, completeTask } = useDevCalendar();
@@ -32,21 +45,23 @@ export default function HomePage() {
   // 今日やるべき Top3: lib/top-tasks.ts のスコアリング（doing/優先度/期限/今日の予定）で上位を抽出
   const topTasks = useMemo(() => selectTopTasks(tasks, getTodayString()), [tasks]);
 
-  const dueSoon = useMemo(() => {
-    const now = new Date();
-    const soon: typeof tasks = [];
+  // Issue #69: 期限の判定は lib/due-status.ts に切り出した。
+  // 以前はここで「期限日の 00:00」と「現在時刻」を引き算していたため、
+  // 期限が今日のタスクは差が負になって一覧からもカウントからも漏れていた。
+  // 超過タスクも含め、危険な順に並ぶ。
+  const dueSoonAll = useMemo(() => selectDueSoonTasks(tasks, getTodayString()), [tasks]);
 
-    tasks.forEach((t) => {
-      if (!t.dueDate) return;
-      const d = new Date(`${t.dueDate}T00:00:00`);
-      const diff = (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-      if (diff >= 0 && diff <= 7) {
-        soon.push(t);
-      }
-    });
+  // カードに出すのは上位6件だけ。ただし「期限間近」の件数は全件で数える
+  // （切り詰めた配列の length を使うと、7件以上あっても常に 6 と表示されてしまう）
+  const dueSoon = useMemo(() => dueSoonAll.slice(0, 6), [dueSoonAll]);
 
-    return soon.slice(0, 6);
-  }, [tasks]);
+  // 「期限間近」カードの危険度。超過・今日ぶんがあれば赤、それ以外で1件でもあれば琥珀
+  const dueSoonTone: StatTone = useMemo(() => {
+    if (dueSoonAll.some((d) => d.due.severity === "overdue" || d.due.severity === "today")) {
+      return "danger";
+    }
+    return dueSoonAll.length > 0 ? "warning" : "default";
+  }, [dueSoonAll]);
 
   return (
     <div className="grid gap-6">
@@ -109,21 +124,20 @@ export default function HomePage() {
           旧「概要」セクションを流用し、Tasks/Sprint へのボタンはナビと重複するため削除した (Issue #27)。
           右側の StatCard 4枚（全タスク/進行中/今日のタスク/期限間近）はそのまま残す */}
       <section className="rounded-xl border border-stone-200 bg-surface p-6 shadow-md">
-        {/* モバイルでは「見出し → 統計カード」の縦積みにする (Issue #37)。
-            横並びのままだと統計カードが本文の横に押し込まれ、ラベルが縦に折り返してしまう */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-stone-500">Home</p>
-            <h2 className="mt-2 text-2xl font-bold">今日のダッシュボード</h2>
-            <p className="mt-2 text-stone-500">今日やること・進捗・実績をここで確認します。</p>
-          </div>
+        {/* Issue #69: 統計カードは見出しの右に押し込むと4枚が窮屈で読みにくかったため、
+            見出しの下に独立した行として置き、1枚あたりの幅を確保する */}
+        <div>
+          <p className="text-sm font-medium text-stone-500">Home</p>
+          <h2 className="mt-2 text-2xl font-bold">今日のダッシュボード</h2>
+          <p className="mt-2 text-stone-500">今日やること・進捗・実績をここで確認します。</p>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="全タスク" value={tasks.length} />
-            <StatCard label="進行中" value={inProgress.length} />
-            <StatCard label="今日のタスク" value={todayTasks.length} description={getSprintLabel(sprint)} />
-            <StatCard label="期限間近" value={dueSoon.length} />
-          </div>
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard label="全タスク" value={tasks.length} />
+          <StatCard label="進行中" value={inProgress.length} />
+          <StatCard label="今日のタスク" value={todayTasks.length} description={getSprintLabel(sprint)} />
+          {/* 期限間近だけは件数に応じて色を変える。0件のときは既定色に戻す */}
+          <StatCard label="期限間近" value={dueSoonAll.length} tone={dueSoonTone} />
         </div>
       </section>
 
@@ -233,25 +247,40 @@ export default function HomePage() {
         <RecentLogs />
         <Achievements />
 
-        <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
-          <div className="flex items-center justify-between">
+        {/* min-w-0: グリッドアイテムは既定が min-width:auto で中身の最小幅より小さくなれない。
+            付けないと中の行がカードからはみ出す (Issue #69) */}
+        <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+          <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold">期限が近いタスク</h3>
-            <Link href="/tasks" className="text-sm text-lime-700">すべて見る</Link>
+            <Link href="/tasks" className="shrink-0 text-sm text-lime-700">すべて見る</Link>
           </div>
 
           {dueSoon.length === 0 ? (
-            <p className="mt-4 text-stone-400">今後7日以内の期限はありません。</p>
+            <p className="mt-4 text-stone-500">今後7日以内の期限はありません。</p>
           ) : (
             <ul className="mt-3 grid gap-2">
-              {dueSoon.map((t) => (
-                <li key={t.id} className="flex items-center justify-between rounded-md px-3 py-2">
-                  <div>
-                    <div className="font-medium">{t.title}</div>
-                    <div className="text-xs text-stone-600">期限: {t.dueDate}</div>
-                  </div>
-                  <div className="text-xs text-stone-500">{t.priority ?? ""}</div>
-                </li>
-              ))}
+              {dueSoon.map(({ task, due }) => {
+                const tone = DUE_TONE[due.severity];
+
+                return (
+                  <li
+                    key={task.id}
+                    // 左端の色帯で危険度を示す。色だけに頼らないよう残り日数のテキストも併記する。
+                    // min-w-0 がないとグリッドアイテムが中身の最小幅で固定され、カードからはみ出す
+                    className={`min-w-0 rounded-lg border border-l-4 px-3 py-2 ${tone.row}`}
+                  >
+                    <div className="truncate font-medium">{task.title}</div>
+                    {/* 残り日数・期限日・優先度は1つの折り返す行にまとめる。
+                        タイトルの横にバッジを置くと、3カラムの狭い幅で横幅を取り合ってはみ出す */}
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                      {/* 「あと3日」「今日まで」「2日超過」。生の日付より状況が分かる */}
+                      <span className={`font-semibold ${tone.label}`}>{due.label}</span>
+                      <span className="text-stone-500">{task.dueDate}</span>
+                      {task.priority && <PriorityBadge priority={task.priority} />}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
