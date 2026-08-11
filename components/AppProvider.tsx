@@ -24,6 +24,7 @@ import {
   deleteAllProjects,
   deleteProject as deleteProjectRow,
   insertProject,
+  insertProjects,
   listProjects,
   updateProject as updateProjectRow
 } from "@/lib/services/projects";
@@ -406,10 +407,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const seed = createSeedData();
       persist(async () => {
-        // タスクは project_id で参照するため、プロジェクトを先に登録する
-        for (const project of seed.projects) {
-          await insertProject(project);
-        }
+        // タスクは project_id で参照するため、プロジェクトを先に登録する。
+        // Issue #53: 以前は for ループで1件ずつ await しており、途中で失敗すると
+        // 一部のプロジェクトだけ入った状態が残っていた。一括INSERTなら全件入るか
+        // 1件も入らないかのどちらかになる
+        await insertProjects(seed.projects);
         await insertTasks(seed.tasks);
         // DB 保存が成功してから state 反映（Inbox は既存を残し前にサンプル2件を足す）
         setProjects((cur) => [...seed.projects, ...cur.filter((p) => p.id !== INBOX_PROJECT_ID)]);
@@ -427,9 +429,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const importTasks = local.tasks;
 
       persist(async () => {
-        for (const project of importProjects) {
-          await insertProject(project);
-        }
+        // Issue #53: seed と同じ理由で一括INSERTにする（途中失敗で部分適用が残らない）
+        await insertProjects(importProjects);
         await insertTasks(importTasks);
         if (typeof window !== "undefined") {
           window.localStorage.removeItem(STORAGE_KEY);
