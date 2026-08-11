@@ -74,10 +74,5 @@ export function getLogsForTask(taskId: string) {
   return readAll().filter((l) => l.taskId === taskId);
 }
 
-export default {
-  saveOrUpdateDailyLog,
-  getRecentLogs,
-  getLogsByDate,
-  getAllLogs,
-  getLogsForTask
-};
+// Issue #73: 上の関数を束ねた default export があったが、呼び出し側は
+// すべて名前付き import を使っており未使用だったため削除した。

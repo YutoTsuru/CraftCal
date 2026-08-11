@@ -1,0 +1,57 @@
+# CI (Issue #73)
+#
+# main への push と main 宛の PR で、型チェック・テスト・ビルドを回す。
+# これまで検証は人が手で実行したときだけ行われており、回し忘れると
+# 壊れたまま main に入る状態だった。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 同じブランチで新しい push があれば、古い実行は打ち切る。
+# main だけは打ち切らない（マージ済みの状態を必ず1回は検証したいため）。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  verify:
+    name: 型チェック・テスト・ビルド
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 開発環境に合わせる。lockfile を使うので npm のキャッシュも効かせる
+          node-version: 22
+          cache: npm
+
+      # lockfile どおりに入れる（package.json を勝手に更新させない）
+      - name: 依存をインストール
+        run: npm ci
+
+      - name: 型チェック
+        run: npx tsc --noEmit
+
+      # ESLint。errors があれば失敗、warnings では失敗しない（既定の挙動）。
+      # --max-warnings 0 にして警告も落とす案もあるが、CalendarView に
+      # react-hooks/exhaustive-deps の警告が2件残っており、その修正は
+      # フックの依存の見直し（Issue #56 の分割と絡む）が必要なため今は入れない。
+      - name: Lint
+        run: npm run lint
+
+      - name: テスト
+        run: npm test
+
+      # ビルドは Supabase の環境変数が無いと lib/supabase.ts が起動時に throw するため、
+      # ビルドを通すためだけのダミー値を渡す。実際の通信は行わない（静的生成のみ）。
+      - name: ビルド
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-dummy-key
