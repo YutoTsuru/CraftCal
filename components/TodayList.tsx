@@ -163,9 +163,14 @@ export default function TodayList() {
       )}
 
       {editingTaskId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-lg rounded-xl bg-surface p-6 shadow-lg">
-            <h3 className="text-lg font-semibold">作業ログを記録</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="log-dialog-title"
+            className="w-full max-w-lg rounded-xl bg-surface p-6 shadow-lg"
+          >
+            <h3 id="log-dialog-title" className="text-lg font-semibold">作業ログを記録</h3>
             <p className="text-sm text-stone-500">今日やったこと・詰まったこと・次にやることを入力してください。空でも保存できます。</p>
 
             <div className="mt-4 grid gap-3">
