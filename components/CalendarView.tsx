@@ -6,6 +6,7 @@ import { useDevCalendar } from "@/components/AppProvider";
 import { formatDate, getTodayString } from "@/lib/schedule";
 import type { Task, TaskWeight } from "@/types/dev-calendar";
 import CalendarRangeHeader from "@/components/CalendarRangeHeader";
+import { addDays, addMonths, getMonthMatrix, getWeekRange } from "@/lib/calendar-grid";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 type ViewMode = "month" | "week";
@@ -255,44 +256,10 @@ export default function CalendarView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, rangeSelecting]);
 
-  function startOfMonth(date: Date) {
-    return new Date(date.getFullYear(), date.getMonth(), 1);
-  }
-
-  function addMonths(date: Date, months: number) {
-    return new Date(date.getFullYear(), date.getMonth() + months, 1);
-  }
-
-  function addDays(date: Date, days: number) {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
-    return d;
-  }
-
-  function getMonthMatrix(date: Date) {
-    const first = startOfMonth(date);
-    // week starts on Sunday (0)
-    const start = addDays(first, -first.getDay());
-    const matrix: Date[][] = [];
-
-    let cur = new Date(start);
-    for (let week = 0; week < 6; week++) {
-      const row: Date[] = [];
-      for (let i = 0; i < 7; i++) {
-        row.push(new Date(cur));
-        cur = addDays(cur, 1);
-      }
-      matrix.push(row);
-    }
-
-    return matrix;
-  }
-
-  function getWeekRange(date: Date) {
-    const start = addDays(date, -date.getDay());
-    return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
-  }
-
+  // Issue #56: 日付の格子を組み立てる純関数は lib/calendar-grid.ts へ移した。
+  // コンポーネント内の関数だと毎レンダーで別物になり、useMemo の依存に入れると
+  // メモ化が効かなくなる（react-hooks/exhaustive-deps の警告が出ていた）。
+  // モジュール側にあれば参照が固定されるので、依存は cursor だけで足りる。
   const monthMatrix = useMemo(() => getMonthMatrix(cursor), [cursor]);
   const weekRange = useMemo(() => getWeekRange(cursor), [cursor]);
 

@@ -38,10 +38,9 @@ jobs:
       - name: 型チェック
         run: npx tsc --noEmit
 
-      # ESLint。errors があれば失敗、warnings では失敗しない（既定の挙動）。
-      # --max-warnings 0 にして警告も落とす案もあるが、CalendarView に
-      # react-hooks/exhaustive-deps の警告が2件残っており、その修正は
-      # フックの依存の見直し（Issue #56 の分割と絡む）が必要なため今は入れない。
+      # ESLint。--max-warnings 0 なので警告1件でも失敗する。
+      # 残っていた react-hooks/exhaustive-deps の警告2件は、Issue #56 で
+      # 日付ユーティリティを lib/calendar-grid.ts へ切り出した際に解消した。
       - name: Lint
         run: npm run lint
 
