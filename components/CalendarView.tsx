@@ -7,15 +7,17 @@ import { formatDate, getTodayString } from "@/lib/schedule";
 import type { Task, TaskWeight } from "@/types/dev-calendar";
 import CalendarRangeHeader from "@/components/CalendarRangeHeader";
 import { addDays, addMonths, getMonthMatrix, getWeekRange } from "@/lib/calendar-grid";
+import {
+  MAX_BAR_LANES,
+  buildWeekBarLayout,
+  getTasksForDate,
+  taskDisplayScore,
+  getTasksForDateKey,
+  isMultiDayTask
+} from "@/lib/calendar-bars";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 type ViewMode = "month" | "week";
-
-// Issue #46: 期間持ち（複数日）タスクの判定。開始日と終了日が両方あり、かつ異なる日付のとき true。
-// 月表示では複数日タスクを週またぎのバーで、単日タスクをセル内チップで描き分けるために使う。
-function isMultiDayTask(t: Task) {
-  return !!(t.scheduledDate && t.dueDate && t.scheduledDate !== t.dueDate);
-}
 
 // Issue #46: セル内チップ／週バーの状態色（done=緑 / doing=青 / その他=amber）。バーと同じ配色に統一。
 function statusChipColor(status: Task["status"]) {
@@ -263,38 +265,10 @@ export default function CalendarView() {
   const monthMatrix = useMemo(() => getMonthMatrix(cursor), [cursor]);
   const weekRange = useMemo(() => getWeekRange(cursor), [cursor]);
 
-  function tasksForDate(d: Date) {
-    const key = formatDate(d);
-    const sd = new Date(`${key}T00:00:00`);
-    return displayTasks.filter((t) => {
-      const startKey = t.scheduledDate ?? t.dueDate ?? null;
-      const endKey = t.dueDate ?? t.scheduledDate ?? null;
-      if (!startKey) return false;
-      const start = new Date(`${startKey}T00:00:00`);
-      const end = new Date(`${endKey}T00:00:00`);
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
-      return start.getTime() <= sd.getTime() && sd.getTime() <= end.getTime();
-    });
-  }
-
-  function tasksForSelectedKey(key: string) {
-    const sd = new Date(`${key}T00:00:00`);
-    return displayTasks.filter((t) => {
-      const startKey = t.scheduledDate ?? t.dueDate ?? null;
-      const endKey = t.dueDate ?? t.scheduledDate ?? null;
-      if (!startKey) return false;
-      const start = new Date(`${startKey}T00:00:00`);
-      const end = new Date(`${endKey}T00:00:00`);
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
-      return start.getTime() <= sd.getTime() && sd.getTime() <= end.getTime();
-    });
-  }
-
-  function taskDisplayScore(t: Task) {
-    const statusScore = t.status === 'doing' ? 2 : t.status === 'todo' ? 1 : 0;
-    const priorityScore = t.priority === 'high' ? 2 : t.priority === 'medium' ? 1 : 0;
-    return statusScore * 10 + priorityScore;
-  }
+  // Issue #56: 抽出条件は lib/calendar-bars.ts に移した。
+  // ここは表示中のタスク配列を束ねるだけの薄いラッパー
+  const tasksForDate = (d: Date) => getTasksForDate(displayTasks, d);
+  const tasksForSelectedKey = (key: string) => getTasksForDateKey(displayTasks, key);
 
   function goToday() {
     setCursor(new Date());
@@ -546,87 +520,15 @@ export default function CalendarView() {
               {/* weeks */}
               <div className="space-y-1">
                 {monthMatrix.map((week, wi) => {
-                  // Issue #46: バー表示は複数日タスクのみ対象（単日タスクはセル内チップで表示するため）。
-                  // 各日ごとに上位2件までを選び、連続日をつないで週またぎのセグメント（バー）にする。
-                  const dayTopMap: Record<string, Set<string>> = {};
-                  week.forEach((d) => {
-                    const key = formatDate(d);
-                    const items = tasksForDate(d)
-                      .filter(isMultiDayTask)
-                      .slice()
-                      .sort((a, b) => taskDisplayScore(b) - taskDisplayScore(a))
-                      .slice(0, 2);
-                    dayTopMap[key] = new Set(items.map((t) => t.id));
-                  });
-
-                  // build segments for week based on per-day top-2 selection
-                  // For each day, dayTopMap contains top-2 task ids; coalesce consecutive days per task into segments
-                  const idToTask = new Map<string, Task>();
-                  displayTasks.forEach((t) => idToTask.set(t.id, t));
-
-                  const idToIndices = new Map<string, number[]>();
-                  week.forEach((d, idx) => {
-                    const key = formatDate(d);
-                    const s = dayTopMap[key] ?? new Set<string>();
-                    s.forEach((id) => {
-                      if (!idToIndices.has(id)) idToIndices.set(id, []);
-                      idToIndices.get(id)!.push(idx);
-                    });
-                  });
-
-                  let segments: { task: Task; startIndex: number; length: number; segStart: Date; segEnd: Date }[] = [];
-                  idToIndices.forEach((indices, id) => {
-                    indices.sort((a, b) => a - b);
-                    let startIdx = indices[0];
-                    let prev = indices[0];
-                    for (let i = 1; i <= indices.length; i++) {
-                      const cur = indices[i];
-                      if (cur === prev + 1) {
-                        prev = cur;
-                        continue;
-                      }
-                      // emit segment from startIdx..prev
-                      const segStart = week[startIdx];
-                      const segEnd = week[prev];
-                      const startIndex = startIdx;
-                      const length = prev - startIdx + 1;
-                      const task = idToTask.get(id)!;
-                      if (task) segments.push({ task, startIndex, length, segStart, segEnd });
-                      // start new
-                      startIdx = cur;
-                      prev = cur;
-                    }
-                  });
-
-                  // stack segments by assigning row index to avoid vertical overlap
-                  const rows: Array<{ task: Task; startIndex: number; length: number; segStart: Date; segEnd: Date }[]> = [];
-                  segments.forEach((seg) => {
-                    let placed = false;
-                    for (const row of rows) {
-                      const conflict = row.some((r) => !(seg.startIndex + seg.length - 1 < r.startIndex || seg.startIndex > r.startIndex + r.length - 1));
-                      if (!conflict) {
-                        row.push(seg);
-                        placed = true;
-                        break;
-                      }
-                    }
-                    if (!placed) rows.push([seg]);
-                  });
-
-                  const maxRows = 2;
-
-                  // Issue #46: 実際に表示される（上位 maxRows 段の）バーが各曜日を通るタスクID集合。
-                  // セルの「+N件」計算と、チップを置く上部スペースの段数決定に使う。
-                  const shownBarIdsByIndex: Set<string>[] = week.map(() => new Set<string>());
-                  rows.slice(0, maxRows).forEach((row) => {
-                    row.forEach((seg) => {
-                      for (let i = seg.startIndex; i < seg.startIndex + seg.length; i++) {
-                        shownBarIdsByIndex[i]?.add(seg.task.id);
-                      }
-                    });
-                  });
-                  // この週で確保するバーの段数（0〜maxRows）。セル上部に同じ高さの余白を作り段を揃える。
-                  const barLaneCount = Math.min(rows.length, maxRows);
+                  // Issue #56: 各日の上位N件の抽出・セグメントの結合・段の割り当ては
+                  // lib/calendar-bars.ts に切り出した（約80行ぶん）。挙動は変えていない。
+                  // 下の JSX が使っている名前に合わせて分割代入する
+                  const {
+                    lanes: rows,
+                    laneCount: barLaneCount,
+                    shownTaskIdsByDay: shownBarIdsByIndex
+                  } = buildWeekBarLayout(week, displayTasks);
+                  const maxRows = MAX_BAR_LANES;
 
                   return (
                     <div key={wi} className="relative grid grid-cols-7 gap-1">
