@@ -9,14 +9,16 @@ import { isMultiDayTask } from "@/lib/calendar-bars";
 const TODAY = formatDate(new Date());
 
 describe("createSeedData: 基本的な整合性", () => {
-  it("プロジェクト3件（CraftCal / ポートフォリオ / 汎用）を返す", () => {
+  it("プロジェクト5件を返す", () => {
     const { projects } = createSeedData();
 
-    expect(projects).toHaveLength(3);
+    expect(projects).toHaveLength(5);
     expect(projects.map((p) => p.name)).toEqual([
       "CraftCal",
       "tobenaitsuru-HP",
-      "技術ブログを立ち上げる"
+      "技術ブログを立ち上げる",
+      "家計簿アプリ (休止中)",
+      "ショートカット早見表"
     ]);
   });
 
@@ -157,6 +159,24 @@ describe("createSeedData: 各画面を試せる状態が揃っている (Issue #
   it("Inbox のタスクがある", () => {
     const { tasks } = createSeedData();
     expect(tasks.some((t) => t.projectId === INBOX_PROJECT_ID)).toBe(true);
+  });
+
+  it("プロジェクトの状態が3種類そろっている（状態バッジを試せる / Issue #93）", () => {
+    const { projects } = createSeedData();
+    const statuses = new Set(projects.map((p) => p.status));
+
+    expect(statuses).toEqual(new Set(["active", "paused", "done"]));
+  });
+
+  it("全タスクが完了しているプロジェクトがある（進捗バーが満杯になる）", () => {
+    const { projects, tasks } = createSeedData();
+
+    const fullyDone = projects.filter((p) => {
+      const mine = tasks.filter((t) => t.projectId === p.id);
+      return mine.length > 0 && mine.every((t) => t.status === "done");
+    });
+
+    expect(fullyDone.length).toBeGreaterThan(0);
   });
 
   it("完了URLつきのタスクがある（実績の成果物リンク）", () => {

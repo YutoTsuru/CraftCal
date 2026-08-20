@@ -137,6 +137,37 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
     updatedAt: now
   };
 
+  // 完了したプロジェクト。個人開発では「作って公開して終わった小物」がよくある形。
+  // 一覧の進捗バーが満杯になる状態と、状態バッジの「完了」を確認できる
+  const shortcutTool: Project = {
+    id: crypto.randomUUID(),
+    name: "ショートカット早見表",
+    description:
+      "## 概要\nよく使うエディタのショートカットを1枚にまとめた静的ページ。\n\n短期で作り切って公開済み。",
+    overviewUrl: null,
+    iconPath: null,
+    color: paletteColor("violet"),
+    status: "done",
+    goal: "1週間で作って公開する",
+    createdAt: now,
+    updatedAt: now
+  };
+
+  // 休止中のプロジェクト。状態バッジの「休止中」を確認できる
+  const mobileApp: Project = {
+    id: crypto.randomUUID(),
+    name: "家計簿アプリ (休止中)",
+    description:
+      "## 概要\nスマホで使う家計簿。作りかけで止めている。\n\n他を片付けてから再開する。",
+    overviewUrl: null,
+    iconPath: null,
+    color: paletteColor("cyan"),
+    status: "paused",
+    goal: "毎日の入力が5秒で終わる状態にする",
+    createdAt: now,
+    updatedAt: now
+  };
+
   // ---- CraftCal: GitHub のオープンIssueと直近の完了作業 ----
   const craftcalTasks: Task[] = [
     // 進行中。今日の予定に入る
@@ -408,6 +439,71 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
     })
   ];
 
+  // ---- ショートカット早見表: 完了プロジェクト。全タスクが完了で進捗100%になる ----
+  const shortcutTasks: Task[] = [
+    makeSeedTask({
+      projectId: shortcutTool.id,
+      title: "載せるショートカットを選ぶ",
+      weight: "light",
+      status: "done",
+      scheduledIn: -14,
+      completedDaysAgo: 14,
+      estimatedMinutes: 45
+    }),
+    makeSeedTask({
+      projectId: shortcutTool.id,
+      title: "1枚に収まるレイアウトを作る",
+      weight: "medium",
+      status: "done",
+      scheduledIn: -12,
+      completedDaysAgo: 12,
+      estimatedMinutes: 120
+    }),
+    makeSeedTask({
+      projectId: shortcutTool.id,
+      title: "公開して知人に見てもらう",
+      weight: "light",
+      priority: "high",
+      status: "done",
+      scheduledIn: -10,
+      completedDaysAgo: 10,
+      completionNote: "印刷して使えると好評だった",
+      estimatedMinutes: 30
+    })
+  ];
+
+  // ---- 家計簿アプリ: 休止中。未配置のまま止まっているタスクが並ぶ ----
+  const mobileAppTasks: Task[] = [
+    makeSeedTask({
+      projectId: mobileApp.id,
+      title: "入力画面のたたき台を作る",
+      memo: "金額と分類だけで登録できるところまで",
+      weight: "medium",
+      priority: "medium",
+      status: "done",
+      scheduledIn: -20,
+      completedDaysAgo: 20,
+      estimatedMinutes: 180
+    }),
+    makeSeedTask({
+      projectId: mobileApp.id,
+      title: "月ごとの集計を出す",
+      weight: "medium",
+      priority: "low",
+      scheduledIn: null,
+      estimatedMinutes: 150
+    }),
+    makeSeedTask({
+      projectId: mobileApp.id,
+      title: "レシートの撮影から金額を読み取る",
+      memo: "他が片付いてから。今は手入力で足りている",
+      weight: "heavy",
+      priority: "low",
+      scheduledIn: null,
+      estimatedMinutes: 480
+    })
+  ];
+
   // ---- Inbox (未分類) のタスク ----
   const inboxTasks: Task[] = [
     makeSeedTask({
@@ -430,7 +526,15 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
   ];
 
   return {
-    projects: [craftcal, portfolio, blog],
-    tasks: [...craftcalTasks, ...portfolioTasks, ...blogTasks, ...inboxTasks]
+    // 状態のばらつきを作る: active 3件 / paused 1件 / done 1件
+    projects: [craftcal, portfolio, blog, mobileApp, shortcutTool],
+    tasks: [
+      ...craftcalTasks,
+      ...portfolioTasks,
+      ...blogTasks,
+      ...mobileAppTasks,
+      ...shortcutTasks,
+      ...inboxTasks
+    ]
   };
 }
