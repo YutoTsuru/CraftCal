@@ -4,6 +4,7 @@ import {
   MAX_ICON_BYTES,
   buildIconPath,
   formatBytes,
+  pickPastedImage,
   validateIconFile
 } from "@/lib/project-icon-rules";
 
@@ -76,5 +77,34 @@ describe("buildIconPath", () => {
 
   it("拡張子が末尾に付く", () => {
     expect(buildIconPath("user-1", "project-1", "webp", 1000).endsWith(".webp")).toBe(true);
+  });
+});
+
+describe("pickPastedImage", () => {
+  it("画像が含まれていれば返す", () => {
+    const png = { type: "image/png" };
+    expect(pickPastedImage([png])).toBe(png);
+  });
+
+  it("複数あれば最初の画像を返す", () => {
+    const first = { type: "image/png" };
+    const second = { type: "image/jpeg" };
+    expect(pickPastedImage([{ type: "text/plain" }, first, second])).toBe(first);
+  });
+
+  it("画像が無ければ null（テキストの貼り付けを横取りしないため）", () => {
+    expect(pickPastedImage([{ type: "text/plain" }])).toBeNull();
+    expect(pickPastedImage([])).toBeNull();
+  });
+
+  it("未設定でも落ちない", () => {
+    expect(pickPastedImage(null)).toBeNull();
+    expect(pickPastedImage(undefined)).toBeNull();
+  });
+
+  it("SVG も image/ なのでここでは拾う（弾くのは validateIconFile の役目）", () => {
+    const svg = { type: "image/svg+xml" };
+    expect(pickPastedImage([svg])).toBe(svg);
+    expect(validateIconFile({ type: "image/svg+xml", size: 100 }).ok).toBe(false);
   });
 });

@@ -79,3 +79,20 @@ export function buildIconPath(
 ): string {
   return `${userId}/${projectId}-${now}.${extension}`;
 }
+
+/**
+ * 貼り付けられた内容から、アイコンに使う画像を1つ選ぶ (Issue #82)。
+ *
+ * 画像が含まれないときは null を返し、呼び出し側は貼り付けを横取りしない。
+ * こうしないと、説明欄へのテキスト貼り付けまで奪ってしまう。
+ *
+ * ドロップの場合は先頭のファイルをそのまま渡す（画像でなければ検証で弾き、
+ * 理由を画面に出す）。貼り付けだけ「画像のときだけ反応する」のは、
+ * 利用者が別の目的で Ctrl+V を押している可能性があるため。
+ */
+export function pickPastedImage<T extends { type: string }>(
+  files: ArrayLike<T> | null | undefined
+): T | null {
+  if (!files) return null;
+  return Array.from(files).find((file) => file.type.startsWith("image/")) ?? null;
+}
