@@ -76,3 +76,17 @@ export function getLogsForTask(taskId: string) {
 
 // Issue #73: 上の関数を束ねた default export があったが、呼び出し側は
 // すべて名前付き import を使っており未使用だったため削除した。
+
+/**
+ * 作業ログをすべて消す (Issue #89)。
+ *
+ * 「すべてのデータを削除」から呼ぶ。タスクを消しても作業ログが残ると、
+ * 活動グリッド・最近の作業ログ・達成バッジに古い記録が表示され続ける。
+ *
+ * キー名はこのモジュールが持っているので、削除処理もここに置く
+ * （UI 側にキー名を直書きしない）。
+ */
+export function clearAllDailyLogs(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(STORAGE_KEY);
+}

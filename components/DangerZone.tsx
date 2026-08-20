@@ -3,15 +3,23 @@
 import { useState } from "react";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useDevCalendar } from "@/components/AppProvider";
-import { INBOX_PROJECT_ID } from "@/lib/storage";
+import { INBOX_PROJECT_ID, clearLocalState } from "@/lib/storage";
+import { clearAllDailyLogs } from "@/lib/dailyLogs";
 
 /**
- * DangerZone: 全データを削除する区画 (Issue #87)。
+ * DangerZone: 全データを削除する区画 (Issue #87 / #89)。
  *
  * 背景:
  *   resetAll は AppProvider に実装済みだったが、どの画面からも呼ばれておらず
  *   到達できなかった。一方でサンプルデータの投入はタスクが0件のときしか動かないため、
- *   一度データが入ると入れ直す手段が無い状態だった。
+ *   一度データが入ると入れ直す手段が無い状態だった (Issue #87)。
+ *
+ *   さらに resetAll が消すのは Supabase のプロジェクトとタスクだけで、
+ *   ブラウザ側に残るものがあった (Issue #89)。
+ *     - 作業ログ … 残ると活動グリッドや実績に古い記録が出続ける
+ *     - 旧ローカルデータ … 残ると再読み込み時に「取り込みますか」の案内が出て、
+ *       サンプルデータの案内が隠れる
+ *   まっさらにするのに何手も必要だったため、1回で全部消すようにした。
  *
  * 誤操作対策:
  *   押しただけでは消さず、2段階にする。プロジェクト名を打たせる方式は
@@ -25,6 +33,19 @@ export function DangerZone() {
   const realProjectCount = projects.filter((p) => p.id !== INBOX_PROJECT_ID).length;
   const isEmpty = tasks.length === 0 && realProjectCount === 0;
 
+  const handleReset = () => {
+    // サーバー側の削除を先に始める。失敗しても persist が警告バナーを出し、
+    // サーバーの状態に合わせて巻き戻してくれる
+    resetAll();
+
+    // ブラウザ側は同期的に消す。ここが残ると「消したのに実績や案内が元のまま」
+    // という分かりにくい状態になる
+    clearAllDailyLogs();
+    clearLocalState();
+
+    setConfirming(false);
+  };
+
   return (
     <section className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
       <h3 className="text-lg font-semibold">データの管理</h3>
@@ -36,11 +57,19 @@ export function DangerZone() {
       ) : (
         <>
           <p className="mt-2 text-sm text-stone-600">
-            プロジェクト {realProjectCount} 件とタスク {tasks.length} 件を削除します。
+            このアカウントとこのブラウザに保存されているものを、まとめて削除します。
             <span className="font-semibold text-rose-700">元に戻せません。</span>
           </p>
-          <p className="mt-1 text-xs text-stone-500">
-            作業ログはこのブラウザに保存されており、削除の対象外です。
+
+          {/* 何が消えるかを列挙する。保存先が分かれているため、
+              「全部消したのに実績だけ残っている」という誤解を防ぐ */}
+          <ul className="mt-2 grid gap-1 text-sm text-stone-600">
+            <li>・プロジェクト {realProjectCount} 件とタスク {tasks.length} 件</li>
+            <li>・作業ログ（活動グリッド・最近の作業ログ・達成バッジの元データ）</li>
+            <li>・このブラウザに残っている移行前のデータ</li>
+          </ul>
+
+          <p className="mt-2 text-xs text-stone-500">
             削除するとサンプルデータを読み込み直せるようになります。
           </p>
 
@@ -60,10 +89,7 @@ export function DangerZone() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    resetAll();
-                    setConfirming(false);
-                  }}
+                  onClick={handleReset}
                   className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-800"
                 >
                   <Trash2 size={16} aria-hidden="true" />
