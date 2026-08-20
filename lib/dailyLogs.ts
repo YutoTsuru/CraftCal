@@ -90,3 +90,38 @@ export function clearAllDailyLogs(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(STORAGE_KEY);
 }
+
+/**
+ * 指定タスクの作業ログを消し、消したぶんを返す (Issue #91)。
+ *
+ * タスクを削除してもログが残ると、
+ *   - 最近の作業ログに「(Unknown)」の行が並ぶ（タスク名を引けないため）
+ *   - 活動グリッドと達成バッジが、存在しないタスクの記録を数え続ける
+ * という状態になる。
+ *
+ * 返り値は restoreDailyLogs に渡すためのもの。タスク削除はサーバー側の削除が
+ * 失敗すると巻き戻るので、そのときにログも戻せるようにしている。
+ */
+export function deleteLogsForTask(taskId: string): DailyLog[] {
+  const all = readAll();
+  const removed = all.filter((l) => l.taskId === taskId);
+  if (removed.length === 0) return [];
+
+  writeAll(all.filter((l) => l.taskId !== taskId));
+  return removed;
+}
+
+/**
+ * deleteLogsForTask で消したログを書き戻す (Issue #91)。
+ * 同じ id が既にあるものは重複させない。
+ */
+export function restoreDailyLogs(logs: DailyLog[]): void {
+  if (logs.length === 0) return;
+
+  const all = readAll();
+  const existingIds = new Set(all.map((l) => l.id));
+  const restored = logs.filter((l) => !existingIds.has(l.id));
+  if (restored.length === 0) return;
+
+  writeAll([...restored, ...all]);
+}

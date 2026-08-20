@@ -20,6 +20,7 @@ import { createSeedData } from "@/lib/seed-data";
 import { createPersistCoordinator, type PersistRunOptions } from "@/lib/persist-coordinator";
 import { INBOX_PROJECT_ID, STORAGE_KEY, createEmptyState, ensureInboxProject, loadState } from "@/lib/storage";
 import { useAuth } from "@/components/AuthProvider";
+import { deleteLogsForTask, restoreDailyLogs } from "@/lib/dailyLogs";
 import {
   deleteAllProjects,
   deleteProject as deleteProjectRow,
@@ -246,9 +247,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           taskIds: day.taskIds.filter((taskId) => taskId !== id)
         }))
       );
+
+      // Issue #91: そのタスクの作業ログも一緒に消す。残すと最近の作業ログに
+      // 「(Unknown)」の行が並び、活動グリッドと達成バッジが存在しないタスクの
+      // 記録を数え続ける。消したぶんは保存失敗時に書き戻す
+      const removedLogs = deleteLogsForTask(id);
+
       persist(() => deleteTaskRow(id), {
         queueKey: id,
-        restoreOnFailure: () => setSchedule(scheduleSnapshot)
+        restoreOnFailure: () => {
+          setSchedule(scheduleSnapshot);
+          restoreDailyLogs(removedLogs);
+        }
       });
     };
 
