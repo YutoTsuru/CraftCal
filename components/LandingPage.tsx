@@ -73,20 +73,15 @@ export function LandingPage() {
             <p className="max-w-md text-lg leading-relaxed text-stone-600">
               作りたいものをタスクに分解し、カレンダーに置いて、今日ぶんだけに集中する。{SITE_DESCRIPTION}です。
             </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/signup"
-                className="rounded-xl bg-lime-700 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-lime-800"
-              >
-                無料ではじめる
-              </Link>
-              <Link
-                href="/login"
-                className="rounded-xl border border-stone-300 bg-surface px-6 py-3 font-medium text-stone-700 transition hover:border-stone-400"
-              >
-                ログイン
-              </Link>
-            </div>
+            {/* Issue #79: ここにも「ログイン」を置いていたが、ヘッダー右上と同じ /login への
+                導線がファーストビューに2つ並んでいた。既存ユーザー向けの導線はヘッダーに任せ、
+                ヒーローは「無料ではじめる」1つに絞る */}
+            <Link
+              href="/signup"
+              className="rounded-xl bg-lime-700 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-lime-800"
+            >
+              無料ではじめる
+            </Link>
           </div>
 
           {/* 起動画面と同じイラスト。装飾なので支援技術からは隠れている（PenAndPaper 側で aria-hidden 済み） */}
