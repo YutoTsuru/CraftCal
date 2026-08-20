@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import ProjectForm from "@/components/ProjectForm";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import { toPlainTextExcerpt } from "@/lib/project-summary";
 import { Sparkles } from "lucide-react";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
@@ -53,14 +54,22 @@ export default function ProjectsPage() {
                   <StatusBadge status={project.status} kind="project" size="sm" />
                 </div>
 
-                <div className="pr-20">
-                  <h3 className="text-lg font-semibold">{project.name}</h3>
+                <div className="flex items-start gap-3 pr-20">
+                  <ProjectIcon
+                    name={project.name}
+                    iconPath={project.iconPath}
+                    color={project.color}
+                    size={40}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-lg font-semibold">{project.name}</h3>
                   {/* Issue #81: ここで MarkdownView を使うと、説明文中のリンクが <a> になり
                       カード全体を包む <Link> と入れ子になる（不正なHTML → hydration エラー →
                       カードのタップが効かなくなる）。記法を落としたプレーンテキストの抜粋にする */}
-                  {excerpt && (
-                    <p className="mt-1 line-clamp-2 text-sm text-stone-600">{excerpt}</p>
-                  )}
+                    {excerpt && (
+                      <p className="mt-1 line-clamp-2 text-sm text-stone-600">{excerpt}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between text-sm text-stone-600">

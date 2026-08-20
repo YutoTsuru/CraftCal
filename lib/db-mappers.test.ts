@@ -67,6 +67,7 @@ function makeDbProject(overrides: Partial<DbProject> = {}): DbProject {
     goal: "毎日使えるツールにする",
     color: "#10b981",
     overview_url: "https://example.com",
+    icon_path: null,
     start_date: null,
     end_date: null,
     created_at: "2026-07-14T00:00:00.000Z",
@@ -210,13 +211,14 @@ describe("db-mappers: projects", () => {
       status: row.status,
       goal: row.goal,
       color: row.color,
-      overview_url: row.overview_url
+      overview_url: row.overview_url,
+      icon_path: row.icon_path
     });
   });
 
-  it("null 境界: description / goal / color / overview_url が null でも変換できる", () => {
+  it("null 境界: description / goal / color / overview_url / icon_path が null でも変換できる", () => {
     const project = fromDbProject(
-      makeDbProject({ description: null, goal: null, color: null, overview_url: null })
+      makeDbProject({ description: null, goal: null, color: null, overview_url: null, icon_path: null })
     );
     expect(project.description).toBeNull();
     expect(project.overviewUrl).toBeNull();

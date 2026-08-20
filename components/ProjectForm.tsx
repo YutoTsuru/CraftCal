@@ -3,6 +3,7 @@
 import { FormEvent, memo, useState } from "react";
 import { useDevCalendarActions } from "@/components/AppProvider";
 import { ColorPicker } from "@/components/ColorPicker";
+import { ProjectIconInput } from "@/components/ProjectIconInput";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
 function ProjectFormComponent() {
@@ -15,13 +16,29 @@ function ProjectFormComponent() {
   const [goal, setGoal] = useState("");
   const [overviewUrl, setOverviewUrl] = useState("");
   const [status, setStatus] = useState<"active" | "paused" | "done">("active");
+  // Issue #82: アイコンは選んだ時点でアップロードするため、保存前に id が要る。
+  // 作成のたびに新しい id を振り直し、追加後にリセットする
+  const [projectId, setProjectId] = useState(() => crypto.randomUUID());
+  const [iconPath, setIconPath] = useState<string | null>(null);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    addProject({ name: name.trim(), description: description.trim() || null, overviewUrl: overviewUrl.trim() || null, color: color || null, status, goal: goal.trim() || null });
+    addProject({
+      id: projectId,
+      name: name.trim(),
+      description: description.trim() || null,
+      overviewUrl: overviewUrl.trim() || null,
+      iconPath,
+      color: color || null,
+      status,
+      goal: goal.trim() || null
+    });
 
+    // 次の作成に備えて id を振り直す（前のアイコンを引き継がない）
+    setProjectId(crypto.randomUUID());
+    setIconPath(null);
     setName("");
     setDescription("");
     setColor(DEFAULT_PROJECT_COLOR);
@@ -40,6 +57,14 @@ function ProjectFormComponent() {
             md:col-span-2 で独立した行にする。入力欄と同じ行に置くと、グリッドの
             align-items: stretch で入力欄がピッカーの高さまで引き伸ばされてしまう */}
         <ColorPicker value={color} onChange={setColor} label="テーマカラー" className="md:col-span-2" />
+        <ProjectIconInput
+          projectId={projectId}
+          value={iconPath}
+          onChange={setIconPath}
+          color={color}
+          name={name || "新しいプロジェクト"}
+          className="md:col-span-2"
+        />
         <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
         <input value={goal} onChange={(e) => setGoal(e.target.value)} placeholder="ゴール (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
         <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />

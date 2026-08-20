@@ -338,6 +338,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         name: p.name,
         description: p.description ?? null,
         overviewUrl: p.overviewUrl ?? null,
+        iconPath: p.iconPath ?? null,
         color: p.color ?? null,
         status: p.status,
         goal: p.goal ?? null,

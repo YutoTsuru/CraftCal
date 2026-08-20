@@ -6,7 +6,8 @@
  *   - Inbox: アプリの projectId === "inbox" ⇔ DB の project_id: null（双方向）
  *   - 日付列（due_date / scheduled_date）は date 型だが supabase-js は "YYYY-MM-DD" 文字列で返すため文字列のまま扱う
  *   - 日時列（created_at 等）は timestamptz。ISO 文字列のまま扱う
- *   - Project.overviewUrl ⇔ projects.overview_url、goal / color はそのまま
+ *   - Project.overviewUrl ⇔ projects.overview_url、Project.iconPath ⇔ projects.icon_path
+ *   - goal / color はそのまま
  *
  * 副作用なし・Supabase 非依存なので単体テスト（db-mappers.test.ts）で往復変換を検証する。
  */
@@ -78,6 +79,8 @@ export type DbProject = {
   goal: string | null;
   color: string | null;
   overview_url: string | null;
+  // Issue #82: アイコン画像の保存先パス（Supabase Storage の project-icons バケット）
+  icon_path: string | null;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
@@ -93,6 +96,7 @@ export type DbProjectInsert = {
   goal: string | null;
   color: string | null;
   overview_url: string | null;
+  icon_path: string | null;
   created_at: string;
 };
 
@@ -171,6 +175,7 @@ export function fromDbProject(row: DbProject): Project {
     name: row.name,
     description: row.description,
     overviewUrl: row.overview_url,
+    iconPath: row.icon_path,
     color: row.color,
     status: row.status,
     goal: row.goal,
@@ -187,7 +192,8 @@ function toDbProjectColumns(project: Project): DbProjectUpdate {
     status: project.status,
     goal: project.goal ?? null,
     color: project.color ?? null,
-    overview_url: project.overviewUrl ?? null
+    overview_url: project.overviewUrl ?? null,
+    icon_path: project.iconPath ?? null
   };
 }
 

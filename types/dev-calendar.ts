@@ -41,6 +41,8 @@ export type Project = {
   name: string;
   description?: string | null;
   overviewUrl?: string | null;
+  /** Issue #82: アイコン画像の保存先パス ("{userId}/{projectId}")。未設定なら null */
+  iconPath?: string | null;
   color?: string | null;
   status: ProjectStatus;
   goal?: string | null;
@@ -101,7 +103,8 @@ export type DevCalendarActions = {
   completeTask: (id: string, note?: string | null, url?: string | null) => void;
   setSprint: (sprint: Sprint) => void;
   generateSprintSchedule: () => void;
-  addProject: (p: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  // id は任意。指定しなければ生成する（アイコンのアップロード先を先に決めたい場合に渡す）
+  addProject: (p: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => void;
   updateProject: (id: string, patch: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   // サンプルデータ投入 (lib/seed-data.ts)。タスクが1件もないときだけ動く
@@ -123,7 +126,8 @@ export type DevCalendarContextValue = DevCalendarState & {
   setSprint: (sprint: Sprint) => void;
   generateSprintSchedule: () => void;
   projects: Project[];
-  addProject: (p: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  // id は任意。指定しなければ生成する（アイコンのアップロード先を先に決めたい場合に渡す）
+  addProject: (p: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => void;
   updateProject: (id: string, patch: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   // サンプルデータ投入 (lib/seed-data.ts)。タスクが1件もないときだけ動く
