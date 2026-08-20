@@ -16,6 +16,7 @@ import ActivityGrid from "@/components/ActivityGrid";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 import RecentLogs from "@/components/RecentLogs";
 import Achievements from "@/components/Achievements";
+import DangerZone from "@/components/DangerZone";
 import { getSprintLabel, getTodayString, getTodayTasks } from "@/lib/schedule";
 import { selectTopTasks } from "@/lib/top-tasks";
 import { selectDueSoonTasks, type DueSeverity } from "@/lib/due-status";
@@ -295,6 +296,10 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Issue #87: 全データ削除の導線。resetAll は実装済みだったが呼び出し側が無く、
+          一度データが入るとサンプルを入れ直せない状態だった */}
+      <DangerZone />
     </div>
   );
 }
