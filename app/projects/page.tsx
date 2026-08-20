@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import ProjectForm from "@/components/ProjectForm";
-import { MarkdownView } from "@/components/MarkdownView";
+import { StatusBadge } from "@/components/StatusBadge";
+import { toPlainTextExcerpt } from "@/lib/project-summary";
 import { Sparkles } from "lucide-react";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 
@@ -42,17 +43,23 @@ export default function ProjectsPage() {
       <ProjectForm />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {stats.map(({ project, total, done, todo, progress }) => (
+        {stats.map(({ project, total, done, todo, progress }) => {
+          const excerpt = toPlainTextExcerpt(project.description);
+
+          return (
             <Link key={project.id} href={`/projects/${project.id}`} className="block">
               <article className="group relative rounded-xl border border-stone-200 bg-surface p-4 shadow-md hover:shadow-lg transition-all">
-                <div className="absolute top-3 right-3 text-xs rounded-full px-2 py-1 bg-stone-100 text-stone-700">{project.status}</div>
+                <div className="absolute right-3 top-3">
+                  <StatusBadge status={project.status} kind="project" size="sm" />
+                </div>
 
-                <div>
+                <div className="pr-20">
                   <h3 className="text-lg font-semibold">{project.name}</h3>
-                  {project.description && (
-                    <div className="mt-1 line-clamp-2 text-sm text-stone-600 [&_*]:m-0 [&_*]:inline">
-                      <MarkdownView content={project.description} />
-                    </div>
+                  {/* Issue #81: ここで MarkdownView を使うと、説明文中のリンクが <a> になり
+                      カード全体を包む <Link> と入れ子になる（不正なHTML → hydration エラー →
+                      カードのタップが効かなくなる）。記法を落としたプレーンテキストの抜粋にする */}
+                  {excerpt && (
+                    <p className="mt-1 line-clamp-2 text-sm text-stone-600">{excerpt}</p>
                   )}
                 </div>
 
@@ -67,7 +74,8 @@ export default function ProjectsPage() {
                 </div>
               </article>
             </Link>
-        ))}
+          );
+        })}
       </section>
     </div>
   );
