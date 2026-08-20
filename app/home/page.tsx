@@ -224,18 +224,24 @@ export default function HomePage() {
             const progress = projectTasks.length === 0 ? 0 : Math.round((done / projectTasks.length) * 100);
 
             return (
-              <div key={p.id} className="rounded-md border p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium">{p.name}</div>
+              // Issue #81: 以前はただの div でタップできなかった。
+              // 遷移先の /projects/[projectId] にそのプロジェクトのタスク一覧がある
+              <Link
+                key={p.id}
+                href={`/projects/${p.id}`}
+                className="block rounded-md border border-stone-200 p-3 transition hover:border-stone-300 hover:bg-stone-100"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{p.name}</div>
                     <div className="text-xs text-stone-500">{projectTasks.length} 件</div>
                   </div>
-                  <div className="text-sm font-semibold">{progress}%</div>
+                  <div className="shrink-0 text-sm font-semibold tabular-nums">{progress}%</div>
                 </div>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-100">
                   <div style={{ width: `${progress}%`, background: p.color ?? DEFAULT_PROJECT_COLOR }} className="h-2" />
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
