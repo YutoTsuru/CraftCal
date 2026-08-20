@@ -10,6 +10,8 @@ import { getTodayString } from "@/lib/schedule";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { MarkdownView } from "@/components/MarkdownView";
 import { ColorPicker } from "@/components/ColorPicker";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { ProjectIconInput } from "@/components/ProjectIconInput";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 import type { Task } from "@/types/dev-calendar";
 
@@ -28,6 +30,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
   const [overviewUrl, setOverviewUrl] = useState("");
   const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
   const [status, setStatus] = useState<"active" | "paused" | "done">("active");
+  const [iconPath, setIconPath] = useState<string | null>(null);
 
   // delete confirm state
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -43,6 +46,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       setOverviewUrl(project.overviewUrl ?? "");
       setColor(project.color ?? DEFAULT_PROJECT_COLOR);
       setStatus(project.status ?? "active");
+      setIconPath(project.iconPath ?? null);
     }
   }, [project]);
 
@@ -77,6 +81,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       goal: goal.trim() || null,
       overviewUrl: overviewUrl.trim() || null,
       color: color || null,
+      iconPath,
       status,
     });
     setIsEditing(false);
@@ -89,6 +94,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
     setOverviewUrl(project.overviewUrl ?? "");
     setColor(project.color ?? DEFAULT_PROJECT_COLOR);
     setStatus(project.status ?? "active");
+    setIconPath(project.iconPath ?? null);
     setIsEditing(false);
   };
 
@@ -120,6 +126,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
                 <input value={overviewUrl} onChange={(e) => setOverviewUrl(e.target.value)} placeholder="概要ページのURL (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />
                 {/* Issue #57: ラベルなしの type=color（謎の色付きの箱）をプリセット選択UIに置き換え */}
                 <ColorPicker value={color} onChange={setColor} className="md:col-span-2" />
+                <ProjectIconInput
+                  projectId={project.id}
+                  value={iconPath}
+                  onChange={setIconPath}
+                  color={color}
+                  name={name || project.name}
+                  className="md:col-span-2"
+                />
 
                 <div className="flex items-center gap-2">
                   <select value={status} onChange={(e) => setStatus(e.target.value as any)} className="rounded-xl border border-stone-200 px-3 py-2">
@@ -140,7 +154,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
           <div className="flex items-start gap-4">
             <div className="flex-1">
               <p className="text-sm text-stone-500">Project</p>
-              <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
+              {/* Issue #82: アイコンを設定していれば見出しの横に出す */}
+              <div className="mt-2 flex items-center gap-3">
+                <ProjectIcon
+                  name={project.name}
+                  iconPath={project.iconPath}
+                  color={project.color}
+                  size={40}
+                />
+                <h2 className="text-3xl font-bold">{project.name}</h2>
+              </div>
               {project.description && (
                 <div className="mt-3 rounded-xl border border-stone-200 bg-surface p-4 text-sm shadow-sm">
                   <MarkdownView content={project.description} />

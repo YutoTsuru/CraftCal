@@ -120,8 +120,8 @@ export default function ProjectPlanPage() {
       goal: goal.trim() || null,
       overviewUrl: null,
       color,
-      status: "active",
-    } as any);
+      status: "active"
+    });
 
     tasks.forEach((t) => {
       addTask({

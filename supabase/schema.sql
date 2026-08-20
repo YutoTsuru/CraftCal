@@ -238,3 +238,55 @@ create policy schedules_update on public.schedules
 drop policy if exists schedules_delete on public.schedules;
 create policy schedules_delete on public.schedules
   for delete using (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- プロジェクトのアイコン画像 (Issue #82)
+--
+-- 画像は Supabase Storage に置き、projects には保存先のパスだけを持たせる。
+-- パスは "{user_id}/{project_id}" 形式にして、ポリシーで先頭フォルダが
+-- ログイン中のユーザーIDと一致する場合のみ書き込み・削除を許可する。
+--
+-- バケットを public にしている点について:
+--   読み取りを public にすると、表示側は URL を組み立てるだけで済む
+--   （署名URLの取得が不要になり、一覧の描画を同期的に書ける）。
+--   代償として URL を知っていれば誰でも画像を取得できるが、パスは
+--   user_id と project_id の uuid で構成されるため推測はほぼ不可能。
+--   アイコンは装飾であり秘密ではない、という前提の機能として割り切っている。
+--   機密性が必要になったら public を false にし、署名URL方式へ切り替えること。
+--
+-- add column if not exists / on conflict do nothing / drop policy if exists で
+-- 何度実行しても安全（冪等）。
+-- ----------------------------------------------------------------------------
+alter table public.projects add column if not exists icon_path text;
+
+insert into storage.buckets (id, name, public)
+values ('project-icons', 'project-icons', true)
+on conflict (id) do nothing;
+
+-- 読み取りは誰でも（public バケットのため）
+drop policy if exists project_icons_select on storage.objects;
+create policy project_icons_select on storage.objects
+  for select using (bucket_id = 'project-icons');
+
+-- 書き込み・更新・削除は「自分のユーザーIDのフォルダ配下」のみ。
+-- storage.foldername(name) は パスをフォルダ名の配列に分解する（1要素目が先頭フォルダ）。
+drop policy if exists project_icons_insert on storage.objects;
+create policy project_icons_insert on storage.objects
+  for insert with check (
+    bucket_id = 'project-icons'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists project_icons_update on storage.objects;
+create policy project_icons_update on storage.objects
+  for update using (
+    bucket_id = 'project-icons'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists project_icons_delete on storage.objects;
+create policy project_icons_delete on storage.objects
+  for delete using (
+    bucket_id = 'project-icons'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );

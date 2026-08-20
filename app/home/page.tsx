@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { StatCard, type StatTone } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import { PriorityBadge } from "@/components/PriorityBadge";
 // Today (旧 /today) の機能をこのホームに統合するために配置するコンポーネント群 (Issue #27)。
 // 各コンポーネントの内部は変更せず、ここに並べ替えて移設するだけ
@@ -232,9 +233,12 @@ export default function HomePage() {
                 className="block rounded-md border border-stone-200 p-3 transition hover:border-stone-300 hover:bg-stone-100"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{p.name}</div>
-                    <div className="text-xs text-stone-500">{projectTasks.length} 件</div>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <ProjectIcon name={p.name} iconPath={p.iconPath} color={p.color} size={28} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{p.name}</div>
+                      <div className="text-xs text-stone-500">{projectTasks.length} 件</div>
+                    </div>
                   </div>
                   <div className="shrink-0 text-sm font-semibold tabular-nums">{progress}%</div>
                 </div>
