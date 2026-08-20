@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   INBOX_PROJECT_ID,
+  clearLocalState,
   SCHEMA_VERSION,
   ensureInboxProject,
   migrateScheduleDay,
@@ -165,5 +166,47 @@ describe("serializeState / parsePersistedState (Issue #9)", () => {
 
   it("壊れたJSONは null を返す（例外を投げない）", () => {
     expect(parsePersistedState("{壊れたデータ")).toBeNull();
+  });
+});
+
+describe("clearLocalState (Issue #89)", () => {
+  const KEY = "craftcal-state";
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** localStorage の最小スタブ。jsdom を入れずに挙動だけ確かめる */
+  function stubLocalStorage(initial: Record<string, string> = {}) {
+    const store = new Map(Object.entries(initial));
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => void store.set(k, v),
+        removeItem: (k: string) => void store.delete(k)
+      }
+    });
+    return store;
+  }
+
+  it("移行前の保存データを消す", () => {
+    const store = stubLocalStorage({ [KEY]: "{}" });
+
+    clearLocalState();
+
+    expect(store.has(KEY)).toBe(false);
+  });
+
+  it("作業ログのキーには触らない（保存先が別のため）", () => {
+    const store = stubLocalStorage({ [KEY]: "{}", "craftcal-dailylogs": "[]" });
+
+    clearLocalState();
+
+    expect(store.get("craftcal-dailylogs")).toBe("[]");
+  });
+
+  it("サーバー側（window が無い）で呼んでも落ちない", () => {
+    vi.stubGlobal("window", undefined);
+    expect(() => clearLocalState()).not.toThrow();
   });
 });

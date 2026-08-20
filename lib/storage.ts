@@ -205,3 +205,18 @@ export function saveState(state: DevCalendarState): boolean {
     return false;
   }
 }
+
+/**
+ * 旧 localStorage の保存データを消す (Issue #89)。
+ *
+ * Supabase 移行前のデータが残っていると、サーバーを空にした直後の再読み込みで
+ * 「取り込みますか」の案内が出て、サンプルデータの案内が隠れてしまう
+ * （app/home/page.tsx の表示条件が tasks.length === 0 && !canImportLocalData）。
+ *
+ * 取り込み成功時にも同じキーを消しているが、あちらは AppProvider が直接
+ * removeItem している。キーの持ち主はこのモジュールなので、こちらを使う。
+ */
+export function clearLocalState(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(STORAGE_KEY);
+}
