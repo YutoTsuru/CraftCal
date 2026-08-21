@@ -52,27 +52,6 @@ export async function insertProject(project: Project): Promise<void> {
   }
 }
 
-/**
- * プロジェクトを一括登録する (Issue #53)。
- *
- * seed / import はもともと for ループで insertProject を1件ずつ await していたため、
- * 途中で失敗すると「一部のプロジェクトだけ DB に入った」中途半端な状態が残っていた。
- *
- * 配列を1回の insert で送ると Postgres 側では単一のステートメントとして扱われ、
- * 全行入るか1行も入らないかのどちらかになる。tasks 側の insertTasks と同じ形。
- */
-export async function insertProjects(projects: Project[]): Promise<void> {
-  if (projects.length === 0) {
-    return;
-  }
-  const userId = await requireUserId();
-  const rows = projects.map((project) => toDbProjectInsert(project, userId));
-  const { error } = await supabase.from("projects").insert(rows);
-  if (error) {
-    throw error;
-  }
-}
-
 // プロジェクトを1件更新する
 export async function updateProject(project: Project): Promise<void> {
   const { error } = await supabase

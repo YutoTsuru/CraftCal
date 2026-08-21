@@ -25,7 +25,6 @@ import {
   deleteAllProjects,
   deleteProject as deleteProjectRow,
   insertProject,
-  insertProjects,
   listProjects,
   updateProject as updateProjectRow
 } from "@/lib/services/projects";
@@ -33,10 +32,10 @@ import {
   deleteAllTasks,
   deleteTask as deleteTaskRow,
   insertTask,
-  insertTasks,
   listTasks,
   updateTask as updateTaskRow
 } from "@/lib/services/tasks";
+import { importUserData } from "@/lib/services/bulk-import";
 import type {
   DevCalendarActions,
   DevCalendarContextValue,
@@ -448,12 +447,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const seed = createSeedData();
       persist(async () => {
-        // タスクは project_id で参照するため、プロジェクトを先に登録する。
-        // Issue #53: 以前は for ループで1件ずつ await しており、途中で失敗すると
-        // 一部のプロジェクトだけ入った状態が残っていた。一括INSERTなら全件入るか
-        // 1件も入らないかのどちらかになる
-        await insertProjects(seed.projects);
-        await insertTasks(seed.tasks);
+        // Issue #76: projects と tasks を1トランザクションで投入する。
+        // 以前は insertProjects → insertTasks の2回に分けており、テーブル内の部分適用は
+        // Issue #53 で解消したものの、タスク側で失敗すると「プロジェクトだけ入った」状態が残った。
+        // そのとき state のタスクは空のままなので上のガードに引っかからず、createSeedData は
+        // 毎回新しい uuid を振るため、押すたびに同じ内容が重複して増えていた。
+        // RPC 側が全部入れるか何も入れないかにしてくれるので、失敗後に押し直しても重複しない。
+        //
+        // なお「DB には入ったが応答が失われた」場合は、保存失敗をきっかけに
+        // persist-coordinator がサーバー状態を取り直して state に反映する。
+        // その時点でタスクが入るので、上のガードが効いて二重投入にはならない。
+        await importUserData(seed.projects, seed.tasks);
         // DB 保存が成功してから state 反映（Inbox は既存を残し前にサンプル2件を足す）
         setProjects((cur) => [...seed.projects, ...cur.filter((p) => p.id !== INBOX_PROJECT_ID)]);
         setTasks(seed.tasks);
@@ -470,9 +474,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const importTasks = local.tasks;
 
       persist(async () => {
-        // Issue #53: seed と同じ理由で一括INSERTにする（途中失敗で部分適用が残らない）
-        await insertProjects(importProjects);
-        await insertTasks(importTasks);
+        // Issue #76: seed と同じ理由で、2テーブルへの投入を1トランザクションにまとめる。
+        // localStorage の削除はこの後なので、失敗したときは取り込み元が残って再取り込みできる
+        // （この挙動は従来どおり）。RPC が失敗すれば DB 側は何も入っていない状態に戻る。
+        await importUserData(importProjects, importTasks);
         if (typeof window !== "undefined") {
           window.localStorage.removeItem(STORAGE_KEY);
         }
