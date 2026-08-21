@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   fromDbProject,
   fromDbTask,
+  toDbProjectImportRow,
   toDbProjectInsert,
   toDbProjectUpdate,
+  toDbTaskImportRow,
   toDbTaskInsert,
   toDbTaskUpdate,
   type DbProject,
@@ -285,5 +287,33 @@ describe("db-mappers: projects", () => {
     expect(update).not.toHaveProperty("user_id");
     expect(update).not.toHaveProperty("created_at");
     expect(update.overview_url).toBe("https://example.com");
+  });
+});
+
+// Issue #76: import_user_data RPC に渡す行。insert 用との差は user_id を含まないことだけで、
+// user_id は RPC 側が auth.uid() で埋める（クライアントから他人の id を送れないようにするため）
+describe("db-mappers: import_user_data 用の行 (Issue #76)", () => {
+  it("toDbTaskImportRow は insert 用から user_id を除いただけの内容になる", () => {
+    const task = makeTask();
+    const { user_id, ...insertWithoutUserId } = toDbTaskInsert(task, "user-1");
+    expect(toDbTaskImportRow(task)).toEqual(insertWithoutUserId);
+  });
+
+  it("toDbTaskImportRow は user_id を含まない", () => {
+    expect(toDbTaskImportRow(makeTask())).not.toHaveProperty("user_id");
+  });
+
+  it("toDbTaskImportRow でも Inbox は project_id: null になる", () => {
+    expect(toDbTaskImportRow(makeTask({ projectId: INBOX_PROJECT_ID })).project_id).toBeNull();
+  });
+
+  it("toDbProjectImportRow は insert 用から user_id を除いただけの内容になる", () => {
+    const project = makeProject();
+    const { user_id, ...insertWithoutUserId } = toDbProjectInsert(project, "user-1");
+    expect(toDbProjectImportRow(project)).toEqual(insertWithoutUserId);
+  });
+
+  it("toDbProjectImportRow は user_id を含まない", () => {
+    expect(toDbProjectImportRow(makeProject())).not.toHaveProperty("user_id");
   });
 });

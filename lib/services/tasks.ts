@@ -47,19 +47,6 @@ export async function insertTask(task: Task): Promise<void> {
   }
 }
 
-// タスクを一括登録する（ローカルデータ取り込み・サンプルデータ投入で使う）
-export async function insertTasks(tasks: Task[]): Promise<void> {
-  if (tasks.length === 0) {
-    return;
-  }
-  const userId = await requireUserId();
-  const rows = tasks.map((task) => toDbTaskInsert(task, userId));
-  const { error } = await supabase.from("tasks").insert(rows);
-  if (error) {
-    throw error;
-  }
-}
-
 // タスクを1件更新する
 export async function updateTask(task: Task): Promise<void> {
   const { error } = await supabase.from("tasks").update(toDbTaskUpdate(task)).eq("id", task.id);

@@ -320,3 +320,80 @@ create policy project_icons_delete on storage.objects
     bucket_id = 'project-icons'
     and auth.uid()::text = (storage.foldername(name))[1]
   );
+
+-- ----------------------------------------------------------------------------
+-- import_user_data: projects と tasks を1トランザクションで投入する (Issue #76)
+--
+-- 背景: seed / import は insertProjects → insertTasks の2回に分けて送っていたため、
+-- テーブル内は全件入るか0件かのどちらか（Issue #53）でも、テーブルをまたぐと
+-- 「プロジェクトだけ入った」中途半端な状態が残りえた。state のタスクは空のままなので
+-- ボタンは押せ続け、seed は毎回新しい uuid を振るので押すたびに重複が増えていた。
+--
+-- 関数の本体は暗黙に単一トランザクションで走るので、tasks の INSERT が落ちれば
+-- projects の INSERT も巻き戻る。これで「全部入るか、何も入らないか」になる。
+--
+-- security invoker（既定）のままにして RLS を効かせる。user_id はクライアントから
+-- 受け取らず auth.uid() で埋めるので、他人の user_id を差し込むことはできない。
+--
+-- 引数は jsonb の配列。列を個別の配列引数にすると列追加のたびにシグネチャが変わり、
+-- 古い関数が残って曖昧になるため、行そのものを渡す形にしている。
+-- ----------------------------------------------------------------------------
+create or replace function public.import_user_data(p_projects jsonb, p_tasks jsonb)
+returns void
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then
+    -- 42501 = insufficient_privilege。PostgREST は 403 で返す
+    raise exception 'ログインが必要です。再度ログインしてください。' using errcode = '42501';
+  end if;
+
+  insert into public.projects (
+    id, user_id, created_at, name, description, status, goal, color, overview_url, icon_path
+  )
+  select
+    (elem->>'id')::uuid,
+    v_user_id,
+    coalesce((elem->>'created_at')::timestamptz, now()),
+    elem->>'name',
+    elem->>'description',
+    coalesce(elem->>'status', 'active'),
+    elem->>'goal',
+    elem->>'color',
+    elem->>'overview_url',
+    elem->>'icon_path'
+  from jsonb_array_elements(coalesce(p_projects, '[]'::jsonb)) as elem;
+
+  insert into public.tasks (
+    id, user_id, created_at, project_id, title, description, status, priority, weight,
+    due_date, scheduled_date, scheduled_start_time, scheduled_end_time,
+    estimated_minutes, completed_at, completion_note, completion_url
+  )
+  select
+    (elem->>'id')::uuid,
+    v_user_id,
+    coalesce((elem->>'created_at')::timestamptz, now()),
+    (elem->>'project_id')::uuid,
+    elem->>'title',
+    elem->>'description',
+    coalesce(elem->>'status', 'todo'),
+    coalesce(elem->>'priority', 'medium'),
+    coalesce(elem->>'weight', 'medium'),
+    (elem->>'due_date')::date,
+    (elem->>'scheduled_date')::date,
+    elem->>'scheduled_start_time',
+    elem->>'scheduled_end_time',
+    (elem->>'estimated_minutes')::integer,
+    (elem->>'completed_at')::timestamptz,
+    elem->>'completion_note',
+    elem->>'completion_url'
+  from jsonb_array_elements(coalesce(p_tasks, '[]'::jsonb)) as elem;
+end;
+$$;
+
+-- 匿名ロールには実行させない（RLS でも弾かれるが、入口でも絞る）
+revoke all on function public.import_user_data(jsonb, jsonb) from public;
+grant execute on function public.import_user_data(jsonb, jsonb) to authenticated;

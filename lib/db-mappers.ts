@@ -72,6 +72,9 @@ export type DbTaskInsert = {
 // update 時に送る列。id / user_id / created_at は変更しない。updated_at は DB トリガーが自動更新する
 export type DbTaskUpdate = Omit<DbTaskInsert, "id" | "user_id" | "created_at">;
 
+// Issue #76: import_user_data RPC に渡す1行。user_id は RPC 側が auth.uid() で埋める
+export type DbTaskImportRow = Omit<DbTaskInsert, "user_id">;
+
 // ---------------------------------------------------------------------------
 // projects テーブルの行型（supabase/schema.sql の projects 定義に対応）
 // start_date / end_date はアプリの Project 型に無いため変換対象外
@@ -107,6 +110,9 @@ export type DbProjectInsert = {
 };
 
 export type DbProjectUpdate = Omit<DbProjectInsert, "id" | "user_id" | "created_at">;
+
+// Issue #76: import_user_data RPC に渡す1行。user_id は RPC 側が auth.uid() で埋める
+export type DbProjectImportRow = Omit<DbProjectInsert, "user_id">;
 
 // ---------------------------------------------------------------------------
 // tasks: DB 行 → アプリ Task
@@ -163,9 +169,18 @@ function toDbTaskColumns(task: Task): DbTaskUpdate {
 // tasks: アプリ Task → DB insert 用（user_id はセッションから受け取る）
 // ---------------------------------------------------------------------------
 export function toDbTaskInsert(task: Task, userId: string): DbTaskInsert {
+  return { user_id: userId, ...toDbTaskImportRow(task) };
+}
+
+/**
+ * tasks: アプリ Task → import_user_data RPC に渡す1行 (Issue #76)。
+ *
+ * insert 用との違いは user_id を含めないことだけ。RPC 側が auth.uid() で埋めるため、
+ * クライアントから user_id を送らない（他人の user_id を差し込めないようにする）。
+ */
+export function toDbTaskImportRow(task: Task): DbTaskImportRow {
   return {
     id: task.id,
-    user_id: userId,
     created_at: task.createdAt,
     ...toDbTaskColumns(task)
   };
@@ -213,9 +228,14 @@ function toDbProjectColumns(project: Project): DbProjectUpdate {
 // projects: アプリ Project → DB insert 用（user_id はセッションから受け取る）
 // ---------------------------------------------------------------------------
 export function toDbProjectInsert(project: Project, userId: string): DbProjectInsert {
+  return { user_id: userId, ...toDbProjectImportRow(project) };
+}
+
+// projects: アプリ Project → import_user_data RPC に渡す1行 (Issue #76)。
+// tasks 側の toDbTaskImportRow と同じ考え方で user_id を含めない
+export function toDbProjectImportRow(project: Project): DbProjectImportRow {
   return {
     id: project.id,
-    user_id: userId,
     created_at: project.createdAt,
     ...toDbProjectColumns(project)
   };
