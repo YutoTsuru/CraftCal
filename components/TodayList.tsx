@@ -9,6 +9,7 @@ import { saveOrUpdateDailyLog, getAllLogs } from "@/lib/dailyLogs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
+import { formatScheduledTimeRange } from "@/lib/scheduled-time";
 
 // タスクの重さの日本語表記 (Issue #71)。優先度・状態は各バッジ側で日本語化済み
 const WEIGHT_LABEL: Record<string, string> = {
@@ -16,15 +17,6 @@ const WEIGHT_LABEL: Record<string, string> = {
   medium: "普通",
   heavy: "重い"
 };
-
-// Issue #51: 開始/終了時刻を "HH:MM–HH:MM" 形式にする。片方だけ入力されていればその時刻だけ表示し、
-// どちらも無ければ null（呼び出し側は時刻を出さない＝従来どおり終日扱い）。CalendarView.tsx の同名関数と同じ表示ルール。
-function formatScheduledTimeRange(start?: string | null, end?: string | null): string | null {
-  if (start && end) return `${start}–${end}`;
-  if (start) return start;
-  if (end) return end;
-  return null;
-}
 
 function ProjectBadge({ projectId, projects }: { projectId: string; projects: { id: string; name: string; color?: string | null }[] }) {
   const project = projects.find((p) => p.id === projectId);

@@ -309,6 +309,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // （時刻だけ残ると「未配置なのに時刻がある」という不整合な状態になるため）。
     // options を省略したとき（既存の呼び出し元 = カレンダーの配置/未配置操作）は
     // 時刻フィールドに触れず、既存の scheduledStartTime/scheduledEndTime をそのまま維持する。
+    //
+    // キーの有無で「省略」と「明示的な null」を区別する点に注意。
+    // options?.startTime ?? 既存値 と書くと、時刻を消したくて null を渡しても既存値に
+    // 戻ってしまい、一度入れた時刻を API から二度と消せなくなる。
     const rescheduleTask = (
       id: string,
       scheduledDate: string | null,
@@ -316,8 +320,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ) => {
       const now = new Date().toISOString();
       const target = tasksRef.current.find((task) => task.id === id);
-      const scheduledStartTime = scheduledDate === null ? null : options?.startTime ?? target?.scheduledStartTime ?? null;
-      const scheduledEndTime = scheduledDate === null ? null : options?.endTime ?? target?.scheduledEndTime ?? null;
+      const hasStartTime = options !== undefined && "startTime" in options;
+      const hasEndTime = options !== undefined && "endTime" in options;
+      const scheduledStartTime =
+        scheduledDate === null ? null : hasStartTime ? options.startTime ?? null : target?.scheduledStartTime ?? null;
+      const scheduledEndTime =
+        scheduledDate === null ? null : hasEndTime ? options.endTime ?? null : target?.scheduledEndTime ?? null;
       setTasks((current) =>
         current.map((task) =>
           task.id === id ? { ...task, scheduledDate, scheduledStartTime, scheduledEndTime, updatedAt: now } : task

@@ -116,6 +116,19 @@ alter table public.tasks drop constraint if exists tasks_scheduled_end_time_chec
 alter table public.tasks add constraint tasks_scheduled_end_time_check
   check (scheduled_end_time is null or scheduled_end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
 
+-- 前後関係も DB 側で担保する（schedules_time_order_check と同じ考え方）。
+-- 画面側の検証は lib/scheduled-time.ts の validateScheduledTimeRange。
+-- "HH:MM" は桁が固定なので文字列比較がそのまま時刻の比較になる。
+-- schedules 側が > なのに対しこちらが >= なのは、所要 0 分（"10:00 の打ち合わせ" のように
+-- 時点だけ決める予定）をアプリが許可しているため。片方だけ入力も許可する。
+alter table public.tasks drop constraint if exists tasks_scheduled_time_order_check;
+alter table public.tasks add constraint tasks_scheduled_time_order_check
+  check (
+    scheduled_start_time is null
+    or scheduled_end_time is null
+    or scheduled_end_time >= scheduled_start_time
+  );
+
 -- ----------------------------------------------------------------------------
 -- インデックス: 絞り込みに使う列に付与
 -- ----------------------------------------------------------------------------

@@ -16,6 +16,7 @@ import {
   isMultiDayTask
 } from "@/lib/calendar-bars";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
+import { formatScheduledTimeRange, validateScheduledTimeRange } from "@/lib/scheduled-time";
 
 type ViewMode = "month" | "week";
 
@@ -24,23 +25,12 @@ function statusChipColor(status: Task["status"]) {
   return status === "done" ? "bg-lime-200" : status === "doing" ? "bg-amber-200" : "bg-amber-200";
 }
 
-// Issue #51: 開始/終了時刻を "HH:MM–HH:MM" 形式にする。片方だけ入力されていればその時刻だけ表示し、
-// どちらも無ければ null（呼び出し側は時刻行自体を出さない＝従来どおり終日扱い）。
-function formatScheduledTimeRange(task: Task): string | null {
-  const start = task.scheduledStartTime;
-  const end = task.scheduledEndTime;
-  if (start && end) return `${start}–${end}`;
-  if (start) return start;
-  if (end) return end;
-  return null;
-}
-
 function TaskCard({ task }: { task: Task }) {
   const { projects } = useDevCalendar();
   const project = projects.find((p) => p.id === task.projectId);
   const today = getTodayString();
   const overdue = task.dueDate && task.dueDate < today && task.status !== "done";
-  const timeRange = formatScheduledTimeRange(task);
+  const timeRange = formatScheduledTimeRange(task.scheduledStartTime, task.scheduledEndTime);
 
   const priorityColor =
     task.priority === "high" ? "border-rose-500" : task.priority === "medium" ? "border-amber-400" : "border-lime-500";
@@ -349,6 +339,12 @@ export default function CalendarView() {
       setAddError("終了日は開始日以降の日付にしてください");
       return;
     }
+    // Issue #51: 終了時刻 < 開始時刻 もエラー（日付と同じく送信前に弾く）
+    const addTimeError = validateScheduledTimeRange(newStartTime, newEndTime);
+    if (addTimeError) {
+      setAddError(addTimeError);
+      return;
+    }
     addTask({
       title,
       memo: "",
@@ -403,6 +399,12 @@ export default function CalendarView() {
     // 終了日 < 開始日 はエラー（追加フォームと同じ文言・rose色）
     if (editStart && editEnd && editEnd < editStart) {
       setEditError("終了日は開始日以降の日付にしてください");
+      return;
+    }
+    // Issue #51: 終了時刻 < 開始時刻 もエラー（追加フォームと同じ文言・rose色）
+    const editTimeError = validateScheduledTimeRange(editStartTime, editEndTime);
+    if (editTimeError) {
+      setEditError(editTimeError);
       return;
     }
     updateTask(task.id, {

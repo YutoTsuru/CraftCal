@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useDevCalendar } from "@/components/AppProvider";
 import type { TaskWeight, TaskPriority, Task, TaskFormInput } from "@/types/dev-calendar";
+import { validateScheduledTimeRange } from "@/lib/scheduled-time";
 
 type Props = {
   editingTask?: Task | null;
@@ -55,6 +56,13 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
     // Validate start <= end
     if (input.scheduledDate && input.dueDate && input.scheduledDate > input.dueDate) {
       setError("終了日は開始日以降の日付にしてください");
+      return false;
+    }
+
+    // Issue #51: 時刻も同じく終了 < 開始をエラーにする（カレンダー側の 2 フォームと同じ文言）
+    const timeError = validateScheduledTimeRange(input.scheduledStartTime, input.scheduledEndTime);
+    if (timeError) {
+      setError(timeError);
       return false;
     }
 
