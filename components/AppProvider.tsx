@@ -223,6 +223,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         priority: input.priority ?? "medium",
         dueDate: input.dueDate ?? null,
         scheduledDate: input.scheduledDate ?? null,
+        // Issue #51: scheduledDate に付ける任意の開始/終了時刻。フォームが送ってこなければ時刻なし
+        scheduledStartTime: input.scheduledStartTime ?? null,
+        scheduledEndTime: input.scheduledEndTime ?? null,
         estimatedMinutes: typeof input.estimatedMinutes === "number" ? input.estimatedMinutes : null,
         status: "todo",
         createdAt: now,
@@ -289,6 +292,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         priority: input.priority ?? target.priority,
         dueDate: input.dueDate ?? null,
         scheduledDate: input.scheduledDate ?? null,
+        // Issue #51: dueDate / scheduledDate と同じ単純代入パターンに揃える（フォームは常に値を送る想定）
+        scheduledStartTime: input.scheduledStartTime ?? null,
+        scheduledEndTime: input.scheduledEndTime ?? null,
         // undefined = 変更なし（既存値を維持） / null = クリア（未設定に戻す） / 数値 = その値に設定 (Issue #44)
         estimatedMinutes: input.estimatedMinutes === undefined ? target.estimatedMinutes : input.estimatedMinutes,
         updatedAt: now
@@ -298,15 +304,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       persist(() => updateTaskRow(updated), { queueKey: id });
     };
 
-    const rescheduleTask = (id: string, scheduledDate: string | null) => {
+    // Issue #51: 予定日に加えて開始/終了時刻も付け替えられるよう options を追加。
+    // scheduledDate が null（未配置に戻す）のときは時刻も一緒に null へクリアする
+    // （時刻だけ残ると「未配置なのに時刻がある」という不整合な状態になるため）。
+    // options を省略したとき（既存の呼び出し元 = カレンダーの配置/未配置操作）は
+    // 時刻フィールドに触れず、既存の scheduledStartTime/scheduledEndTime をそのまま維持する。
+    //
+    // キーの有無で「省略」と「明示的な null」を区別する点に注意。
+    // options?.startTime ?? 既存値 と書くと、時刻を消したくて null を渡しても既存値に
+    // 戻ってしまい、一度入れた時刻を API から二度と消せなくなる。
+    const rescheduleTask = (
+      id: string,
+      scheduledDate: string | null,
+      options?: { startTime?: string | null; endTime?: string | null }
+    ) => {
       const now = new Date().toISOString();
       const target = tasksRef.current.find((task) => task.id === id);
+      const hasStartTime = options !== undefined && "startTime" in options;
+      const hasEndTime = options !== undefined && "endTime" in options;
+      const scheduledStartTime =
+        scheduledDate === null ? null : hasStartTime ? options.startTime ?? null : target?.scheduledStartTime ?? null;
+      const scheduledEndTime =
+        scheduledDate === null ? null : hasEndTime ? options.endTime ?? null : target?.scheduledEndTime ?? null;
       setTasks((current) =>
-        current.map((task) => (task.id === id ? { ...task, scheduledDate, updatedAt: now } : task))
+        current.map((task) =>
+          task.id === id ? { ...task, scheduledDate, scheduledStartTime, scheduledEndTime, updatedAt: now } : task
+        )
       );
       if (target) {
         // Issue #48 (レビュー指摘対応): 同一タスクの更新を送信順に直列化する
-        persist(() => updateTaskRow({ ...target, scheduledDate, updatedAt: now }), { queueKey: id });
+        persist(
+          () => updateTaskRow({ ...target, scheduledDate, scheduledStartTime, scheduledEndTime, updatedAt: now }),
+          { queueKey: id }
+        );
       }
     };
 

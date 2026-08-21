@@ -9,6 +9,7 @@ import { saveOrUpdateDailyLog, getAllLogs } from "@/lib/dailyLogs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
+import { formatScheduledTimeRange } from "@/lib/scheduled-time";
 
 // タスクの重さの日本語表記 (Issue #71)。優先度・状態は各バッジ側で日本語化済み
 const WEIGHT_LABEL: Record<string, string> = {
@@ -114,6 +115,10 @@ export default function TodayList() {
                   </div>
                   {task.memo && <div className={`text-sm ${task.status === "done" ? "line-through text-stone-500" : "text-stone-600"}`}>{task.memo}</div>}
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-600">
+                    {/* Issue #51: 時刻があるときだけ表示（時刻なしのタスクは従来どおり終日扱いで何も出さない） */}
+                    {formatScheduledTimeRange(task.scheduledStartTime, task.scheduledEndTime) && (
+                      <div>{formatScheduledTimeRange(task.scheduledStartTime, task.scheduledEndTime)}</div>
+                    )}
                     {/* Issue #71: medium / heavy と英語の生の値が出ていたため日本語にする */}
                     <div>{WEIGHT_LABEL[task.weight] ?? task.weight}</div>
                     {task.priority && <PriorityBadge priority={task.priority} />}

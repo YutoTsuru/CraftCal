@@ -25,6 +25,8 @@ function makeDbTask(overrides: Partial<DbTask> = {}): DbTask {
     weight: "medium",
     due_date: "2026-07-20",
     scheduled_date: "2026-07-15",
+    scheduled_start_time: "09:00",
+    scheduled_end_time: "10:30",
     estimated_minutes: 90,
     completed_at: null,
     completion_note: null,
@@ -46,6 +48,8 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     priority: "high",
     dueDate: "2026-07-20",
     scheduledDate: "2026-07-15",
+    scheduledStartTime: "09:00",
+    scheduledEndTime: "10:30",
     estimatedMinutes: 90,
     status: "todo",
     completedAt: null,
@@ -98,6 +102,8 @@ describe("db-mappers: tasks", () => {
     expect(task.projectId).toBe("project-1");
     expect(task.dueDate).toBe("2026-07-20");
     expect(task.scheduledDate).toBe("2026-07-15");
+    expect(task.scheduledStartTime).toBe("09:00");
+    expect(task.scheduledEndTime).toBe("10:30");
     expect(task.estimatedMinutes).toBe(90);
     expect(task.updatedAt).toBe("2026-07-14T01:00:00.000Z");
   });
@@ -118,11 +124,38 @@ describe("db-mappers: tasks", () => {
       weight: row.weight,
       due_date: row.due_date,
       scheduled_date: row.scheduled_date,
+      scheduled_start_time: row.scheduled_start_time,
+      scheduled_end_time: row.scheduled_end_time,
       estimated_minutes: row.estimated_minutes,
       completed_at: row.completed_at,
       completion_note: row.completion_note,
       completion_url: row.completion_url
     });
+  });
+
+  // Issue #51: 開始/終了時刻の往復変換（DB → アプリ → DB）を時刻ありケースで検証。
+  // 上の insert 往復テストと重複するが、意図を明確にするため時刻だけに絞ったテストも用意する
+  it("Issue #51: 予定の開始/終了時刻の往復（時刻あり）が保たれる", () => {
+    const row = makeDbTask({ scheduled_start_time: "13:15", scheduled_end_time: "14:45" });
+    const task = fromDbTask(row);
+    expect(task.scheduledStartTime).toBe("13:15");
+    expect(task.scheduledEndTime).toBe("14:45");
+
+    const insert = toDbTaskInsert(task, row.user_id);
+    expect(insert.scheduled_start_time).toBe("13:15");
+    expect(insert.scheduled_end_time).toBe("14:45");
+  });
+
+  // Issue #51: 時刻なし（null）のタスクも往復で null のまま保たれることを確認（終日扱いが崩れないように）
+  it("Issue #51: 予定の開始/終了時刻の往復（null）が保たれる", () => {
+    const row = makeDbTask({ scheduled_start_time: null, scheduled_end_time: null });
+    const task = fromDbTask(row);
+    expect(task.scheduledStartTime).toBeNull();
+    expect(task.scheduledEndTime).toBeNull();
+
+    const insert = toDbTaskInsert(task, row.user_id);
+    expect(insert.scheduled_start_time).toBeNull();
+    expect(insert.scheduled_end_time).toBeNull();
   });
 
   it("Inbox: projectId 'inbox' は project_id null に変換される（アプリ → DB）", () => {
@@ -146,11 +179,13 @@ describe("db-mappers: tasks", () => {
     expect(task.memo).toBe("");
   });
 
-  it("null 境界: due_date / scheduled_date / estimated_minutes / completed_at が null でも変換できる", () => {
+  it("null 境界: due_date / scheduled_date / scheduled_start_time / scheduled_end_time / estimated_minutes / completed_at が null でも変換できる", () => {
     const task = fromDbTask(
       makeDbTask({
         due_date: null,
         scheduled_date: null,
+        scheduled_start_time: null,
+        scheduled_end_time: null,
         estimated_minutes: null,
         completed_at: null,
         completion_note: null,
@@ -159,6 +194,8 @@ describe("db-mappers: tasks", () => {
     );
     expect(task.dueDate).toBeNull();
     expect(task.scheduledDate).toBeNull();
+    expect(task.scheduledStartTime).toBeNull();
+    expect(task.scheduledEndTime).toBeNull();
     expect(task.estimatedMinutes).toBeNull();
     expect(task.completedAt).toBeNull();
   });
@@ -168,6 +205,8 @@ describe("db-mappers: tasks", () => {
     const task = makeTask({
       dueDate: undefined,
       scheduledDate: undefined,
+      scheduledStartTime: undefined,
+      scheduledEndTime: undefined,
       estimatedMinutes: undefined,
       completedAt: undefined,
       completionNote: undefined,
@@ -176,6 +215,8 @@ describe("db-mappers: tasks", () => {
     const insert = toDbTaskInsert(task, "user-1");
     expect(insert.due_date).toBeNull();
     expect(insert.scheduled_date).toBeNull();
+    expect(insert.scheduled_start_time).toBeNull();
+    expect(insert.scheduled_end_time).toBeNull();
     expect(insert.estimated_minutes).toBeNull();
     expect(insert.completed_at).toBeNull();
     expect(insert.completion_note).toBeNull();

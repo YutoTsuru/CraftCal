@@ -14,3 +14,11 @@ yarn-error.log*
 tsconfig.tsbuildinfo
 # Claude Code の個人設定。権限ルールなど各自の環境依存の内容が入るため除外する
 .claude/settings.local.json
+
+# Supabase CLI のローカル作業用ファイル
+# スキーマの正は supabase/schema.sql。migrations/ は schema.sql の差分から
+# 生成して db push するだけの使い捨てで、リポジトリには載せない。
+# ただしローカルには残す（消すと次回 db push が
+# 「Remote migration versions not found」で止まり、repair が必要になるため）。
+supabase/.temp/
+supabase/migrations/
