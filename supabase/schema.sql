@@ -394,6 +394,12 @@ begin
 end;
 $$;
 
--- 匿名ロールには実行させない（RLS でも弾かれるが、入口でも絞る）
+-- PUBLIC への暗黙の付与は外し、ログイン済みロールにだけ明示的に許可する。
+-- ただし Supabase は public スキーマの新規関数に対して anon へも EXECUTE を付ける
+-- 既定権限を持っているため、これだけでは anon を締め出せない。
+-- 締め出さないのは意図的で、セッション切れのリクエストは anon として届くので、
+-- 関数冒頭の auth.uid() 判定に落として「ログインが必要です」を返したいため
+-- （anon から revoke すると "permission denied for function" になり、何が起きたか伝わらない）。
+-- いずれにせよ auth.uid() が null なら行は1件も入らない。
 revoke all on function public.import_user_data(jsonb, jsonb) from public;
 grant execute on function public.import_user_data(jsonb, jsonb) to authenticated;
