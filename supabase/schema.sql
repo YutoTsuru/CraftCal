@@ -84,20 +84,17 @@ create table if not exists public.tasks (
 );
 
 -- ----------------------------------------------------------------------------
--- schedules: 予定（現状 UI からは未使用。将来のスケジュール機能用に spec どおり作成）
+-- schedules テーブルの撤去 (Issue #54)
+--
+-- 「将来のスケジュール機能用」として spec どおり作っていたが、予定の時刻は
+-- Issue #51 で tasks に直接持たせる形（scheduled_start_time / scheduled_end_time）に
+-- 決まったため、このテーブルを使う予定は無くなった。アプリからの参照も一度も無い。
+--
+-- 既にテーブルがある環境のために drop を残す。index / トリガー / RLS ポリシーは
+-- テーブルと一緒に落ちるので、個別に消す必要はない。
+-- 新規環境では対象が無く何も起きない（if exists なので冪等）。
 -- ----------------------------------------------------------------------------
-create table if not exists public.schedules (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users (id) on delete cascade,
-  task_id uuid references public.tasks (id) on delete cascade,
-  title text not null,
-  start_at timestamptz,
-  end_at timestamptz,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint schedules_title_len_check check (char_length(title) between 1 and 200),
-  constraint schedules_time_order_check check (end_at is null or start_at is null or end_at > start_at)
-);
+drop table if exists public.schedules;
 
 -- ----------------------------------------------------------------------------
 -- tasks: 予定の開始/終了時刻 (Issue #51)
@@ -116,11 +113,11 @@ alter table public.tasks drop constraint if exists tasks_scheduled_end_time_chec
 alter table public.tasks add constraint tasks_scheduled_end_time_check
   check (scheduled_end_time is null or scheduled_end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
 
--- 前後関係も DB 側で担保する（schedules_time_order_check と同じ考え方）。
--- 画面側の検証は lib/scheduled-time.ts の validateScheduledTimeRange。
+-- 前後関係も DB 側で担保する（画面側の検証は lib/scheduled-time.ts の
+-- validateScheduledTimeRange。そこを通らない経路でも壊れた値が入らないようにする）。
 -- "HH:MM" は桁が固定なので文字列比較がそのまま時刻の比較になる。
--- schedules 側が > なのに対しこちらが >= なのは、所要 0 分（"10:00 の打ち合わせ" のように
--- 時点だけ決める予定）をアプリが許可しているため。片方だけ入力も許可する。
+-- > ではなく >= なのは、所要 0 分（"10:00 の打ち合わせ" のように時点だけ決める予定）を
+-- アプリが許可しているため。片方だけの入力も許可する。
 alter table public.tasks drop constraint if exists tasks_scheduled_time_order_check;
 alter table public.tasks add constraint tasks_scheduled_time_order_check
   check (
@@ -137,8 +134,6 @@ create index if not exists tasks_user_id_idx on public.tasks (user_id);
 create index if not exists tasks_project_id_idx on public.tasks (project_id);
 create index if not exists tasks_scheduled_date_idx on public.tasks (scheduled_date);
 create index if not exists tasks_due_date_idx on public.tasks (due_date);
-create index if not exists schedules_user_id_idx on public.schedules (user_id);
-create index if not exists schedules_task_id_idx on public.schedules (task_id);
 
 -- ----------------------------------------------------------------------------
 -- updated_at 自動更新トリガー（各テーブルに設定）
@@ -153,10 +148,6 @@ create trigger set_updated_at before update on public.projects
 
 drop trigger if exists set_updated_at on public.tasks;
 create trigger set_updated_at before update on public.tasks
-  for each row execute function public.set_updated_at();
-
-drop trigger if exists set_updated_at on public.schedules;
-create trigger set_updated_at before update on public.schedules
   for each row execute function public.set_updated_at();
 
 -- ----------------------------------------------------------------------------
@@ -191,7 +182,6 @@ create trigger on_auth_user_created after insert on auth.users
 alter table public.profiles enable row level security;
 alter table public.projects enable row level security;
 alter table public.tasks enable row level security;
-alter table public.schedules enable row level security;
 
 -- ----------------------------------------------------------------------------
 -- ポリシー: profiles（自分の行 = auth.uid() = id のみ）
@@ -248,25 +238,6 @@ create policy tasks_update on public.tasks
 
 drop policy if exists tasks_delete on public.tasks;
 create policy tasks_delete on public.tasks
-  for delete using (auth.uid() = user_id);
-
--- ----------------------------------------------------------------------------
--- ポリシー: schedules（自分の行 = auth.uid() = user_id のみ）
--- ----------------------------------------------------------------------------
-drop policy if exists schedules_select on public.schedules;
-create policy schedules_select on public.schedules
-  for select using (auth.uid() = user_id);
-
-drop policy if exists schedules_insert on public.schedules;
-create policy schedules_insert on public.schedules
-  for insert with check (auth.uid() = user_id);
-
-drop policy if exists schedules_update on public.schedules;
-create policy schedules_update on public.schedules
-  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
-drop policy if exists schedules_delete on public.schedules;
-create policy schedules_delete on public.schedules
   for delete using (auth.uid() = user_id);
 
 -- ----------------------------------------------------------------------------
