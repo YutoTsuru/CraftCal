@@ -49,7 +49,7 @@ export default function ProjectsPage() {
 
           return (
             <Link key={project.id} href={`/projects/${project.id}`} className="block">
-              <article className="group relative rounded-xl border border-stone-200 bg-surface p-4 shadow-md hover:shadow-lg transition-all">
+              <article className="group relative rounded-xl border border-stone-200 bg-surface p-5 shadow-md hover:shadow-lg transition-all">
                 <div className="absolute right-3 top-3">
                   <StatusBadge status={project.status} kind="project" size="sm" />
                 </div>

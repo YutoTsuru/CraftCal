@@ -48,7 +48,7 @@ function ProjectFormComponent() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
       <div className="grid gap-3 md:grid-cols-2">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-stone-200 px-3 py-2 outline-none md:col-span-2" />
         {/* テーマカラー選択。ラベルなしの type=color だと「謎のグレーの棒」に見えるため

@@ -13,9 +13,9 @@ function getColorForLevel(level: number) {
     case 0:
       return "bg-stone-100";
     case 1:
-      return "bg-green-200";
+      return "bg-lime-200";
     case 2:
-      return "bg-green-400";
+      return "bg-lime-400";
     case 3:
       return "bg-lime-700";
     case 4:
@@ -85,7 +85,7 @@ export default function ActivityGrid({ days = 90 }: { days?: number }) {
   }, [weeks]);
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
       <h3 className="text-lg font-semibold">Craft Activity</h3>
 
       <div className="mt-3 flex gap-3">

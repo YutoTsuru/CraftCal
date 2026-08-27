@@ -54,7 +54,7 @@ export default function DayDetailPanel({
   }
 
   return (
-    <section className="mt-4 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <section className="mt-4 rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-stone-600">{dateKey}</p>
@@ -75,12 +75,12 @@ export default function DayDetailPanel({
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-4 space-y-3">
         {tasks.length === 0 ? (
           <p className="text-sm text-stone-500">この日のタスクはありません。</p>
         ) : (
           tasks.map((t) => (
-            <div key={t.id} className="flex flex-col gap-2 sm:flex-row sm:items-start">
+            <div key={t.id} className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
               {editingTaskId === t.id ? (
                 <TaskEditForm task={t} onClose={() => setEditingTaskId(null)} />
               ) : (
@@ -126,7 +126,7 @@ export default function DayDetailPanel({
 
       {/* Issue #38/#42 追加: パネル下部の「+ この日にタスクを追加」。
           押すとタイトル・期間（開始日/終了日）・重さ・見積時間を入力できるインラインフォームに切り替わる */}
-      <div className="mt-3 border-t border-stone-100 pt-3">
+      <div className="mt-4 border-t border-stone-100 pt-4">
         {isAdding ? (
           <DayTaskAddForm dateKey={dateKey} range={range} onDone={closeAddForm} />
         ) : (

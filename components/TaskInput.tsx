@@ -123,7 +123,7 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
           event.preventDefault();
         }
       }}
-      className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md"
+      className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md"
     >
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         <input
@@ -199,23 +199,23 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
         {/* Issue #51: 開始/終了時刻（任意）。空のままなら時刻なし＝終日扱いで保存される */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center md:col-span-2 lg:col-span-2">
             <label className="flex flex-col">
-              <span className="text-xs text-slate-600 mb-1">開始時刻（任意）</span>
+              <span className="text-xs text-stone-600 mb-1">開始時刻（任意）</span>
               <input
                 type="time"
                 value={startTime ?? ""}
                 onChange={(e) => setStartTime(e.target.value || null)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none w-full box-border"
+                className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none transition focus:border-lime-500 w-full box-border"
                 aria-label="開始時刻"
               />
             </label>
 
             <label className="flex flex-col">
-              <span className="text-xs text-slate-600 mb-1">終了時刻（任意）</span>
+              <span className="text-xs text-stone-600 mb-1">終了時刻（任意）</span>
               <input
                 type="time"
                 value={endTime ?? ""}
                 onChange={(e) => setEndTime(e.target.value || null)}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none w-full box-border"
+                className="rounded-xl border border-stone-200 bg-surface px-3 py-2 text-stone-900 outline-none transition focus:border-lime-500 w-full box-border"
                 aria-label="終了時刻"
               />
             </label>

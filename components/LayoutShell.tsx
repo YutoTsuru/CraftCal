@@ -136,7 +136,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       {/* ===== メインコンテンツ =====
           - lg:ml-56 はデスクトップでサイドバー幅 (w-56) の分だけ右にずらすため
           - pb-24 はモバイルでボトムタブバー (高さ約64px) にコンテンツが隠れないための下余白 */}
-      <main className="w-full px-4 py-6 pb-24 lg:ml-56 lg:px-8 lg:py-8 lg:pb-8 content-above">
+      <main className="w-full px-5 py-7 pb-28 lg:ml-56 lg:px-10 lg:py-10 lg:pb-10 content-above">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}

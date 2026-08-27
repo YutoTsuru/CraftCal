@@ -7,26 +7,10 @@ import { Sparkles, ChevronRight, Clock, Pencil, Check, X } from "lucide-react";
 import { generateTasks, type PlannedTask } from "@/lib/planner-templates";
 import { ColorPicker } from "@/components/ColorPicker";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
+import { PriorityBadge } from "@/components/PriorityBadge";
+import { WeightBadge } from "@/components/WeightBadge";
 
 type Step = "input" | "review";
-
-const WEIGHT_LABEL: Record<string, string> = {
-  light: "軽",
-  medium: "中",
-  heavy: "重",
-};
-
-const PRIORITY_COLOR: Record<string, string> = {
-  high: "bg-red-100 text-red-700",
-  medium: "bg-amber-100 text-amber-700",
-  low: "bg-stone-100 text-stone-600",
-};
-
-const PRIORITY_LABEL: Record<string, string> = {
-  high: "高",
-  medium: "中",
-  low: "低",
-};
 
 function formatMinutes(min: number) {
   if (min < 60) return `${min}分`;
@@ -163,7 +147,7 @@ export default function ProjectPlanPage() {
           <div className="grid gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-stone-700">
-                プロジェクト名 <span className="text-red-500">*</span>
+                プロジェクト名 <span className="text-rose-500">*</span>
               </label>
               <input
                 value={name}
@@ -282,19 +266,15 @@ export default function ProjectPlanPage() {
                     ) : (
                       <>
                         <p className="text-sm font-medium text-stone-800">{task.title}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-2">
-                          <span className="flex items-center gap-1 text-xs text-stone-500">
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                          <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-stone-500">
                             <Clock size={11} />
                             {formatMinutes(task.estimatedMinutes)}
                           </span>
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PRIORITY_COLOR[task.priority]}`}>
-                            優先度: {PRIORITY_LABEL[task.priority]}
-                          </span>
-                          <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
-                            {WEIGHT_LABEL[task.weight]}
-                          </span>
+                          <PriorityBadge priority={task.priority} />
+                          <WeightBadge weight={task.weight} />
                           {task.dependency && (
-                            <span className="text-xs text-stone-400">↳ {task.dependency}</span>
+                            <span className="min-w-0 break-words text-xs text-stone-400">↳ {task.dependency}</span>
                           )}
                         </div>
                       </>
@@ -324,7 +304,7 @@ export default function ProjectPlanPage() {
                       </button>
                       <button
                         onClick={() => removeTask(i)}
-                        className="rounded p-1 text-red-400 hover:bg-red-50"
+                        className="rounded p-1 text-rose-400 hover:bg-rose-50"
                         title="削除"
                       >
                         <X size={14} />

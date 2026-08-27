@@ -1,4 +1,5 @@
 import React from "react";
+import { BADGE_BASE, badgeSizeClass } from "@/lib/badge-style";
 
 /**
  * StatusBadge: プロジェクト／タスクの状態バッジ。
@@ -54,8 +55,10 @@ export function StatusBadge({
   kind?: "project" | "task";
   size?: "sm" | "md";
 }) {
-  const base = "inline-flex items-center rounded-full border px-2.5 py-1 font-medium";
-  const sizeClass = size === "md" ? "text-sm px-3 py-1" : "text-xs";
+  // 寸法は PriorityBadge / WeightBadge と共通（lib/badge-style.ts）。
+  // 横に並んだときに高さと角丸が揃うようにするため
+  const base = BADGE_BASE;
+  const sizeClass = badgeSizeClass(size);
 
   const isProject = kind === "project";
   const tone = isProject

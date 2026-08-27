@@ -8,23 +8,17 @@ import type { TaskStatus } from "@/types/dev-calendar";
 import { saveOrUpdateDailyLog, getAllLogs } from "@/lib/dailyLogs";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
+import { WeightBadge } from "@/components/WeightBadge";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
 import { formatScheduledTimeRange } from "@/lib/scheduled-time";
-
-// タスクの重さの日本語表記 (Issue #71)。優先度・状態は各バッジ側で日本語化済み
-const WEIGHT_LABEL: Record<string, string> = {
-  light: "軽い",
-  medium: "普通",
-  heavy: "重い"
-};
 
 function ProjectBadge({ projectId, projects }: { projectId: string; projects: { id: string; name: string; color?: string | null }[] }) {
   const project = projects.find((p) => p.id === projectId);
   if (!project) return null;
 
   return (
-    <span className="inline-flex items-center gap-2">
-      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project.color ?? DEFAULT_PROJECT_COLOR }} />
+    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+      <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: project.color ?? DEFAULT_PROJECT_COLOR }} />
       <span className="text-xs text-stone-500">{project.name}</span>
     </span>
   );
@@ -71,7 +65,7 @@ export default function TodayList() {
 
   return (
     <div className="grid gap-4">
-      <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+      <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
         <p className="text-sm text-stone-700">今日の日付</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <h2 className="text-2xl font-bold">{today}</h2>
@@ -84,14 +78,15 @@ export default function TodayList() {
           今日に割り振られたタスクはありません。
         </div>
       ) : (
-        <ul className="grid gap-2">
+        <ul className="grid gap-3">
           {/* タスク1件分の行 (<li>)。
               モバイル: 上に内容、下に操作ボタンの縦積み (flex-col)
               sm(640px)以上: 左に内容、右にボタンの横並び (sm:flex-row)
               — 横並び固定だとボタン群が375px幅からはみ出すため (Issue #14) */}
           {tasksForToday.map((task) => (
-            <li key={task.id} className={`flex flex-col gap-3 rounded-xl border border-stone-200 bg-surface p-3 sm:flex-row sm:items-center sm:justify-between ${task.status === "done" ? "opacity-60" : ""}`}>
-              <div className="flex items-start gap-3">
+            <li key={task.id} className={`flex flex-col gap-4 rounded-xl border border-stone-200 bg-surface p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6 ${task.status === "done" ? "opacity-60" : ""}`}>
+              {/* min-w-0 をここにも通さないと、内側の min-w-0 が効かず内容がはみ出す */}
+              <div className="flex min-w-0 flex-1 items-start gap-3">
                 <input
                   type="checkbox"
                   checked={task.status === "done"}
@@ -105,31 +100,36 @@ export default function TodayList() {
                   className="mt-1 h-4 w-4"
                   aria-label={`完了 ${task.title}`}
                 />
-                <div>
-                  <div className="flex items-center gap-2">
+                {/* min-w-0 が無いと、長いタイトルやメモが縮まずに右の操作エリアを押し出す */}
+                <div className="min-w-0 flex-1">
+                  {/* バッジとタイトルは1つの折り返し行にまとめる。
+                      以前は入れ子の flex を折り返し不可のまま重ねていたため、
+                      狭い幅でタイトルがカードからはみ出していた */}
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
                     <ProjectBadge projectId={task.projectId} projects={projects} />
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={task.status} size="sm" />
-                      <div className={`font-medium ${task.status === "done" ? "line-through text-stone-500" : "text-stone-900"}`}>{task.title}</div>
-                    </div>
+                    <StatusBadge status={task.status} size="sm" />
+                    <div className={`min-w-0 break-words font-medium ${task.status === "done" ? "line-through text-stone-500" : "text-stone-900"}`}>{task.title}</div>
                   </div>
-                  {task.memo && <div className={`text-sm ${task.status === "done" ? "line-through text-stone-500" : "text-stone-600"}`}>{task.memo}</div>}
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-600">
+                  {task.memo && <div className={`mt-2 break-words text-sm ${task.status === "done" ? "line-through text-stone-500" : "text-stone-600"}`}>{task.memo}</div>}
+                  {/* 素のテキスト（時刻・見積）とピル（重さ・優先度）が同じ行に並ぶので、
+                      横の間隔を広めに取って字とピルが詰まって見えないようにする */}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-stone-600">
                     {/* Issue #51: 時刻があるときだけ表示（時刻なしのタスクは従来どおり終日扱いで何も出さない） */}
                     {formatScheduledTimeRange(task.scheduledStartTime, task.scheduledEndTime) && (
-                      <div>{formatScheduledTimeRange(task.scheduledStartTime, task.scheduledEndTime)}</div>
+                      <div className="whitespace-nowrap">{formatScheduledTimeRange(task.scheduledStartTime, task.scheduledEndTime)}</div>
                     )}
-                    {/* Issue #71: medium / heavy と英語の生の値が出ていたため日本語にする */}
-                    <div>{WEIGHT_LABEL[task.weight] ?? task.weight}</div>
+                    {/* Issue #71 で日本語にしたが素のテキストのままで、隣のピルと不揃いだった。
+                        他の画面と同じ WeightBadge に揃える */}
+                    <WeightBadge weight={task.weight} />
                     {task.priority && <PriorityBadge priority={task.priority} />}
-                    {typeof task.estimatedMinutes === "number" && <div>{Math.round(task.estimatedMinutes / 60 * 10) / 10}h</div>}
+                    {typeof task.estimatedMinutes === "number" && <div className="whitespace-nowrap">{Math.round(task.estimatedMinutes / 60 * 10) / 10}h</div>}
                   </div>
                 </div>
               </div>
 
               {/* 操作ボタン群。flex-wrap で狭い画面では折り返す。
                   min-h-11 (44px) はタップしやすさの基準 (Issue #14) */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <select
                   value={task.status}
                   onChange={(event) => updateTaskStatus(task.id, event.target.value as TaskStatus)}

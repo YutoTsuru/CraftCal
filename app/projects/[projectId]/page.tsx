@@ -112,7 +112,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
             <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
             <p className="mt-2 text-stone-400">プロジェクト情報を編集します。</p>
 
-            <form className="mt-4 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+            <form className="mt-4 rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
               <div className="grid gap-3 md:grid-cols-2">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-stone-200 px-3 py-2 outline-none md:col-span-2" />
                 <textarea
@@ -177,7 +177,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
               <button onClick={() => setIsEditing(true)} className="inline-flex items-center gap-2 rounded-md bg-stone-100 px-3 py-2 text-sm text-stone-700 hover:bg-stone-200">編集</button>
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="inline-flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 hover:bg-red-100"
+                className="inline-flex items-center gap-2 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-600 hover:bg-rose-100"
               >
                 <Trash2 size={14} />
                 削除
@@ -189,18 +189,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
 
       {/* 削除確認 */}
       {confirmDelete && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-5">
           <div className="flex items-start gap-3">
-            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-red-500" />
+            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-500" />
             <div className="flex-1">
-              <p className="font-medium text-red-800">「{project.name}」を削除しますか？</p>
-              <p className="mt-1 text-sm text-red-600">
+              <p className="font-medium text-rose-800">「{project.name}」を削除しますか？</p>
+              <p className="mt-1 text-sm text-rose-600">
                 このプロジェクトに紐づくタスク（{projectTasks.length}件）はInboxに移動されます。この操作は元に戻せません。
               </p>
               <div className="mt-4 flex gap-3">
                 <button
                   onClick={handleDelete}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                  className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
                 >
                   削除する
                 </button>
@@ -216,7 +216,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         </div>
       )}
 
-      <section className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+      <section className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm text-stone-600">ゴール</div>
@@ -234,14 +234,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       )}
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+        <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
           <h3 className="text-lg font-semibold">タスク一覧</h3>
           <div className="mt-3">
             <TaskList tasks={projectTasks} onEdit={setEditingTask} />
           </div>
         </div>
 
-        <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+        <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
           <h3 className="text-lg font-semibold">今日のタスク</h3>
           {todays.length === 0 ? <p className="mt-3 text-stone-400">今日のタスクはありません。</p> : <TaskList tasks={todays} onEdit={setEditingTask} />}
 
