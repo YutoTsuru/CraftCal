@@ -15,7 +15,7 @@ export default function RecentLogs() {
   // min-w-0: グリッドアイテムは既定が min-width:auto で、中身の最小幅より小さくなれない。
   // 付けないと長い内容でカードが横にはみ出す (Issue #69)
   return (
-    <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
       <h3 className="text-lg font-semibold">Recent Logs</h3>
       <ul className="mt-3 grid gap-3">
         {logs.map((l) => {

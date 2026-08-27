@@ -9,7 +9,8 @@
 
 import { useDevCalendarActions } from "@/components/AppProvider";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import type { Task, TaskStatus, TaskWeight, TaskPriority } from "@/types/dev-calendar";
+import { WeightBadge } from "@/components/WeightBadge";
+import type { Task, TaskStatus, TaskPriority } from "@/types/dev-calendar";
 
 // カンバンの列順序。この配列のインデックスで「前へ/次へ」の移動先を決める
 const statusOrder: TaskStatus[] = ["todo", "doing", "done"];
@@ -20,19 +21,6 @@ const statusLabels: Partial<Record<TaskStatus, string>> = {
   todo: "未着手",
   doing: "進行中",
   done: "完了"
-};
-
-// TaskList.tsx の weightLabels と同等の表示文字列 (export はせずこちらにも定義する)
-const weightLabels: Record<TaskWeight, string> = {
-  light: "軽め",
-  medium: "普通",
-  heavy: "重め"
-};
-
-const weightClassNames: Record<TaskWeight, string> = {
-  light: "border-stone-400/40 bg-stone-100 text-stone-700",
-  medium: "border-lime-500/40 bg-lime-50 text-lime-800",
-  heavy: "border-orange-400/40 bg-orange-50 text-orange-700"
 };
 
 export function TaskBoard({ tasks }: { tasks: Task[] }) {
@@ -67,24 +55,23 @@ export function TaskBoard({ tasks }: { tasks: Task[] }) {
                 {columnTasks.map((task) => (
                   <article
                     key={task.id}
-                    className="rounded-lg border border-stone-200 bg-surface p-3 shadow-sm"
+                    className="rounded-lg border border-stone-200 bg-surface p-4 shadow-sm"
                   >
+                    {/* 長いタイトルはカード幅で折り返す（列が狭いので truncate だと読めない） */}
                     <h4
-                      className={`font-medium ${
+                      className={`break-words font-medium ${
                         task.status === "done" ? "text-stone-500 line-through opacity-60" : "text-stone-900"
                       }`}
                     >
                       {task.title}
                     </h4>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className={`rounded-full border px-2 py-0.5 text-xs ${weightClassNames[task.weight]}`}>
-                        {weightLabels[task.weight]}
-                      </span>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <WeightBadge weight={task.weight} />
                       {task.priority && <PriorityBadge priority={task.priority as TaskPriority} />}
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-stone-600">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-600">
                       {typeof task.estimatedMinutes === "number" && (
                         <div>{Math.round((task.estimatedMinutes / 60) * 10) / 10}h</div>
                       )}
@@ -92,7 +79,7 @@ export function TaskBoard({ tasks }: { tasks: Task[] }) {
                     </div>
 
                     {/* 列移動ボタン: 先頭列には←を、末尾列には→を出さない */}
-                    <div className="mt-3 flex items-center gap-2">
+                    <div className="mt-4 flex items-center gap-2">
                       {prevStatus && (
                         <button
                           onClick={() => updateTaskStatus(task.id, prevStatus)}

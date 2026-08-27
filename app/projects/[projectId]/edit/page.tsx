@@ -69,7 +69,7 @@ export default function ProjectEditPage({ params }: { params: Promise<{ projectI
         <p className="mt-2 text-stone-400">プロジェクト情報を編集します。</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+      <form onSubmit={handleSubmit} className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
         <div className="grid gap-3 md:grid-cols-2">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-stone-200 px-3 py-2 outline-none md:col-span-2" />
           <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="説明 (任意)" className="rounded-xl border border-stone-200 px-3 py-2 md:col-span-2" />

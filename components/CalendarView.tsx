@@ -330,7 +330,7 @@ export default function CalendarView() {
           preventDefault はせず、縦スクロールやタップ（日付選択・配置）を妨げない。
           範囲選択モード中（rangeSelecting）は誤発火防止のためスワイプを無効化する */}
       <section
-        className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md"
+        className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md"
         onTouchStart={(e) => {
           if (rangeSelecting) return;
           beginSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY);

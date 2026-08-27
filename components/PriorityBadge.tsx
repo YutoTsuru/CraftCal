@@ -1,4 +1,5 @@
 import React from "react";
+import { BADGE_BASE, badgeSizeClass } from "@/lib/badge-style";
 
 /**
  * PriorityBadge: タスクの優先度バッジ。
@@ -26,8 +27,9 @@ const TONE: Record<Priority, string> = {
 };
 
 export function PriorityBadge({ priority, size = "sm" }: { priority: Priority; size?: "sm" | "md" }) {
-  const base = "inline-flex items-center rounded-full border px-2.5 py-1 font-medium";
-  const sizeClass = size === "md" ? "text-sm px-3 py-1" : "text-xs";
+  // 寸法は StatusBadge / WeightBadge と共通（lib/badge-style.ts）
+  const base = BADGE_BASE;
+  const sizeClass = badgeSizeClass(size);
 
   return <span className={`${base} ${sizeClass} ${TONE[priority]}`}>{LABEL[priority]}</span>;
 }

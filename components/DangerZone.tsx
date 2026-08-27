@@ -47,7 +47,7 @@ export function DangerZone() {
   };
 
   return (
-    <section className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <section className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
       <h3 className="text-lg font-semibold">データの管理</h3>
 
       {isEmpty ? (

@@ -146,7 +146,7 @@ export default function HomePage() {
       {/* 今日やるべき Top3: 開いて数秒で「今何をすべきか」が分かるように上部に置く (Issue #6)。
           未完了タスクが1件もないときはセクションごと非表示にする */}
       {topTasks.length > 0 && (
-        <section className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+        <section className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">今日やるべき Top3</h3>
             <Link href="/tasks" className="text-sm text-lime-700">すべて見る</Link>
@@ -157,20 +157,20 @@ export default function HomePage() {
               const project = projects.find((p) => p.id === task.projectId);
 
               return (
-                <div key={task.id} className="relative rounded-xl border border-stone-200 bg-surface p-4 shadow-sm">
+                <div key={task.id} className="relative rounded-xl border border-stone-200 bg-surface p-5 shadow-sm">
                   {/* 順位バッジ (1〜3位)。カード左上に固定表示 */}
-                  <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-stone-700 text-sm font-semibold text-white">
+                  <span className="absolute left-4 top-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-stone-700 text-sm font-semibold text-white">
                     {index + 1}
                   </span>
 
-                  <div className="pl-9">
-                    <div className="font-semibold">{task.title}</div>
-                    <div className="mt-1 flex items-center gap-1.5 text-xs text-stone-500">
+                  <div className="min-w-0 pl-10">
+                    <div className="break-words font-semibold">{task.title}</div>
+                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-stone-500">
                       <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: project?.color ?? DEFAULT_PROJECT_COLOR }} />
                       {project?.name ?? "Inbox"}
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                       <StatusBadge status={task.status} size="sm" />
                       <PriorityBadge priority={task.priority} />
                       {typeof task.estimatedMinutes === "number" && (
@@ -178,7 +178,7 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    <div className="mt-3">
+                    <div className="mt-4">
                       {/* todo なら「開始」で doing へ、それ以外(doing等)は「完了」で done へ */}
                       {task.status === "todo" ? (
                         <button
@@ -217,7 +217,7 @@ export default function HomePage() {
       </section>
 
       {/* プロジェクト進捗: 各プロジェクトの完了率をバーで表示 */}
-      <section className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+      <section className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
         <h3 className="text-lg font-semibold">プロジェクト進捗</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {projects.map((p) => {
@@ -260,7 +260,7 @@ export default function HomePage() {
 
         {/* min-w-0: グリッドアイテムは既定が min-width:auto で中身の最小幅より小さくなれない。
             付けないと中の行がカードからはみ出す (Issue #69) */}
-        <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+        <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-lg font-semibold">期限が近いタスク</h3>
             <Link href="/tasks" className="shrink-0 text-sm text-lime-700">すべて見る</Link>
@@ -278,12 +278,12 @@ export default function HomePage() {
                     key={task.id}
                     // 左端の色帯で危険度を示す。色だけに頼らないよう残り日数のテキストも併記する。
                     // min-w-0 がないとグリッドアイテムが中身の最小幅で固定され、カードからはみ出す
-                    className={`min-w-0 rounded-lg border border-l-4 px-3 py-2 ${tone.row}`}
+                    className={`min-w-0 rounded-lg border border-l-4 px-3.5 py-2.5 ${tone.row}`}
                   >
                     <div className="truncate font-medium">{task.title}</div>
                     {/* 残り日数・期限日・優先度は1つの折り返す行にまとめる。
                         タイトルの横にバッジを置くと、3カラムの狭い幅で横幅を取り合ってはみ出す */}
-                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
                       {/* 「あと3日」「今日まで」「2日超過」。生の日付より状況が分かる */}
                       <span className={`font-semibold ${tone.label}`}>{due.label}</span>
                       <span className="text-stone-500">{task.dueDate}</span>

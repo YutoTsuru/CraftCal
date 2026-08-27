@@ -44,7 +44,7 @@ export default function StatsCard() {
   const completedCount = tasks.filter((t) => t.status === "done").length;
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
       <h3 className="text-lg font-semibold">Stats</h3>
       <div className="mt-3 grid grid-cols-2 gap-3">
         <div className="rounded-md border p-3 text-center">

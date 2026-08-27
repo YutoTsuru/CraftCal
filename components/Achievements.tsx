@@ -28,7 +28,7 @@ export default function Achievements() {
 
   // min-w-0: グリッドアイテムが中身の最小幅で固定され、カードがはみ出すのを防ぐ (Issue #69)
   return (
-    <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-4 shadow-md">
+    <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
       <h3 className="text-lg font-semibold">Achievements</h3>
       <div className="mt-3 grid gap-2">
         <Badge name="初めての一歩" achieved={achieved.firstStep} />
