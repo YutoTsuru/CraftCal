@@ -4,7 +4,7 @@
  * 時刻は "HH:MM" の文字列（<input type="time"> の値そのまま）で、
  * どちらも任意。両方 null なら「時刻なし＝終日扱い」で、これまでの挙動と同じ。
  *
- * 表示（formatScheduledTimeRange）は CalendarView.tsx と TodayList.tsx に
+ * 表示（formatScheduledTimeRange）は CalendarView.tsx と旧 TodayList.tsx（現 home/TodaySection.tsx）に
  * 同じ関数が別々に書かれていたので、ここへ寄せて 1 つにした。
  * 検証（validateScheduledTimeRange）はカレンダーの追加フォーム・編集フォーム・
  * TaskInput の 3 箇所から呼ぶ。
