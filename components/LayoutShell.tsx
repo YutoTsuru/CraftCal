@@ -24,10 +24,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { CalendarDays, CheckSquare, Home, Rocket, Folder, LogOut, PanelLeft, Settings } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { CalendarDays, CheckSquare, Home, Rocket, Folder, PanelLeft, Settings } from "lucide-react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/components/AuthProvider";
 
 // ナビ項目（5画面）。サイドバー・ボトムタブで共通に使う。
 // Issue #112: ラベルを日本語化し、並びを「毎日使う順」（ホーム → タスク → カレンダー → プロジェクト → アシスタント）に変更
@@ -50,9 +49,6 @@ const SIDEBAR_STORAGE_KEY = "craftcal-sidebar-open";
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   // 現在のURLパス。ナビの「今いる画面」をハイライトする判定に使う
   const pathname = usePathname();
-  const router = useRouter();
-  // ログイン中のユーザー情報とログアウト操作（サイドバー下部・モバイルヘッダーで使う）
-  const { user, signOut } = useAuth();
 
   // PC のサイドバー開閉状態。既定は閉（サイドバーなしが基本）。
   // 実際の値はマウント後に localStorage から復元する（下の useEffect）。
@@ -95,12 +91,6 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [toggleSidebar]);
-
-  // ログアウト → ログイン画面へ戻す
-  const handleSignOut = async () => {
-    await signOut();
-    router.replace("/login");
-  };
 
   return (
     <div className="min-h-screen lg:flex">
@@ -169,30 +159,20 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* ===== サイドバー下部: ログイン中のメールアドレス + ログアウトボタン =====
-            mt-auto で常に一番下に貼り付ける */}
+        {/* ===== サイドバー下部: 設定リンクのみ =====
+            mt-auto で常に一番下に貼り付ける。
+            メールアドレス表示とログアウトは、モバイルでの誤タップ防止のため設定ページの
+            「アカウント」セクションへ移した（PC・モバイルで置き場所を揃える） */}
         <div className="mt-auto border-t border-stone-200 pt-3">
-          {/* メールアドレス（長い場合は truncate で省略） */}
-          <p className="mb-2 truncate px-1 text-xs text-stone-500" title={user?.email ?? ""}>
-            {user?.email}
-          </p>
-          {/* 設定リンク (Issue #112)。ログアウトと同系の控えめなスタイルで、
+          {/* 設定リンク (Issue #112)。控えめなスタイルで、
               現在地でも強調はしない（日常的なナビではないため） */}
           <Link
             href="/settings"
-            className="mb-2 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
           >
             <Settings size={18} />
             <span>設定</span>
           </Link>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-2 rounded-xl bg-stone-100 px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-200 hover:text-stone-900"
-          >
-            <LogOut size={18} />
-            <span>ログアウト</span>
-          </button>
         </div>
       </aside>
 
@@ -200,29 +180,22 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           ナビはここには置かず、ロゴだけにして縦スペースを節約する。
           ロゴタップでダッシュボード (/) へ移動できる */}
       <header className="lg:hidden sticky top-0 z-40 border-b border-stone-200 bg-surface/90 backdrop-blur">
-        {/* relative + 中央絶対配置のロゴ。右端にログアウトアイコンボタンを置く */}
+        {/* relative + 中央絶対配置のロゴ。右端に設定アイコンだけを置く */}
         <div className="relative flex items-center justify-center px-2 py-3">
           <Link href="/home" className="text-lg font-bold tracking-tight text-stone-900">
             CraftCal
           </Link>
-          {/* 設定リンク (Issue #112)。ログアウトの左隣（right-12 = 44px + 余白）。
-              下部ナビは5項目のままにするため、設定はヘッダーのアイコンで出す */}
+          {/* 設定リンク (Issue #112)。下部ナビは5項目のままにするため、設定はヘッダーのアイコンで出す。
+              ログアウトは、以前ここの隣にあって誤タップしやすかったため設定ページの「アカウント」へ移した。
+              これでヘッダーには歯車1個だけが残り、誤タップの構造自体がなくなる。
+              タップ領域 44px を確保 (h-11 w-11) */}
           <Link
             href="/settings"
             aria-label="設定"
-            className="absolute right-12 flex h-11 w-11 items-center justify-center rounded-xl text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
+            className="absolute right-4 flex h-11 w-11 items-center justify-center rounded-xl text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
           >
             <Settings size={20} />
           </Link>
-          {/* ログアウトボタン。タップ領域 44px を確保 (h-11 w-11) */}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            aria-label="ログアウト"
-            className="absolute right-1 flex h-11 w-11 items-center justify-center rounded-xl text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
-          >
-            <LogOut size={20} />
-          </button>
         </div>
       </header>
 
