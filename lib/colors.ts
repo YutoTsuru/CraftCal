@@ -10,7 +10,7 @@
  *   - components/ColorPicker.tsx … このパレットをスウォッチのグリッドとして描画する
  *   - components/ProjectForm.tsx / app/projects/plan/page.tsx /
  *     app/projects/[projectId]/page.tsx / app/projects/[projectId]/edit/page.tsx … 選択UI
- *   - components/TodayList.tsx / components/CalendarView.tsx / app/page.tsx … 8px の丸ドットとして表示
+ *   - components/home/TodaySection.tsx / components/CalendarView.tsx / app/page.tsx … 8px の丸ドットとして表示
  *   - app/page.tsx / app/projects/page.tsx … 進捗バーの色として表示
  */
 

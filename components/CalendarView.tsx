@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { formatDate } from "@/lib/schedule";
 import type { Task } from "@/types/dev-calendar";
+import { PageHeader } from "@/components/ui/PageHeader";
 import CalendarRangeHeader from "@/components/CalendarRangeHeader";
 import { addDays, addMonths, getMonthMatrix, getWeekRange } from "@/lib/calendar-grid";
 import { getTasksForDateKey } from "@/lib/calendar-bars";
@@ -267,25 +268,18 @@ export default function CalendarView() {
 
   return (
     <div className="grid gap-6">
-      <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-lime-700">Calendar</p>
-            <h2 className="mt-2 text-3xl font-bold">カレンダー</h2>
-            <p className="mt-1 text-stone-400">月表示・週表示でタスクを確認できます。</p>
+      {/* ページ見出し (Issue #112): eyebrow・説明文を廃止して1行にし、右端に月/週の切替を置く。
+          切替タブは以前 hidden sm:flex でモバイル非表示だったが、モバイルでも切替できるよう常時表示 (Issue #14)。
+          py-2 はタップ領域確保のため */}
+      <PageHeader
+        title="カレンダー"
+        actions={
+          <div className="flex items-center rounded-md bg-stone-100 p-1">
+            <button onClick={() => setMode("month")} className={`rounded px-3 py-2 text-sm ${mode === "month" ? "bg-lime-700 text-white" : "text-stone-700"}`}>Month</button>
+            <button onClick={() => setMode("week")} className={`rounded px-3 py-2 text-sm ${mode === "week" ? "bg-lime-700 text-white" : "text-stone-700"}`}>Week</button>
           </div>
-
-          {/* 月表示/週表示の切替タブ。
-              以前は hidden sm:flex でモバイル非表示だったが、モバイルでも切替できるよう常時表示に変更 (Issue #14)。
-              py-2 はタップ領域確保のため */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center rounded-md bg-stone-100 p-1">
-              <button onClick={() => setMode("month")} className={`rounded px-3 py-2 text-sm ${mode === "month" ? "bg-lime-700 text-white" : "text-stone-700"}`}>Month</button>
-              <button onClick={() => setMode("week")} className={`rounded px-3 py-2 text-sm ${mode === "week" ? "bg-lime-700 text-white" : "text-stone-700"}`}>Week</button>
-            </div>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Range header with controls */}
       <CalendarRangeHeader
@@ -330,7 +324,7 @@ export default function CalendarView() {
           preventDefault はせず、縦スクロールやタップ（日付選択・配置）を妨げない。
           範囲選択モード中（rangeSelecting）は誤発火防止のためスワイプを無効化する */}
       <section
-        className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md"
+        className="rounded-xl border border-stone-200 bg-surface p-5 shadow-sm"
         onTouchStart={(e) => {
           if (rangeSelecting) return;
           beginSwipe(e.changedTouches[0].clientX, e.changedTouches[0].clientY);

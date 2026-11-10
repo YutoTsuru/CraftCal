@@ -54,7 +54,7 @@ export default function DayDetailPanel({
   }
 
   return (
-    <section className="mt-4 rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
+    <section className="mt-4 rounded-xl border border-stone-200 bg-surface p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-stone-600">{dateKey}</p>
