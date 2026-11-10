@@ -50,6 +50,20 @@ export default function HomePage() {
 
   const today = getTodayString();
 
+  // ライブ時計 (HH:MM)。日付ヘッダーの時刻表示に使う。
+  // 表示は1分精度だが、分の切り替わりを遅らせないよう1秒ごとに現在時刻を見直す。
+  // マウント前は null のまま（SSR とのズレ防止）。アンマウント時に clearInterval で止める
+  const [clock, setClock] = useState<string | null>(null);
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      setClock(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
+    };
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // 作業ログは localStorage にあり SSR 中は読めないため、マウント後に useEffect で読む。
   // tasks を依存に入れるのは、完了操作などの後にも最新へ更新するため（旧 StatsCard と同じ）
   const [logs, setLogs] = useState<DailyLog[]>([]);
@@ -65,14 +79,21 @@ export default function HomePage() {
     () => selectDueSoonTasks(tasks, today).filter((d) => d.due.severity === "overdue" || d.due.severity === "today"),
     [tasks, today]
   );
+  // 右レール「期限が近いタスク」用（超過含む・最大6件）
+  const dueSoonList = useMemo(() => selectDueSoonTasks(tasks, today, { limit: 6 }), [tasks, today]);
   const overdueCount = alertTasks.filter((d) => d.due.severity === "overdue").length;
   const todayDueCount = alertTasks.length - overdueCount;
 
   return (
     <div className="grid gap-6">
-      {/* 日付ヘッダー: 左に今日の日付、右に連続日数・今週の作業日数 */}
+      {/* 日付ヘッダー: 左に今日の日付 + 現在時刻（大きく）、右に連続日数・今週の作業日数（小さく） */}
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-xl font-bold">{formatJapaneseDate(today)}</h2>
+        {/* 時間を意識して作業するため、日付と時刻を大きく表示する。
+            時刻はマウント前(null)は出さない（SSR と初回描画の不一致を避ける） */}
+        <h2 className="text-2xl font-bold tabular-nums sm:text-3xl">
+          {formatJapaneseDate(today)}
+          {clock !== null && <span className="ml-4">{clock}</span>}
+        </h2>
         <p className="text-sm text-stone-500">🔥 連続{streak}日 ・ 今週{weekDays}日</p>
       </header>
 
@@ -134,7 +155,7 @@ export default function HomePage() {
       {/* PC幅では「今日やること」(左) と ふり返り系 (右レール) の2カラムにする (Issue #112)。
           縦1列のままだと PC では草の右側や画面下部が大きく空いてしまうため。
           モバイルは従来どおり縦積み（アラート → 今日 → アクティビティ → ログ の順） */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,340px)] lg:items-start">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] lg:items-start">
         {/* 左: 今日やること（メイン） */}
         <div className="grid min-w-0 gap-6">
           {/* 期限アラート帯: 期限切れ・今日が期限のタスクがあるときだけ表示する。
@@ -166,6 +187,28 @@ export default function HomePage() {
           <section>
             <h3 className="mb-3 text-sm font-semibold text-stone-500">アクティビティ</h3>
             <ActivityGrid />
+          </section>
+
+          {/* 期限が近いタスク: 7日以内（超過含む）を危険な順に最大6件。
+              役割分担: 左の期限アラート帯は overdue/today だけの「行動喚起」、こちらは近い期限の「一覧」 */}
+          <section>
+            <h3 className="mb-3 text-sm font-semibold text-stone-500">期限が近いタスク</h3>
+            {dueSoonList.length === 0 ? (
+              <p className="text-sm text-stone-600">7日以内の期限はありません</p>
+            ) : (
+              <ul className="divide-y divide-stone-100 rounded-xl border border-stone-200 bg-surface">
+                {dueSoonList.map(({ task, due }) => (
+                  // 左の色帯は DUE_TONE.row の border-l 色（危険度）を流用
+                  <li key={task.id} className={`flex min-w-0 items-baseline gap-3 border-l-2 px-3 py-2 text-sm ${DUE_TONE[due.severity].row}`}>
+                    <span className={`shrink-0 font-medium ${DUE_TONE[due.severity].label}`}>{due.label}</span>
+                    <span className="min-w-0 flex-1 truncate text-stone-800">{task.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link href="/tasks" className="mt-2 inline-block text-sm text-lime-700 underline-offset-2 hover:underline">
+              すべて見る
+            </Link>
           </section>
 
           {/* 最近の作業ログ: 既定は閉じた折りたたみ。開くと RecentLogs が見える */}

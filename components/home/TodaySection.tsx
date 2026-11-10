@@ -14,10 +14,11 @@
 
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
 import { getTodayString, getTodayTasks } from "@/lib/schedule";
 import { selectTopTasks } from "@/lib/top-tasks";
+import { getDailyCapacityHours, selectWithinCapacity } from "@/lib/daily-capacity";
 import type { Task, TaskStatus } from "@/types/dev-calendar";
 import { saveOrUpdateDailyLog, getAllLogs } from "@/lib/dailyLogs";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -50,6 +51,23 @@ export default function TodaySection() {
     return getTodayTasks(schedule, tasks).filter((t) => !topIds.has(t.id));
   }, [schedule, tasks, topTasks]);
   const totalCount = topTasks.length + restTasks.length;
+
+  // Issue #112: 「1日に11件は多すぎる」というフィードバックへの対応。
+  // 設定した1日の作業時間(lib/daily-capacity.ts)に収まる範囲だけを表示し、超えたぶんは折りたたむ。
+  // localStorage は SSR 中に読めないため、マウント後に useEffect で読む（読み込み前は null = 全件表示）
+  const [capacityHours, setCapacityHours] = useState<number | null>(null);
+  useEffect(() => {
+    setCapacityHours(getDailyCapacityHours());
+  }, []);
+
+  // Top3 を先頭に、残りを続けた並びのまま容量で絞る。Top3 の順位番号は rank 計算のため id で引く
+  const { visibleTasks, hiddenTasks } = useMemo(() => {
+    const list = [...topTasks, ...restTasks];
+    if (capacityHours === null) return { visibleTasks: list, hiddenTasks: [] as Task[] };
+    const { visible, hidden } = selectWithinCapacity(list, capacityHours);
+    return { visibleTasks: visible, hiddenTasks: hidden };
+  }, [topTasks, restTasks, capacityHours]);
+  const topRank = useMemo(() => new Map(topTasks.map((t, i) => [t.id, i + 1])), [topTasks]);
 
   // 作業ログのモーダル
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -87,11 +105,13 @@ export default function TodaySection() {
   const renderRow = (task: Task, rank?: number) => (
     <li
       key={task.id}
-      // モバイル: 上に内容・下に操作の縦積み / sm 以上: 左に内容・右に操作 (Issue #14)
-      className={`flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${task.status === "done" ? "opacity-60" : ""}`}
+      // モバイル: 上に内容・下に操作の縦積み / sm 以上: 左に内容・その直後に操作 (Issue #14)
+      // Issue #112: フルード幅では操作を右端固定(justify-between)にするとタイトルと操作の間が
+      // 間延びするため、操作をコンテンツ側に寄せた
+      className={`flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-6 ${task.status === "done" ? "opacity-60" : ""}`}
     >
-      {/* min-w-0: 付けないと長いタイトルが右の操作エリアを押し出す */}
-      <div className="flex min-w-0 flex-1 items-start gap-3">
+      {/* min-w-0: 付けないと長いタイトルが操作エリアを押し出す。max-w-3xl: 幅いっぱいに伸びず、操作が直後に続く */}
+      <div className="flex min-w-0 max-w-3xl items-start gap-3">
         {/* チェックボックス: ON で完了、OFF で未着手に戻す */}
         <input
           type="checkbox"
@@ -136,6 +156,7 @@ export default function TodaySection() {
       </div>
 
       {/* 操作ボタン群（ステータス select / 完了モーダル / 作業ログモーダル）。狭い画面では折り返す */}
+      {/* Issue #112: 右端固定をやめ、コンテンツの直後に置く（親の flex で左コンテンツに続く） */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 pl-7 sm:pl-0">
         <select
           value={task.status}
@@ -174,9 +195,17 @@ export default function TodaySection() {
 
   return (
     <section>
-      {/* セクション見出し「今日」+ 件数 */}
+      {/* セクション見出し「今日」+ 件数。絞り込みが効いているときは「M/N件 ・ 目安X時間」と表示し、設定へのリンクを添える */}
       <h3 className="text-sm font-semibold text-stone-500">
-        今日 <span className="ml-1 font-normal">{totalCount}件</span>
+        今日{" "}
+        <span className="ml-1 font-normal">
+          {capacityHours === null ? `${totalCount}件` : `${visibleTasks.length}/${totalCount}件 ・ 目安${capacityHours}時間`}
+        </span>
+        {capacityHours !== null && (
+          <Link href="/settings" className="ml-2 text-xs font-normal text-lime-700 underline-offset-2 hover:underline">
+            設定
+          </Link>
+        )}
       </h3>
 
       {totalCount === 0 ? (
@@ -188,9 +217,20 @@ export default function TodaySection() {
       ) : (
         // 1つのカードの中に Top3 → 残りを続けて並べる。行の区切りは divide-y
         <ul className="mt-3 divide-y divide-stone-100 rounded-xl border border-stone-200 bg-surface px-4">
-          {topTasks.map((task, index) => renderRow(task, index + 1))}
-          {restTasks.map((task) => renderRow(task))}
+          {visibleTasks.map((task) => renderRow(task, topRank.get(task.id)))}
         </ul>
+      )}
+
+      {/* 1日の目安時間を超えたぶんの折りたたみ。行の見た目は同じ renderRow */}
+      {hiddenTasks.length > 0 && (
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm text-stone-500">
+            ほか{hiddenTasks.length}件（1日の目安時間を超えるぶん）
+          </summary>
+          <ul className="mt-2 divide-y divide-stone-100 rounded-xl border border-stone-200 bg-surface px-4">
+            {hiddenTasks.map((task) => renderRow(task, topRank.get(task.id)))}
+          </ul>
+        </details>
       )}
 
       {editingTaskId && (

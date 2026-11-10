@@ -42,9 +42,11 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
         {tasks.map((task) => (
           // 1行 = 1タスク。完了済みは薄く表示する
           <li key={task.id} className={`px-4 py-3 ${task.status === "done" ? "opacity-60" : ""}`}>
-            <div className="flex items-start justify-between gap-3">
-              {/* min-w-0 が無いと、長いタイトルが縮まずに右の操作エリアを押し出す */}
-              <div className="min-w-0 flex-1">
+            {/* Issue #112: フルード幅では右端固定(justify-between)だとタイトルと操作の間が間延びするため、
+                操作をコンテンツ側に寄せた。狭い画面では操作群が下の行に折り返す */}
+            <div className="flex flex-wrap items-start gap-x-6 gap-y-2">
+              {/* min-w-0 が無いと、長いタイトルが縮まずに操作エリアを押し出す。max-w-3xl で伸びすぎも防ぐ */}
+              <div className="min-w-0 max-w-3xl">
                 {/* タイトル + バッジを1つの折り返し行にまとめる（高さを揃えるため） */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <h3 className="min-w-0 break-words text-base font-semibold">{task.title}</h3>
@@ -62,9 +64,9 @@ export function TaskList({ tasks, onEdit }: { tasks: Task[]; onEdit?: (task: Tas
                 </div>
               </div>
 
-              {/* 行右端の操作エリア: ステータス変更 / 編集 / 削除。
+              {/* コンテンツ直後の操作エリア: ステータス変更 / 編集 / 削除。
                   行リスト化に合わせて高さを h-9 に下げた (Issue #14 の h-11 から。モーダル内は別) */}
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 {/* ステータス変更のドロップダウン。変更すると即保存される */}
                 <select
                   value={task.status}
