@@ -85,10 +85,10 @@ export default function ActivityGrid({ days = 90 }: { days?: number }) {
   }, [weeks]);
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
-      <h3 className="text-lg font-semibold">Craft Activity</h3>
-
-      <div className="mt-3 flex gap-3">
+    // Issue #112: 以前はカード(枠+影)と英語見出し「Craft Activity」を自前で持っていたが、
+    // 置き場所(Home)の「アクティビティ」見出しと二重になるため外し、素のグリッドだけを描く
+    <div>
+      <div className="flex gap-3">
         {/* Weekday labels */}
         <div className="hidden md:flex md:flex-col md:items-end md:gap-[4px] md:pr-2" style={{ width: 48 }}>
           <div className="h-3" />

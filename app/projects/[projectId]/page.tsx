@@ -13,6 +13,8 @@ import { ColorPicker } from "@/components/ColorPicker";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { ProjectIconInput } from "@/components/ProjectIconInput";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
+import { getProjectProgress } from "@/lib/project-progress";
+import { StatusBadge } from "@/components/StatusBadge";
 import type { Task } from "@/types/dev-calendar";
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
@@ -60,8 +62,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
   }
 
   const projectTasks = tasks.filter((t) => t.projectId === projectId);
-  const done = projectTasks.filter((t) => t.status === "done").length;
-  const progress = projectTasks.length === 0 ? 0 : Math.round((done / projectTasks.length) * 100);
+  // 進捗率は共通関数に一本化 (Issue #112)
+  const progress = getProjectProgress(tasks, projectId);
 
   const today = getTodayString();
   const todays = projectTasks.filter((t) => t.scheduledDate === today);
@@ -108,11 +110,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
       <div>
         {isEditing ? (
           <div>
-            <p className="text-sm text-stone-500">Edit Project</p>
-            <h2 className="mt-2 text-3xl font-bold">{project.name}</h2>
-            <p className="mt-2 text-stone-400">プロジェクト情報を編集します。</p>
+            {/* 編集モードの見出し (Issue #112): eyebrow・説明文を廃止して1行に */}
+            <h2 className="text-xl font-bold">{project.name}を編集</h2>
 
-            <form className="mt-4 rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
+            <form className="mt-4 rounded-xl border border-stone-200 bg-surface p-5 shadow-sm">
               <div className="grid gap-3 md:grid-cols-2">
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder="プロジェクト名" className="rounded-xl border border-stone-200 px-3 py-2 outline-none md:col-span-2" />
                 <textarea
@@ -153,16 +154,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         ) : (
           <div className="flex items-start gap-4">
             <div className="flex-1">
-              <p className="text-sm text-stone-500">Project</p>
-              {/* Issue #82: アイコンを設定していれば見出しの横に出す */}
-              <div className="mt-2 flex items-center gap-3">
+              {/* Issue #82: アイコンを設定していれば見出しの横に出す。
+                  Issue #112: eyebrow「Project」を廃止し、見出しも text-3xl → text-xl に */}
+              <div className="flex items-center gap-3">
                 <ProjectIcon
                   name={project.name}
                   iconPath={project.iconPath}
                   color={project.color}
                   size={40}
                 />
-                <h2 className="text-3xl font-bold">{project.name}</h2>
+                <h2 className="text-xl font-bold">{project.name}</h2>
               </div>
               {project.description && (
                 <div className="mt-3 rounded-xl border border-stone-200 bg-surface p-4 text-sm shadow-sm">
@@ -216,16 +217,21 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         </div>
       )}
 
-      <section className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
-        <div className="flex items-center justify-between">
+      {/* ゴールカード (Issue #112): 進捗に全幅バーを追加し、
+          ステータスの生英語値(active 等)は StatusBadge の日本語ラベルに置き換えた */}
+      <section className="rounded-xl border border-stone-200 bg-surface p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm text-stone-600">ゴール</div>
             <div className="mt-1 text-lg font-medium">{project.goal ?? "(未設定)"}</div>
           </div>
-          <div className="text-right">
+          <div className="flex flex-col items-end gap-2">
             <div className="text-sm text-stone-500">進捗: {progress}%</div>
-            <div className="mt-2 text-sm text-stone-500">ステータス: {project.status}</div>
+            <StatusBadge status={project.status} kind="project" />
           </div>
+        </div>
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-stone-100">
+          <div style={{ width: `${progress}%`, background: project.color ?? DEFAULT_PROJECT_COLOR }} className="h-2 rounded-full" />
         </div>
       </section>
 
@@ -233,20 +239,26 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         <TaskInput editingTask={editingTask} onCancel={() => setEditingTask(null)} />
       )}
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
-          <h3 className="text-lg font-semibold">タスク一覧</h3>
+      {/* Issue #112: TaskList 自体が枠つきのリストカードになったため、
+          ここで更にカードで包むと二重枠になる。列は素の div + 控えめな見出しにする */}
+      <section className="grid gap-6 md:grid-cols-2">
+        <div>
+          <h3 className="text-sm font-semibold text-stone-500">タスク一覧</h3>
           <div className="mt-3">
             <TaskList tasks={projectTasks} onEdit={setEditingTask} />
           </div>
         </div>
 
-        <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
-          <h3 className="text-lg font-semibold">今日のタスク</h3>
-          {todays.length === 0 ? <p className="mt-3 text-stone-400">今日のタスクはありません。</p> : <TaskList tasks={todays} onEdit={setEditingTask} />}
+        <div>
+          <h3 className="text-sm font-semibold text-stone-500">今日のタスク</h3>
+          <div className="mt-3">
+            {todays.length === 0 ? <p className="text-stone-400">今日のタスクはありません。</p> : <TaskList tasks={todays} onEdit={setEditingTask} />}
+          </div>
 
-          <h3 className="mt-6 text-lg font-semibold">期限が近いタスク</h3>
-          {dueSoon.length === 0 ? <p className="mt-3 text-stone-400">今後7日以内の期限はありません。</p> : <TaskList tasks={dueSoon} onEdit={setEditingTask} />}
+          <h3 className="mt-6 text-sm font-semibold text-stone-500">期限が近いタスク</h3>
+          <div className="mt-3">
+            {dueSoon.length === 0 ? <p className="text-stone-400">今後7日以内の期限はありません。</p> : <TaskList tasks={dueSoon} onEdit={setEditingTask} />}
+          </div>
         </div>
       </section>
     </div>
