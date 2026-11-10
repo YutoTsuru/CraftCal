@@ -12,26 +12,26 @@
  * - スマホは画面下 1/3 が親指で最も届きやすい（サムゾーン）
  * - タブは 3〜5 個が上限とされるため、ちょうど 5 画面（Home 含む）に収まる
  *
- * ナビの並び順は利用フロー順にしている (Issue #27):
- * Home（今日の確認）→ Projects（登録）→ Tasks（管理）→ Sprint（AI計画）→ Calendar（確認）。
- * Today は統合ホーム (/) に統合したため項目から外した。
+ * ナビの並び順は Issue #112 で「毎日使う順」に変更:
+ * ホーム → タスク → カレンダー → プロジェクト → アシスタント。
+ * 設定 (/settings) はナビ項目ではなく、サイドバー下部 / モバイルヘッダー右のリンクで出す。
  */
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CalendarDays, CheckSquare, Home, Rocket, Folder, LogOut } from "lucide-react";
+import { CalendarDays, CheckSquare, Home, Rocket, Folder, LogOut, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/components/AuthProvider";
 
 // ナビ項目（5画面）。サイドバー・ボトムタブで共通に使う。
-// 並び順 = 利用フロー順（Home → Projects → Tasks → Sprint → Calendar）
+// Issue #112: ラベルを日本語化し、並びを「毎日使う順」（ホーム → タスク → カレンダー → プロジェクト → アシスタント）に変更
 const sidebarItems = [
   // Issue #64: ダッシュボードは / から /home に移動（/ は公開ランディング）
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/projects", label: "Projects", icon: Folder },
-  { href: "/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/sprint", label: "Sprint", icon: Rocket },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays }
+  { href: "/home", label: "ホーム", icon: Home },
+  { href: "/tasks", label: "タスク", icon: CheckSquare },
+  { href: "/calendar", label: "カレンダー", icon: CalendarDays },
+  { href: "/projects", label: "プロジェクト", icon: Folder },
+  { href: "/sprint", label: "アシスタント", icon: Rocket }
 ];
 
 // モバイルのボトムタブに出す項目。
@@ -101,6 +101,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           <p className="mb-2 truncate px-1 text-xs text-stone-500" title={user?.email ?? ""}>
             {user?.email}
           </p>
+          {/* 設定リンク (Issue #112)。ログアウトと同系の控えめなスタイルで、
+              現在地でも強調はしない（日常的なナビではないため） */}
+          <Link
+            href="/settings"
+            className="mb-2 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
+          >
+            <Settings size={18} />
+            <span>設定</span>
+          </Link>
           <button
             type="button"
             onClick={handleSignOut}
@@ -120,6 +129,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <div className="relative flex items-center justify-center px-2 py-3">
           <Link href="/home" className="text-lg font-bold tracking-tight text-stone-900">
             CraftCal
+          </Link>
+          {/* 設定リンク (Issue #112)。ログアウトの左隣（right-12 = 44px + 余白）。
+              下部ナビは5項目のままにするため、設定はヘッダーのアイコンで出す */}
+          <Link
+            href="/settings"
+            aria-label="設定"
+            className="absolute right-12 flex h-11 w-11 items-center justify-center rounded-xl text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
+          >
+            <Settings size={20} />
           </Link>
           {/* ログアウトボタン。タップ領域 44px を確保 (h-11 w-11) */}
           <button
