@@ -69,7 +69,7 @@ export default function HomePage() {
   const todayDueCount = alertTasks.length - overdueCount;
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       {/* 日付ヘッダー: 左に今日の日付、右に連続日数・今週の作業日数 */}
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-xl font-bold">{formatJapaneseDate(today)}</h2>
@@ -131,41 +131,52 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 期限アラート帯: 期限切れ・今日が期限のタスクがあるときだけ表示する。
-          色（rose）だけでなく「期限切れN件・今日が期限N件」の文言でも伝える (Issue #69 の二重表現を踏襲) */}
-      {alertTasks.length > 0 && (
-        <Link
-          href="/tasks"
-          className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-rose-200 bg-rose-50/60 px-4 py-3 text-sm"
-        >
-          <span className={`shrink-0 font-semibold ${DUE_TONE.overdue.label}`}>
-            {[overdueCount > 0 && `期限切れ${overdueCount}件`, todayDueCount > 0 && `今日が期限${todayDueCount}件`].filter(Boolean).join("・")}
-          </span>
-          {/* 先頭2件のタイトル（危険な順に並んでいる） */}
-          <span className="min-w-0 flex-1 truncate text-stone-700">
-            {alertTasks.slice(0, 2).map(({ task }) => task.title).join(" / ")}
-          </span>
-          <span className="shrink-0 text-lime-700">タスクを見る</span>
-        </Link>
-      )}
+      {/* PC幅では「今日やること」(左) と ふり返り系 (右レール) の2カラムにする (Issue #112)。
+          縦1列のままだと PC では草の右側や画面下部が大きく空いてしまうため。
+          モバイルは従来どおり縦積み（アラート → 今日 → アクティビティ → ログ の順） */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,340px)] lg:items-start">
+        {/* 左: 今日やること（メイン） */}
+        <div className="grid min-w-0 gap-6">
+          {/* 期限アラート帯: 期限切れ・今日が期限のタスクがあるときだけ表示する。
+              色（rose）だけでなく「期限切れN件・今日が期限N件」の文言でも伝える (Issue #69 の二重表現を踏襲) */}
+          {alertTasks.length > 0 && (
+            <Link
+              href="/tasks"
+              className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-rose-200 bg-rose-50/60 px-4 py-3 text-sm"
+            >
+              <span className={`shrink-0 font-semibold ${DUE_TONE.overdue.label}`}>
+                {[overdueCount > 0 && `期限切れ${overdueCount}件`, todayDueCount > 0 && `今日が期限${todayDueCount}件`].filter(Boolean).join("・")}
+              </span>
+              {/* 先頭2件のタイトル（危険な順に並んでいる） */}
+              <span className="min-w-0 flex-1 truncate text-stone-700">
+                {alertTasks.slice(0, 2).map(({ task }) => task.title).join(" / ")}
+              </span>
+              <span className="shrink-0 text-lime-700">タスクを見る</span>
+            </Link>
+          )}
 
-      {/* 「今日」セクション: 旧「今日やるべき Top3」と旧 TodayList を1つに統合したもの。
-          同じ"今日やること"が2回出ていたため (Issue #112) */}
-      <TodaySection />
-
-      {/* アクティビティ: 作業ログの活動グリッド。囲みカードは外して素のまま置く */}
-      <section>
-        <h3 className="mb-3 text-sm font-semibold text-stone-500">アクティビティ</h3>
-        <ActivityGrid />
-      </section>
-
-      {/* 最近の作業ログ: 既定は閉じた折りたたみ。開くと RecentLogs が見える */}
-      <details className="group">
-        <summary className="cursor-pointer text-sm font-semibold text-stone-500">最近の作業ログ</summary>
-        <div className="mt-3">
-          <RecentLogs />
+          {/* 「今日」セクション: 旧「今日やるべき Top3」と旧 TodayList を1つに統合したもの。
+              同じ"今日やること"が2回出ていたため (Issue #112) */}
+          <TodaySection />
         </div>
-      </details>
+
+        {/* 右レール: ふり返り系。日々の操作対象ではないので脇に寄せる */}
+        <div className="grid min-w-0 gap-6">
+          {/* アクティビティ: 作業ログの活動グリッド。囲みカードは外して素のまま置く */}
+          <section>
+            <h3 className="mb-3 text-sm font-semibold text-stone-500">アクティビティ</h3>
+            <ActivityGrid />
+          </section>
+
+          {/* 最近の作業ログ: 既定は閉じた折りたたみ。開くと RecentLogs が見える */}
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-semibold text-stone-500">最近の作業ログ</summary>
+            <div className="mt-3">
+              <RecentLogs />
+            </div>
+          </details>
+        </div>
+      </div>
     </div>
   );
 }

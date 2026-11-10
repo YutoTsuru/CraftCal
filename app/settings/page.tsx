@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function SettingsPage() {
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeader title="設定" />
       {/* データ全削除の区画（2段階確認つき） */}
       <DangerZone />

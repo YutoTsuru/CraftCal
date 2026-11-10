@@ -154,7 +154,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       {/* ===== メインコンテンツ =====
           - lg:ml-56 はデスクトップでサイドバー幅 (w-56) の分だけ右にずらすため
           - pb-24 はモバイルでボトムタブバー (高さ約64px) にコンテンツが隠れないための下余白 */}
-      <main className="w-full px-5 py-7 pb-28 lg:ml-56 lg:px-10 lg:py-10 lg:pb-10 content-above">
+      {/* Issue #112: カードと統計を減らした結果、80c779d で広げた余白が逆に空白として
+          目立つようになったため一段詰める (lg: px-10/py-10 → px-8/py-8、モバイル: py-7 → py-6) */}
+      <main className="w-full px-5 py-6 pb-28 lg:ml-56 lg:px-8 lg:py-8 lg:pb-8 content-above">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
