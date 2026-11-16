@@ -12,17 +12,17 @@ export default function RecentLogs() {
     setLogs(getRecentLogs(5));
   }, []);
 
-  // min-w-0: グリッドアイテムは既定が min-width:auto で、中身の最小幅より小さくなれない。
-  // 付けないと長い内容でカードが横にはみ出す (Issue #69)
+  // Issue #112: Home では <details> の折りたたみ「最近の作業ログ」の中身として使う（見出しは親側）。
+  // 以前は1件ごとの rounded-md border カードだったが、divide-y の行リストに変更した。
+  // min-w-0: グリッド/フレックス内で中身の最小幅より縮められず横にはみ出すのを防ぐ (Issue #69)
   return (
-    <div className="min-w-0 rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
-      <h3 className="text-lg font-semibold">Recent Logs</h3>
-      <ul className="mt-3 grid gap-3">
+    <div className="min-w-0">
+      <ul className="divide-y divide-stone-100">
         {logs.map((l) => {
           const task = tasks.find((t) => t.id === l.taskId);
           return (
             // break-words: 作業ログは自由入力で、長いURLなど折り返せない文字列が入りうる
-            <li key={l.id} className="min-w-0 break-words rounded-md border p-3">
+            <li key={l.id} className="min-w-0 break-words py-2.5">
               <div className="text-sm text-stone-500">{l.date} — {task?.title ?? "(Unknown)"}</div>
               {l.did && <div className="mt-1 text-sm">{l.did}</div>}
               {l.blocked && <div className="mt-1 text-sm text-amber-600">詰まったこと: {l.blocked}</div>}
@@ -30,7 +30,7 @@ export default function RecentLogs() {
             </li>
           );
         })}
-        {logs.length === 0 && <li className="text-sm text-stone-500">まだ作業ログがありません。</li>}
+        {logs.length === 0 && <li className="py-2.5 text-sm text-stone-500">まだ作業ログがありません。</li>}
       </ul>
     </div>
   );

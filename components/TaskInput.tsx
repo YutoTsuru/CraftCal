@@ -123,7 +123,7 @@ export function TaskInput({ editingTask = null, onCancel }: Props) {
           event.preventDefault();
         }
       }}
-      className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md"
+      className="rounded-xl border border-stone-200 bg-surface p-5 shadow-sm"
     >
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         <input

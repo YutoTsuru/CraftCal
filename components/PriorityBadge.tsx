@@ -1,14 +1,11 @@
 import React from "react";
-import { BADGE_BASE, badgeSizeClass } from "@/lib/badge-style";
+import { BADGE_BASE, badgeSizeClass, badgeDotClass } from "@/lib/badge-style";
 
 /**
- * PriorityBadge: タスクの優先度バッジ。
+ * PriorityBadge: タスクの優先度バッジ（色ドット + テキスト）。
  *
- * Issue #69 で直した点:
- *   - `high` / `medium` / `low` と英語の生の値をそのまま出しており、
- *     日本語UIの中で浮くうえ意味が伝わらなかった → 日本語表記にする
- *   - 低優先度が soft-sky（水色）で、Issue #67 の暖色化から取り残されていた
- *     （独自カラー名だったため一括置換から漏れていた）→ 無彩色にする
+ * Issue #69: 英語の生の値を日本語表記にした。
+ * Issue #112: 塗りつぶしピルをやめ、色ドット + テキストに変更。
  */
 
 type Priority = "high" | "medium" | "low";
@@ -20,16 +17,21 @@ const LABEL: Record<Priority, string> = {
 };
 
 // 高＝注意を引く赤、中＝琥珀、低＝無彩色。低は「急がない」ので色を持たせない
-const TONE: Record<Priority, string> = {
-  high: "bg-rose-50 text-rose-700 border-rose-200",
-  medium: "bg-amber-50 text-amber-800 border-amber-200",
-  low: "bg-stone-100 text-stone-600 border-stone-200"
+const DOT: Record<Priority, string> = {
+  high: "bg-rose-500",
+  medium: "bg-amber-500",
+  low: "bg-stone-300"
 };
 
 export function PriorityBadge({ priority, size = "sm" }: { priority: Priority; size?: "sm" | "md" }) {
-  // 寸法は StatusBadge / WeightBadge と共通（lib/badge-style.ts）
-  const base = BADGE_BASE;
-  const sizeClass = badgeSizeClass(size);
+  // 高優先度だけ文字色も赤にして、一覧の中で目に留まるようにする
+  const textClass = priority === "high" ? "text-rose-700" : "";
 
-  return <span className={`${base} ${sizeClass} ${TONE[priority]}`}>{LABEL[priority]}</span>;
+  return (
+    <span className={`${BADGE_BASE} ${badgeSizeClass(size)} ${textClass}`}>
+      {/* 優先度を示す色ドット（装飾。意味は隣のテキストが担う） */}
+      <span className={`${badgeDotClass(size)} ${DOT[priority]}`} aria-hidden="true" />
+      {LABEL[priority]}
+    </span>
+  );
 }

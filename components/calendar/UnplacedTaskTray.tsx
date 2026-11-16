@@ -29,7 +29,7 @@ export default function UnplacedTaskTray({ tasks, placingTaskId, onToggle, onCle
 
   return (
     <section
-      className={`rounded-xl border bg-surface p-4 shadow-md ${placingTask ? "border-lime-500" : "border-stone-200"}`}
+      className={`rounded-xl border bg-surface p-4 shadow-sm ${placingTask ? "border-lime-500" : "border-stone-200"}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>

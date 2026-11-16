@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useDevCalendar } from "@/components/AppProvider";
-import { StatCard } from "@/components/StatCard";
 import { TaskBoard } from "@/components/TaskBoard";
 import { TaskInput } from "@/components/TaskInput";
 import { TaskList } from "@/components/TaskList";
+import { PageHeader } from "@/components/ui/PageHeader";
 import type { Task } from "@/types/dev-calendar";
 
 export default function TasksPage() {
@@ -16,28 +16,12 @@ export default function TasksPage() {
   // リスト/ボードの表示切替 (Issue #5)。永続化はせず、リロードで "list" に戻る
   const [view, setView] = useState<"list" | "board">("list");
 
-  const counts = useMemo(() => {
-    return {
-      todo: tasks.filter((task) => task.status === "todo").length,
-      doing: tasks.filter((task) => task.status === "doing").length,
-      done: tasks.filter((task) => task.status === "done").length
-    };
-  }, [tasks]);
-
   return (
     <div className="grid gap-6">
-      <div>
-        <p className="text-sm text-stone-500">Task Management</p>
-        <h2 className="mt-2 text-3xl font-bold">タスク管理</h2>
-        <p className="mt-2 text-stone-400">今やるべき作業を小さく分けて登録します。</p>
-      </div>
-
-      {/* モバイルでも3列のまま並べる (Issue #37)。縦積みだとカード1枚ずつが巨大になりスクロールが長くなる */}
-      <section className="grid grid-cols-3 gap-3 md:gap-4">
-        <StatCard label="未着手" value={counts.todo} />
-        <StatCard label="進行中" value={counts.doing} />
-        <StatCard label="完了" value={counts.done} />
-      </section>
+      {/* ページ見出し (Issue #112)。
+          以前ここにあった未着手/進行中/完了の統計カード3枚は削除した。
+          件数は TaskBoard の列ヘッダーに既にあり、情報が重複していたため */}
+      <PageHeader title="タスク" />
 
       <TaskInput editingTask={editingTask} onCancel={() => setEditingTask(null)} />
 

@@ -9,6 +9,8 @@ import { ProjectIcon } from "@/components/ProjectIcon";
 import { toPlainTextExcerpt } from "@/lib/project-summary";
 import { Sparkles } from "lucide-react";
 import { DEFAULT_PROJECT_COLOR } from "@/lib/colors";
+import { getProjectProgress } from "@/lib/project-progress";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function ProjectsPage() {
   const { projects = [], tasks } = useDevCalendar();
@@ -18,7 +20,8 @@ export default function ProjectsPage() {
       const projectTasks = tasks.filter((t) => t.projectId === p.id);
       const done = projectTasks.filter((t) => t.status === "done").length;
       const todo = projectTasks.length - done;
-      const progress = projectTasks.length === 0 ? 0 : Math.round((done / projectTasks.length) * 100);
+      // 進捗率は共通関数に一本化 (Issue #112)
+      const progress = getProjectProgress(tasks, p.id);
 
       return { project: p, total: projectTasks.length, done, todo, progress };
     });
@@ -26,20 +29,19 @@ export default function ProjectsPage() {
 
   return (
     <div className="grid gap-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-stone-500">Projects</p>
-          <h2 className="mt-2 text-3xl font-bold">プロジェクト一覧</h2>
-          <p className="mt-2 text-stone-400">プロジェクト単位でタスクを管理します。</p>
-        </div>
-        <Link
-          href="/projects/plan"
-          className="flex shrink-0 items-center gap-2 rounded-xl bg-lime-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-lime-800"
-        >
-          <Sparkles size={15} />
-          AIで計画する
-        </Link>
-      </div>
+      {/* ページ見出し (Issue #112)。「AIで計画する」リンクは右端の actions に移した */}
+      <PageHeader
+        title="プロジェクト"
+        actions={
+          <Link
+            href="/projects/plan"
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-lime-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-lime-800"
+          >
+            <Sparkles size={15} />
+            AIで計画する
+          </Link>
+        }
+      />
 
       <ProjectForm />
 
@@ -49,7 +51,7 @@ export default function ProjectsPage() {
 
           return (
             <Link key={project.id} href={`/projects/${project.id}`} className="block">
-              <article className="group relative rounded-xl border border-stone-200 bg-surface p-5 shadow-md hover:shadow-lg transition-all">
+              <article className="group relative rounded-xl border border-stone-200 bg-surface p-5 shadow-sm hover:shadow transition-all">
                 <div className="absolute right-3 top-3">
                   <StatusBadge status={project.status} kind="project" size="sm" />
                 </div>
@@ -72,14 +74,13 @@ export default function ProjectsPage() {
                   </div>
                 </div>
 
+                {/* カード下部の進捗: 数字は上段、バーはカード全幅 (Issue #112。以前は w-24 の小さなバーだった) */}
                 <div className="mt-4 flex items-center justify-between text-sm text-stone-600">
                   <div>未完了: {todo}</div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm">{progress}%</div>
-                    <div className="h-2 w-24 overflow-hidden rounded-full bg-stone-100">
-                      <div style={{ width: `${progress}%`, background: project.color ?? DEFAULT_PROJECT_COLOR }} className="h-2" />
-                    </div>
-                  </div>
+                  <div className="text-sm">{progress}%</div>
+                </div>
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-stone-100">
+                  <div style={{ width: `${progress}%`, background: project.color ?? DEFAULT_PROJECT_COLOR }} className="h-2" />
                 </div>
               </article>
             </Link>

@@ -85,20 +85,20 @@ export default function ActivityGrid({ days = 90 }: { days?: number }) {
   }, [weeks]);
 
   return (
-    <div className="rounded-xl border border-stone-200 bg-surface p-5 shadow-md">
-      <h3 className="text-lg font-semibold">Craft Activity</h3>
-
-      <div className="mt-3 flex gap-3">
+    // Issue #112: 以前はカード(枠+影)と英語見出し「Craft Activity」を自前で持っていたが、
+    // 置き場所(Home)の「アクティビティ」見出しと二重になるため外し、素のグリッドだけを描く
+    <div>
+      <div className="flex gap-3">
         {/* Weekday labels */}
         <div className="hidden md:flex md:flex-col md:items-end md:gap-[4px] md:pr-2" style={{ width: 48 }}>
           <div className="h-3" />
-          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Mon</div>
-          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Tue</div>
-          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Wed</div>
-          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Thu</div>
-          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Fri</div>
-          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Sat</div>
-          <div className="text-xs text-stone-500" style={{ lineHeight: '12px' }}>Sun</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '14px' }}>Mon</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '14px' }}>Tue</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '14px' }}>Wed</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '14px' }}>Thu</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '14px' }}>Fri</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '14px' }}>Sat</div>
+          <div className="text-xs text-stone-500" style={{ lineHeight: '14px' }}>Sun</div>
         </div>
 
         <div className="flex-1 overflow-x-auto">
@@ -112,8 +112,8 @@ export default function ActivityGrid({ days = 90 }: { days?: number }) {
             className="grid"
             style={{
               gridAutoFlow: 'column',
-              gridAutoColumns: '12px',
-              gridTemplateRows: 'repeat(7, 12px)',
+              gridAutoColumns: '14px',
+              gridTemplateRows: 'repeat(7, 14px)',
               gap: '4px',
               alignItems: 'start'
             }}
@@ -125,7 +125,7 @@ export default function ActivityGrid({ days = 90 }: { days?: number }) {
                 const cls = cell ? getColorForLevel(cell.level) : 'bg-stone-100';
                 const title = cell ? `${cell.date} — logs:${cell.logs} doneToday:${cell.level >= 2 ? 1 : 0} dones:${cell.dones}` : 'No data';
                 return (
-                  <div key={`${ci}-${ri}`} title={title} className={`${cls} rounded-sm`} style={{ width: 12, height: 12 }} />
+                  <div key={`${ci}-${ri}`} title={title} className={`${cls} rounded-sm`} style={{ width: 14, height: 14 }} />
                 );
               })
             )}

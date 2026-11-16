@@ -1,38 +1,25 @@
 "use client";
 
 import { useDevCalendar } from "@/components/AppProvider";
-import { StatCard } from "@/components/StatCard";
 import { ChatMessage } from "@/components/planner/ChatMessage";
 import { QuickActionButtons } from "@/components/planner/QuickActionButtons";
 import { ScheduleSuggestionCard } from "@/components/planner/ScheduleSuggestionCard";
 import { usePlannerChat } from "@/components/planner/usePlannerChat";
-import { getTodayString } from "@/lib/schedule";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function SprintPage() {
   const { tasks, projects } = useDevCalendar();
-  const { messages, input, setInput, sendMessage, useQuickAction, latestSuggestions, notice, rerun, makeLighter, reflect, chooseSuggestions, bottomRef, incompleteTasks } = usePlannerChat({ tasks, projects });
-
-  const proposalCount = latestSuggestions.length;
-  // 「今日の予定タスク」カード用の集計: scheduledDateが今日で、かつ未完了（statusがdoneでない）タスクの件数
-  const todayScheduledTaskCount = tasks.filter((t) => t.scheduledDate === getTodayString() && t.status !== "done").length;
+  const { messages, input, setInput, sendMessage, useQuickAction, latestSuggestions, notice, rerun, makeLighter, reflect, chooseSuggestions, bottomRef } = usePlannerChat({ tasks, projects });
 
   return (
     <div className="grid gap-6">
-      <div>
-        <p className="text-sm font-semibold text-lime-800">AI Planner</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-stone-900">予定アシスタント</h2>
-        <p className="mt-2 text-stone-600">Googleカレンダーの空き時間とタスクをもとに、作業予定をチャット形式で提案します。</p>
-      </div>
-
-      {/* モバイルでも3列のまま並べる (Issue #37)。縦積みだとカード1枚ずつが巨大になりスクロールが長くなる */}
-      <section className="grid grid-cols-3 gap-3 md:gap-4">
-        <StatCard label="今日の予定タスク" value={todayScheduledTaskCount} description="今日に配置済みの未完了タスク" />
-        <StatCard label="未完了タスク" value={incompleteTasks.length} description="割り振り候補" />
-        <StatCard label="提案済み予定" value={proposalCount} description="今日作成した予定案" />
-      </section>
+      {/* ページ見出し (Issue #112)。
+          以前ここにあった統計カード3枚（今日の予定タスク/未完了タスク/提案済み予定）は削除した。
+          このページの主役はチャットで、数字は重複・過剰な情報だったため */}
+      <PageHeader title="アシスタント" />
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)]">
-        <div className="rounded-3xl border border-stone-200 bg-surface/90 p-5 shadow-md">
+        <div className="rounded-xl border border-stone-200 bg-surface/90 p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 border-b border-stone-100 pb-4">
             <div>
               <p className="text-sm font-semibold text-stone-500">チャット</p>
@@ -87,7 +74,7 @@ export default function SprintPage() {
         <div className="grid gap-4 self-start">
           <ScheduleSuggestionCard suggestions={latestSuggestions} onReflect={reflect} onMakeLighter={makeLighter} onRerun={rerun} />
 
-          <div className="rounded-3xl border border-dashed border-stone-200 bg-stone-100 p-5 text-sm text-stone-600">
+          <div className="rounded-xl border border-dashed border-stone-200 bg-stone-100 p-5 text-sm text-stone-600">
             現在は時間帯テンプレートと現在時刻から空き時間を推定するルールベースで提案しています。Google Calendar連携は将来対応予定です。
           </div>
         </div>

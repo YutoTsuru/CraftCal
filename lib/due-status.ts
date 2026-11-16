@@ -10,7 +10,7 @@
  *   漏れていた。最も急ぐものが見えなくなるので、時刻を持たない日付同士で比較する。
  *
  * UI対応箇所:
- *   - app/home/page.tsx … 「期限が近いタスク」カードと「期限間近」の StatCard
+ *   - app/home/page.tsx … 期限アラート帯（期限切れ・今日が期限のときだけ出る。Issue #112）
  */
 
 import type { Task } from "@/types/dev-calendar";

@@ -1,4 +1,6 @@
 import type { Project, Task } from "@/types/dev-calendar";
+import { getDueUrgencyScore } from "@/lib/due-score";
+import { getTodayString } from "@/lib/schedule";
 
 export type PlannerRole = "user" | "assistant";
 export type PlannerTargetDate = "today" | "tomorrow" | "thisWeek";
@@ -176,24 +178,10 @@ function projectNameMatches(input: string, projects: Project[]) {
   );
 }
 
+// 期限スコア。基準日は「今日（ローカル日付）」で、共通関数 getDueUrgencyScore
+// （lib/due-score.ts）に渡す。日付文字列化も既存の getTodayString に寄せる。scoreTask から呼ばれる。
 function getDueDateScore(dueDate: string | null | undefined) {
-  if (!dueDate) return 0;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(`${dueDate}T00:00:00`);
-
-  if (Number.isNaN(due.getTime())) {
-    return 0;
-  }
-
-  due.setHours(0, 0, 0, 0);
-  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-
-  if (diffDays <= 0) return 60;
-  if (diffDays <= 2) return 40;
-  if (diffDays <= 5) return 20;
-  return 0;
+  return getDueUrgencyScore(dueDate, getTodayString());
 }
 
 export function parsePlannerIntent(input: string, projects: Project[] = []): PlannerIntent {
