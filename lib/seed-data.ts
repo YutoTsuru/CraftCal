@@ -6,6 +6,9 @@
  *   2. アプリの機能をひととおり試せる状態にする
  *      （期限切れ / 今日が期限 / 週またぎの期間 / 未配置 / 完了の散らばり）
  *
+ * 期限切れは読み込み直後にちょうど5件（-1/-2/-3/-5/-7日）になるよう配分している。
+ * 多すぎると一覧が赤だらけで見にくく、少なすぎると危険度表示を確認できないため。
+ *
  * 収録プロジェクト:
  *   - CraftCal            … このアプリ自体。GitHub のオープンIssueをそのまま反映
  *   - tobenaitsuru-HP     … 実在のポートフォリオサイト。リポジトリの状態から起こしたタスク
@@ -347,7 +350,7 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
       weight: "medium",
       priority: "medium",
       scheduledIn: null,
-      dueIn: 20,
+      dueIn: -5, // 期限切れ（5日超過）。読み込み直後の期限切れを計5件・日数ばらけで揃える
       estimatedMinutes: 150
     }),
     makeSeedTask({
@@ -413,8 +416,8 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
       title: "記事一覧とタグ機能を作る",
       weight: "medium",
       priority: "medium",
-      scheduledIn: 4,
-      dueIn: 11,
+      scheduledIn: -6,
+      dueIn: -3, // 期限切れ（3日超過）
       estimatedMinutes: 180
     }),
     // 未配置
@@ -520,7 +523,8 @@ export function createSeedData(): { projects: Project[]; tasks: Task[] } {
       title: "開発環境のバックアップ設定",
       weight: "light",
       priority: "low",
-      scheduledIn: 6,
+      scheduledIn: null,
+      dueIn: -7, // 期限切れ（7日超過）。後回しが積もった体のタスク
       estimatedMinutes: 30
     })
   ];

@@ -88,7 +88,9 @@ describe("createSeedData: 各画面を試せる状態が揃っている (Issue #
     const overdue = tasks.filter(
       (t) => t.status !== "done" && t.dueDate != null && (getDaysLeft(t.dueDate, TODAY) ?? 0) < 0
     );
-    expect(overdue.length).toBeGreaterThan(0);
+    // 読み込み直後はちょうど5件（-1/-2/-3/-5/-7日）。
+    // 多すぎると一覧が赤だらけで見にくいため、件数を固定して配分の崩れに気づけるようにする
+    expect(overdue.length).toBe(5);
   });
 
   it("今日が期限のタスクがある（Issue #69 で直した境界）", () => {
